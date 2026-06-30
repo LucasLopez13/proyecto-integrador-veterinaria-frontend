@@ -18,6 +18,16 @@ export async function getPosts(): Promise<Post[]> {
   return response.json();
 }
 
+export async function getPostById(id: number): Promise<Post> {
+  const response = await fetch(`${API_URL}/post/${id}`);
+
+  if (!response.ok) {
+    throw new Error("No se pudo obtener la publicación.");
+  }
+
+  return response.json();
+}
+
 export async function createPost(post: CreatePostData): Promise<Post> {
   const response = await fetch(`${API_URL}/post`, {
     method: "POST",
