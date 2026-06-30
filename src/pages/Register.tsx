@@ -8,7 +8,7 @@ export default function Register() {
 
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -23,28 +23,46 @@ export default function Register() {
   };
 
   return (
-    <div>
-      <h2>Registro</h2>
+    <main className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-md-6 col-lg-5">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title mb-4">Registro</h2>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>NickName</label>
-          <input
-            type="text"
-            value={nickName}
-            onChange={(e) => setNickName(e.target.value)}
-            required
-          />
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label">NickName</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={nickName}
+                    onChange={(e) => setNickName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {error && (
+                  <div className="alert alert-danger">
+                    {error}
+                  </div>
+                )}
+
+                <div className="d-grid">
+                  <button type="submit" className="btn btn-primary">
+                    Registrarse
+                  </button>
+                </div>
+              </form>
+
+              <p className="mt-3 mb-0 text-center">
+                ¿Ya tenés cuenta?{" "}
+                <Link to="/login">Iniciar sesión</Link>
+              </p>
+            </div>
+          </div>
         </div>
-
-        {error && <p>{error}</p>}
-
-        <button type="submit">Registrarse</button>
-      </form>
-
-      <p>
-        ¿Ya tenés cuenta? <Link to="/login">Iniciar sesión</Link>
-      </p>
-    </div>
+      </div>
+    </main>
   );
 }

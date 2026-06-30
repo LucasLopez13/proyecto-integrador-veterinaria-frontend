@@ -24,70 +24,111 @@ export default function CreatePost() {
   };
 
   const handleSubmit = async (
-  e: React.FormEvent<HTMLFormElement>
-) => {
-  e.preventDefault();
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
 
-  if (!user) return;
+    if (!user) return;
 
-  await createPost({
-    descripcion,
-    userNickName: user.nickName,
-    imagenesUrls: imagenUrl
-      ? [imagenUrl]
-      : [],
-    tags: tagSeleccionado
-      ? [tagSeleccionado]
-      : [],
-  });
+    await createPost({
+      descripcion,
+      userNickName: user.nickName,
+      imagenesUrls: imagenUrl
+        ? [imagenUrl]
+        : [],
+      tags: tagSeleccionado
+        ? [tagSeleccionado]
+        : [],
+    });
 
-  navigate("/profile");
-};
+    navigate("/profile");
+  };
 
   return (
-    <div>
-      <h2>Crear publicación</h2>
+    <main className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-lg-7">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <h2 className="card-title mb-4">
+                Crear publicación
+              </h2>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Descripción</label>
-          <input
-            type="text"
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            minLength={5}
-            required
-          />
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label">
+                    Descripción
+                  </label>
+
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={descripcion}
+                    onChange={(e) =>
+                      setDescripcion(e.target.value)
+                    }
+                    minLength={5}
+                    required
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">
+                    URL de imagen
+                  </label>
+
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={imagenUrl}
+                    onChange={(e) =>
+                      setImagenUrl(e.target.value)
+                    }
+                    pattern="https?://.*"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="form-label">
+                    Etiqueta
+                  </label>
+
+                  <select
+                    className="form-select"
+                    value={tagSeleccionado}
+                    onChange={(e) =>
+                      setTagSeleccionado(e.target.value)
+                    }
+                  >
+                    <option value="">
+                      Sin etiqueta
+                    </option>
+
+                    {tags.map((tag) => (
+                      <option
+                        key={tag.id}
+                        value={tag.name}
+                      >
+                        {tag.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="d-grid">
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                  >
+                    Publicar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
-
-        <div>
-          <label>URL de imagen</label>
-          <input
-            type="text"
-            value={imagenUrl}
-            onChange={(e) => setImagenUrl(e.target.value)}
-            pattern="https?://.*"
-          />
-        </div>
-
-        <div>
-          <label>Etiqueta</label>
-          <select
-            value={tagSeleccionado}
-            onChange={(e) => setTagSeleccionado(e.target.value)}
-          >
-            <option value="">Sin etiqueta</option>
-
-            {tags.map((tag) => (
-              <option key={tag.id} value={tag.name}>
-                {tag.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <button type="submit">Publicar</button>
-      </form>
-    </div>
+      </div>
+    </main>
   );
 }

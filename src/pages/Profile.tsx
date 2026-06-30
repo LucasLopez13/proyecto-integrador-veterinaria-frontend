@@ -25,49 +25,47 @@ export default function Profile() {
   };
 
   return (
-    <div className="container mt-4">
+    <main className="container mt-4">
+      <div className="row justify-content-center">
+        <div className="col-lg-8">
+          <div className="card shadow-sm mb-4">
+            <div className="card-body">
+              <h2 className="card-title mb-3">
+                Mi Perfil
+              </h2>
 
-      <div className="card shadow-sm mb-4">
+              <p className="mb-3">
+                <strong>Usuario:</strong>{" "}
+                {user?.nickName}
+              </p>
 
-        <div className="card-body">
+              <button
+                className="btn btn-danger"
+                onClick={logout}
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
 
-          <h2 className="card-title">
-            Mi Perfil
-          </h2>
+          <h3 className="mb-4">
+            Mis publicaciones
+          </h3>
 
-          <p className="mb-3">
-            <strong>Usuario:</strong>{" "}
-            {user?.nickName}
-          </p>
-
-          <button
-            className="btn btn-danger"
-            onClick={logout}
-          >
-            Cerrar sesión
-          </button>
-
+          {posts.length === 0 ? (
+            <div className="alert alert-info">
+              Todavía no realizaste publicaciones.
+            </div>
+          ) : (
+            posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+              />
+            ))
+          )}
         </div>
-
       </div>
-
-      <h3 className="mb-4">
-        Mis publicaciones
-      </h3>
-
-      {posts.length === 0 ? (
-        <div className="alert alert-info">
-          Todavía no realizaste publicaciones.
-        </div>
-      ) : (
-        posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-          />
-        ))
-      )}
-
-    </div>
+    </main>
   );
 }

@@ -56,7 +56,7 @@ export default function Navbar() {
 
                 <li className="nav-item">
                   <button
-                    className="btn btn-outline-light ms-2"
+                    className="btn btn-outline-light ms-lg-2 mt-2 mt-lg-0"
                     onClick={logout}
                   >
                     Cerrar sesión
