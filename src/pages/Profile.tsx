@@ -1,11 +1,12 @@
 import { useEffect, useState, useContext } from "react";
-import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { getPosts } from "../services/postService";
 import type { Post } from "../types/Post";
+import PostCard from "../components/PostCard";
 
 export default function Profile() {
   const { user, logout } = useContext(AuthContext);
+
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
@@ -16,37 +17,57 @@ export default function Profile() {
     const data = await getPosts();
 
     const userPosts = data.filter(
-      (post: Post) => post.userNickName === user?.nickName
+      (post: Post) =>
+        post.userNickName === user?.nickName
     );
 
     setPosts(userPosts);
   };
 
   return (
-    <div>
-      <h2>Perfil</h2>
+    <div className="container mt-4">
 
-      <p>Usuario: {user?.nickName}</p>
+      <div className="card shadow-sm mb-4">
 
-      <button onClick={logout}>
-        Cerrar sesión
-      </button>
+        <div className="card-body">
 
-      <h3>Mis publicaciones</h3>
+          <h2 className="card-title">
+            Mi Perfil
+          </h2>
 
-      {posts.map((post) => (
-        <div key={post.id}>
-          <h4>{post.descripcion}</h4>
-
-          <p>
-            Comentarios visibles: {post.Comments?.length}
+          <p className="mb-3">
+            <strong>Usuario:</strong>{" "}
+            {user?.nickName}
           </p>
 
-          <Link to={`/post/${post.id}`}>
-            Ver más
-          </Link>
+          <button
+            className="btn btn-danger"
+            onClick={logout}
+          >
+            Cerrar sesión
+          </button>
+
         </div>
-      ))}
+
+      </div>
+
+      <h3 className="mb-4">
+        Mis publicaciones
+      </h3>
+
+      {posts.length === 0 ? (
+        <div className="alert alert-info">
+          Todavía no realizaste publicaciones.
+        </div>
+      ) : (
+        posts.map((post) => (
+          <PostCard
+            key={post.id}
+            post={post}
+          />
+        ))
+      )}
+
     </div>
   );
 }

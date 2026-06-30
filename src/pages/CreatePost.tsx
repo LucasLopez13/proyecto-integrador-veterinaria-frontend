@@ -23,20 +23,26 @@ export default function CreatePost() {
     setTags(data);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (
+  e: React.FormEvent<HTMLFormElement>
+) => {
+  e.preventDefault();
 
-    if (!user) return;
+  if (!user) return;
 
-    await createPost({
-      descripcion,
-      userNickName: user.nickName,
-      imagenesUrls: imagenUrl ? [imagenUrl] : [],
-      tags: tagSeleccionado ? [tagSeleccionado] : []
-    });
+  await createPost({
+    descripcion,
+    userNickName: user.nickName,
+    imagenesUrls: imagenUrl
+      ? [imagenUrl]
+      : [],
+    tags: tagSeleccionado
+      ? [tagSeleccionado]
+      : [],
+  });
 
-    navigate("/profile");
-  };
+  navigate("/profile");
+};
 
   return (
     <div>
