@@ -21,8 +21,7 @@ export async function createUser(user: User): Promise<User> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message);
+    throw new Error("No se pudo crear el usuario.");
   }
 
   return response.json();

@@ -14,27 +14,30 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
 
-    const users = await getUsers();
+    try {
+      const users = await getUsers();
 
-    const user = users.find(
-      (user: User) => user.nickName === nickName
-    );
+      const user = users.find(
+        (user: User) => user.nickName === nickName
+      );
 
-    if (!user) {
-      setError("Usuario no encontrado");
-      return;
+      if (!user) {
+        setError("Usuario no encontrado");
+        return;
+      }
+
+      if (password !== "123456") {
+        setError("Contraseña incorrecta");
+        return;
+      }
+
+      login(user);
+      navigate("/");
+    } catch {
+      setError("Error al conectar con el servidor");
     }
-
-    if (password !== "123456") {
-      setError("Contraseña incorrecta");
-      return;
-    }
-
-    login(user);
-    navigate("/");
   };
 
   return (
@@ -64,11 +67,16 @@ export default function Login() {
 
         {error && <p>{error}</p>}
 
-        <button type="submit">Ingresar</button>
+        <button type="submit">
+          Ingresar
+        </button>
       </form>
 
       <p>
-        ¿No tenés cuenta? <Link to="/register">Registrate</Link>
+        ¿No tenés cuenta?{" "}
+        <Link to="/register">
+          Registrate
+        </Link>
       </p>
     </div>
   );
