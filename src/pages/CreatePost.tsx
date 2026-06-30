@@ -49,6 +49,7 @@ export default function CreatePost() {
             type="text"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
+            minLength={5}
             required
           />
         </div>
@@ -59,6 +60,7 @@ export default function CreatePost() {
             type="text"
             value={imagenUrl}
             onChange={(e) => setImagenUrl(e.target.value)}
+            pattern="https?://.*"
           />
         </div>
 
@@ -71,8 +73,8 @@ export default function CreatePost() {
             <option value="">Sin etiqueta</option>
 
             {tags.map((tag) => (
-              <option key={tag.id} value={tag.nombre}>
-                {tag.nombre}
+              <option key={tag.id} value={tag.name}>
+                {tag.name}
               </option>
             ))}
           </select>

@@ -50,7 +50,7 @@ export default function PostDetail() {
 
       <div>
         {post.Tags?.map((tag) => (
-          <span key={tag.id}>#{tag.nombre} </span>
+          <span key={tag.id}>#{tag.name} </span>
         ))}
       </div>
 
@@ -62,7 +62,7 @@ export default function PostDetail() {
         </p>
       ))}
 
-      <CommentForm postId={post.id} />
+      <CommentForm postId={post.id} onCommentAdded={loadComments}/>
     </div>
   );
 }

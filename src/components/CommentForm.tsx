@@ -4,31 +4,35 @@ import { createComment } from "../services/commentService";
 
 type CommentFormProps = {
   postId: number;
+  onCommentAdded: () => void;
 };
 
-export default function CommentForm({ postId }: CommentFormProps) {
+export default function CommentForm({ postId,onCommentAdded }: CommentFormProps) {
   const [texto, setTexto] = useState("");
   const [mensaje, setMensaje] = useState("");
-
+  
   const { user } = useContext(AuthContext);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (
+  e: React.FormEvent<HTMLFormElement>
+  ) => {
+  e.preventDefault();
 
-    if (!user) {
-      setMensaje("Debés iniciar sesión para comentar.");
-      return;
-    }
+  if (!user) {
+    setMensaje("Debés iniciar sesión para comentar.");
+    return;
+  }
 
-    await createComment({
-      texto,
-      userNickName: user.nickName,
-      postId
-    });
+  await createComment({
+    texto,
+    userNickName: user.nickName,
+    postId,
+  });
 
-    setTexto("");
-    setMensaje("Comentario agregado.");
-  };
+  setTexto("");
+  setMensaje("Comentario agregado.");
+  onCommentAdded();
+};
 
   return (
     <div>

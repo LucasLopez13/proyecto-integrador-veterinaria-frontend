@@ -39,7 +39,7 @@ export default function Profile() {
           <h4>{post.descripcion}</h4>
 
           <p>
-            Comentarios visibles: {post.Comments?.length || 0}
+            Comentarios visibles: {post.Comments?.length}
           </p>
 
           <Link to={`/post/${post.id}`}>
