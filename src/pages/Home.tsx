@@ -68,10 +68,10 @@ const loadPosts = async () => {
       <div className="row justify-content-center">
         <div className="col-lg-8">
 
-          <div className="mb-4">
-            <label className="form-label">
-              Filtrar por etiqueta
-            </label>
+        <div className="filter-card">
+          <label className="form-label">
+            Explorar publicaciones por etiqueta
+          </label>
 
             <select
               className="form-select"

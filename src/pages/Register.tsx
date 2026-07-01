@@ -37,6 +37,15 @@ const handleSubmit = async (
   return;
 }
 
+  const regex = /^[a-zA-Z0-9_]+$/;
+
+  if (!regex.test(nick)) {
+    setError(
+      "El usuario solo puede contener letras, números y guiones bajos (_)."
+    );
+    return;
+  }
+
   try {
     await createUser({ nickName: nick });
     navigate("/login");
