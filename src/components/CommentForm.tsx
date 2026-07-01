@@ -55,7 +55,7 @@ export default function CommentForm({
 
         <button
           type="submit"
-          className="btn btn-primary"
+          className="btn btn-custom"
         >
           Comentar
         </button>

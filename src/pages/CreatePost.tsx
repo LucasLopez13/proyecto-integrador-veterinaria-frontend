@@ -48,7 +48,7 @@ export default function CreatePost() {
     <main className="container mt-4">
       <div className="row justify-content-center">
         <div className="col-lg-7">
-          <div className="card shadow-sm">
+          <div className="card shadow-sm auth-card">
             <div className="card-body">
               <h2 className="card-title mb-4">
                 Crear publicación

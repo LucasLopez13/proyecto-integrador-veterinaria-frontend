@@ -42,11 +42,8 @@ export default function PostCard({
           Comentarios visibles: {post.Comments?.length || 0}
         </p>
 
-        <Link
-          to={`/post/${post.id}`}
-          className="btn btn-primary"
-        >
-          Ver más
+        <Link to={`/post/${post.id}`} className="btn btn-custom">
+            Ver más
         </Link>
 
       </div>

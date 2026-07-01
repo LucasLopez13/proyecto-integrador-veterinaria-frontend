@@ -28,7 +28,7 @@ export default function Profile() {
     <main className="container mt-4">
       <div className="row justify-content-center">
         <div className="col-lg-8">
-          <div className="card shadow-sm mb-4">
+          <div className="card shadow auth-card">
             <div className="card-body">
               <h2 className="card-title mb-3">
                 Mi Perfil
@@ -47,8 +47,8 @@ export default function Profile() {
               </button>
             </div>
           </div>
-
-          <h3 className="mb-4">
+          <br></br>
+          <h3 className="mb-4 auth-card">
             Mis publicaciones
           </h3>
 

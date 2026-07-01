@@ -1,10 +1,11 @@
 .navbar-custom {
   background: linear-gradient(
     135deg,
-    #0d6efd,
+    #dc2f02,
     #6610f2
   );
   box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+  font-family: "Poppins", Helvetica, sans-serif;
 }
 
 .navbar-brand {
@@ -51,5 +52,5 @@
 
 .logout-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgb(255, 0, 0);
+  box-shadow: 0 4px 10px #dc2f02;
 }

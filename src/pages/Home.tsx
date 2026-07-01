@@ -4,7 +4,7 @@ import { getTags } from "../services/tagService";
 import type { Post } from "../types/Post";
 import type { Tag } from "../types/Tag";
 import PostCard from "../components/PostCard";
-import "../styles/Home.css";
+import "../styles/home.css";
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -36,7 +36,7 @@ export default function Home() {
         );
 
   return (
-    <div className="container mt-4">
+    <div className="home-container container mt-4">
 
       <div className="text-center mb-4">
         <h1>UnaHur Anti-Social Net</h1>

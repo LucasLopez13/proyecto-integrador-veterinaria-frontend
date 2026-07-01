@@ -5,7 +5,7 @@ import { getCommentsByPost } from "../services/commentService";
 import type { Post } from "../types/Post";
 import type { Comment } from "../types/Comment";
 import CommentForm from "../components/CommentForm";
-
+import "../styles/PostDetail.css"
 export default function PostDetail() {
   const { id } = useParams();
 
@@ -43,7 +43,7 @@ export default function PostDetail() {
     <main className="container mt-4">
       <div className="row justify-content-center">
         <div className="col-lg-8">
-          <div className="card shadow-sm mb-4">
+          <div className="card shadow auth-card">
             <div className="card-body">
               <h2 className="card-title mb-3">
                 {post.descripcion}
@@ -71,7 +71,7 @@ export default function PostDetail() {
             </div>
           </div>
 
-          <div className="card shadow-sm">
+          <div className="card shadow-sm auth-card">
             <div className="card-body">
               <h3 className="card-title mb-3">Comentarios</h3>
 

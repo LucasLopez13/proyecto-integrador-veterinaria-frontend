@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { getUsers } from "../services/userService";
 import type { User } from "../types/User";
-
+import "../styles/Login.css";
 export default function Login() {
   const [nickName, setNickName] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +46,7 @@ export default function Login() {
     <main className="container mt-4">
       <div className="row justify-content-center">
         <div className="col-md-6 col-lg-5">
-          <div className="card shadow-sm">
+          <div className="card shadow auth-card">
             <div className="card-body">
               <h2 className="card-title mb-4">Iniciar sesión</h2>
 
