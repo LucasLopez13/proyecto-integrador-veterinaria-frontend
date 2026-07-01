@@ -1,5 +1,51 @@
 .auth-card {
   animation: fadeInUp 0.6s ease;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.auth-card .card-body {
+  padding: 2rem;
+}
+
+.auth-card h2 {
+  text-align: center;
+  font-weight: bold;
+  color: #198754;
+}
+
+.form-control {
+  border-radius: 10px;
+  padding: 12px;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #198754;
+  box-shadow: 0 0 8px rgba(25, 135, 84, 0.3);
+}
+
+.btn-primary {
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(25, 135, 84, 0.3);
+}
+
+.auth-card a {
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-card a:hover {
+  text-decoration: underline;
 }
 
 @keyframes fadeInUp {
