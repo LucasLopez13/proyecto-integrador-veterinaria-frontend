@@ -13,35 +13,55 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-    e.preventDefault();
-    setError("");
+  e: React.FormEvent<HTMLFormElement>
+) => {
+  e.preventDefault();
+  setError("");
 
-    try {
-      const users = await getUsers();
+  // Validaciones del lado del cliente
+  if (nickName.trim() === "") {
+    setError("Debe ingresar usuario y contraseña.");
+    return;
+  }
 
-      const user = users.find(
-        (user: User) => user.nickName === nickName
-      );
+  if (nickName.trim().length < 4) {
+    setError("El NickName debe tener al menos 4 caracteres.");
+    return;
+  }
 
-      if (!user) {
-        setError("Usuario no encontrado");
-        return;
-      }
+  if (password.trim() === "") {
+    setError("Debe ingresar una contraseña.");
+    return;
+  }
 
-      if (password !== "123456") {
-        setError("Contraseña incorrecta");
-        return;
-      }
+  if (password.length < 6) {
+    setError("La contraseña debe tener al menos 6 caracteres.");
+    return;
+  }
 
-      login(user);
-      navigate("/");
-    } catch {
-      setError("Error al conectar con el servidor");
+  try {
+    const users = await getUsers();
+
+    const user = users.find(
+      (user: User) => user.nickName === nickName
+    );
+
+    if (!user) {
+      setError("Usuario no encontrado");
+      return;
     }
-  };
 
+    if (password !== "123456") {
+      setError("Contraseña incorrecta");
+      return;
+    }
+
+    login(user);
+    navigate("/");
+  } catch {
+    setError("Error al conectar con el servidor");
+  }
+};
   return (
     <main className="container mt-4">
       <div className="row justify-content-center">
@@ -58,7 +78,7 @@ export default function Login() {
                     className="form-control"
                     value={nickName}
                     onChange={(e) => setNickName(e.target.value)}
-                    required
+                    
                   />
                 </div>
 
@@ -69,7 +89,7 @@ export default function Login() {
                     className="form-control"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required
+                    
                   />
                 </div>
 

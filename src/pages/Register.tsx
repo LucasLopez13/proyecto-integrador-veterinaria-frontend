@@ -8,19 +8,44 @@ export default function Register() {
 
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
+const handleSubmit = async (
+  e: React.FormEvent<HTMLFormElement>
+) => {
+  e.preventDefault();
+  setError("");
 
-    try {
-      await createUser({ nickName });
-      navigate("/login");
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      }
+  const nick = nickName.trim();
+
+  // Validaciones del lado del cliente
+  if (nick === "") {
+    setError("Debe ingresar un usuario.");
+    return;
+  }
+
+  if (nick.length < 4) {
+    setError("El usuario debe tener al menos 4 caracteres.");
+    return;
+  }
+
+  if (nick.length > 20) {
+    setError("El usuario no puede superar los 20 caracteres.");
+    return;
+  }
+
+  if (nick.includes(" ")) {
+  setError("El usuario no puede contener espacios.");
+  return;
+}
+
+  try {
+    await createUser({ nickName: nick });
+    navigate("/login");
+  } catch (error) {
+    if (error instanceof Error) {
+      setError(error.message);
     }
-  };
+  }
+};
 
   return (
     <main className="container mt-4">
