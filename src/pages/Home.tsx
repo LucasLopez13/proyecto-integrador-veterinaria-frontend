@@ -10,16 +10,21 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [tagFiltro, setTagFiltro] = useState("");
-
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     loadPosts();
     loadTags();
   }, []);
 
-  const loadPosts = async () => {
+const loadPosts = async () => {
+  try {
+    setLoading(true);
     const data = await getPosts();
     setPosts(data);
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   const loadTags = async () => {
     const data = await getTags();
@@ -38,12 +43,27 @@ export default function Home() {
   return (
     <div className="home-container container mt-4">
 
-      <div className="text-center mb-4">
-        <h1>UnaHur Anti-Social Net</h1>
-        <p className="text-muted">
-          Arranca a Postear con el mundo
-        </p>
-      </div>
+<div className="hero-banner text-center mb-5">
+  <h1>Bienvenido a UnaHur Anti-Social Net</h1>
+
+  <p className="lead">
+    Compartí tus ideas, descubrí nuevas publicaciones e interactuá con la comunidad.
+  </p>
+
+  <div className="mt-4">
+    <span className="badge bg-light text-dark me-2">
+      Publicaciones
+    </span>
+
+    <span className="badge bg-light text-dark me-2">
+      Comentarios
+    </span>
+
+    <span className="badge bg-light text-dark">
+      Comunidad
+    </span>
+  </div>
+</div>
 
       <div className="row justify-content-center">
         <div className="col-lg-8">
@@ -74,19 +94,31 @@ export default function Home() {
               ))}
             </select>
           </div>
-
-          {filteredPosts.length === 0 ? (
-            <div className="alert alert-info">
-              No hay publicaciones disponibles.
+              
+        {loading ? (
+          <div className="text-center my-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">
+                Cargando...
+              </span>
             </div>
-          ) : (
-            filteredPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-              />
-            ))
-          )}
+
+            <p className="mt-3 text-muted">
+              Cargando publicaciones...
+            </p>
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="alert alert-info">
+            No hay publicaciones disponibles.
+          </div>
+        ) : (
+          filteredPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+            />
+          ))
+        )}
 
         </div>
       </div>
