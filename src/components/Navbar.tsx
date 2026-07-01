@@ -34,7 +34,11 @@ export default function Navbar() {
                 Inicio
               </Link>
             </li>
-
+            <li className="nav-item">
+              <Link className="nav-link" to="/about">
+                Sobre Nosotros
+              </Link>
+            </li>
             {user ? (
               <>
                 <li className="nav-item">
