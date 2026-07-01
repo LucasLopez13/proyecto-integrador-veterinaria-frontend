@@ -1,0 +1,30 @@
+.post-card {
+  animation: fadeInUp 0.5s ease;
+  transition: all 0.3s ease;
+  overflow-wrap: break-word;
+}
+
+.post-card img {
+  max-height: 500px;
+  object-fit: cover;
+}
+
+.post-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+.post-tag {
+  color: rgb(255, 255, 255) !important;
+  background-color: rgb(211, 56, 56) !important;
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

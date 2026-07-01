@@ -62,7 +62,7 @@ export default function PostDetail() {
                 {post.Tags?.map((tag) => (
                   <span
                     key={tag.id}
-                    className="badge text-bg-secondary me-2"
+                    className="badge me-2 post-tag"
                   >
                     #{tag.name}
                   </span>

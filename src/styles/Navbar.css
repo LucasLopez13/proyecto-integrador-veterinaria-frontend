@@ -1,0 +1,55 @@
+.navbar-custom {
+  background: linear-gradient(
+    135deg,
+    #0d6efd,
+    #6610f2
+  );
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+  transition: 0.3s;
+}
+
+.navbar-brand:hover {
+  transform: scale(1.05);
+}
+
+.navbar-custom .nav-link {
+  position: relative;
+  color: white !important;
+  margin: 0 0.3rem;
+  transition: all 0.3s ease;
+}
+
+.navbar-custom .nav-link:hover {
+  transform: translateY(-2px);
+}
+
+.navbar-custom .nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 3px;
+  width: 0;
+  height: 2px;
+  background-color: white;
+  transition: width 0.3s ease;
+}
+
+.navbar-custom .nav-link:hover::after {
+  width: 100%;
+}
+
+.logout-btn {
+  border-radius: 25px;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgb(255, 0, 0);
+}

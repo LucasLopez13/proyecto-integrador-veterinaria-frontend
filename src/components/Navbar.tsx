@@ -1,12 +1,13 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import "../styles/Navbar.css";
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav className="navbar navbar-expand-lg navbar-dark navbar-custom">
       <div className="container">
 
         <Link className="navbar-brand" to="/">
@@ -53,10 +54,10 @@ export default function Navbar() {
                     Crear publicación
                   </Link>
                 </li>
-
+                
                 <li className="nav-item">
                   <button
-                    className="btn btn-outline-light ms-lg-2 mt-2 mt-lg-0"
+                    className="btn btn-outline-light ms-lg-2 mt-2 mt-lg-0 logout-btn"
                     onClick={logout}
                   >
                     Cerrar sesión
