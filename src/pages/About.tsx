@@ -21,7 +21,7 @@ export default function About() {
 
         <div className="col-md-6">
           <div className="about-card">
-            <h3>🎯 Objetivo</h3>
+            <h3>Objetivo</h3>
 
             <p>
               El proyecto tiene como objetivo desarrollar una red social que
@@ -34,7 +34,7 @@ export default function About() {
 
         <div className="col-md-6">
           <div className="about-card">
-            <h3>⚙️ Tecnologías</h3>
+            <h3>Tecnologías</h3>
 
             <ul>
               <li>React</li>
@@ -48,7 +48,7 @@ export default function About() {
 
         <div className="col-md-6">
           <div className="about-card">
-            <h3>✨ Funcionalidades</h3>
+            <h3>Funcionalidades</h3>
 
             <ul>
               <li>Registro de usuarios</li>
@@ -62,7 +62,7 @@ export default function About() {
 
         <div className="col-md-6">
           <div className="about-card">
-            <h3>👥 Equipo</h3>
+            <h3>Equipo</h3>
 
             <p>
               Aplicación desarrollada como trabajo práctico para la materia
