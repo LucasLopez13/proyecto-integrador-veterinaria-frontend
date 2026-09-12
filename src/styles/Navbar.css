@@ -1,0 +1,8 @@
+.navbar-brand {
+  font-weight: 600;
+}
+
+.navbar .nav-link {
+  display: flex;
+  align-items: center;
+}

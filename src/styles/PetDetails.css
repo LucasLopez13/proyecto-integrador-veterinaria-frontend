@@ -1,0 +1,17 @@
+.pet-details-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.pet-details-card {
+  max-width: 600px;
+  padding: 32px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.pet-details-card h1 {
+  margin-bottom: 24px;
+}
