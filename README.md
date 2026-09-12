@@ -1,32 +1,49 @@
-# React + TypeScript + Vite
+# Sistema Integral de Gestión Veterinaria
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Frontend del Sistema Integral de Gestión Veterinaria desarrollado como Proyecto Integrador.
 
-Currently, two official plugins are available:
+## MVP
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+La versión inicial permite cubrir el flujo básico del sistema.
 
-## React Compiler
+### Cliente
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Registrarse e iniciar sesión.
+- Consultar sus mascotas.
+- Registrar una mascota.
+- Solicitar un turno para una mascota.
 
-## Expanding the Oxlint configuration
+### Profesional
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+- Consultar los turnos solicitados.
+- Acceder a los datos básicos de la mascota asociada a un turno.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## Tecnologías
+
+- React
+- TypeScript
+- Vite
+- Bootstrap
+- React Router
+
+## Instalación
+
+Instalar las dependencias:
+
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Ejecución
+
+Iniciar el proyecto en modo desarrollo:
+
+```bash
+npm run dev
+```
+
+## Estado del proyecto
+
+Actualmente se encuentra implementada la estructura inicial del frontend correspondiente al MVP.
+
+La integración con el backend se realizará posteriormente.
