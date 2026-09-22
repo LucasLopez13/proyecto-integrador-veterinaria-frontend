@@ -1,8 +1,9 @@
 export interface Pet {
   id: number;
-  name: string;
-  species: string;
-  breed: string;
-  age: number;
-  ownerId: number;
+  nombre: string;
+  especie: string;
+  raza: string;
+  edad: number;
+  sexo: string;
+  usuarioId: number;
 }

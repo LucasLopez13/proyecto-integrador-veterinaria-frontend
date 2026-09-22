@@ -1,9 +1,29 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import type { Appointment } from "../types/Appointment";
 import "../styles/ProfessionalAppointments.css";
 
 function ProfessionalAppointments() {
-  const appointments: Appointment[] = [];
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+
+  useEffect(() => {
+    const cargarTurnos = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/turnos");
+
+        if (!response.ok) {
+          throw new Error("No se pudieron cargar los turnos");
+        }
+
+        const data = await response.json();
+        setAppointments(data);
+      } catch (error) {
+        console.error("Error al cargar turnos:", error);
+      }
+    };
+
+    cargarTurnos();
+  }, []);
 
   return (
     <main className="professional-appointments-page">
@@ -29,23 +49,37 @@ function ProfessionalAppointments() {
               </thead>
 
               <tbody>
-                {appointments.map((appointment) => (
-                  <tr key={appointment.id}>
-                    <td>{appointment.date}</td>
-                    <td>{appointment.time}</td>
-                    <td>{appointment.petId}</td>
-                    <td>{appointment.reason}</td>
-                    <td>{appointment.status}</td>
-                    <td>
-                      <Link
-                        to={`/profesional/mascotas/${appointment.petId}`}
-                        className="btn btn-outline-primary btn-sm"
-                      >
-                        Ver mascota
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {appointments.map((appointment) => {
+                  const fecha = new Date(appointment.fecha);
+
+                  return (
+                    <tr key={appointment.id}>
+                      <td>{fecha.toLocaleDateString("es-AR")}</td>
+
+                      <td>
+                        {fecha.toLocaleTimeString("es-AR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+
+                      <td>{appointment.mascotaId}</td>
+
+                      <td>{appointment.motivo}</td>
+
+                      <td>{appointment.estado}</td>
+
+                      <td>
+                        <Link
+                          to={`/profesional/mascotas/${appointment.mascotaId}`}
+                          className="btn btn-outline-primary btn-sm"
+                        >
+                          Ver mascota
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
