@@ -8,6 +8,7 @@ import ProfessionalAppointments from "./pages/ProfessionalAppointments";
 import PetDetails from "./pages/PetDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import MyAppointments from "./pages/MyAppointments";
 
 function App() {
   return (
@@ -43,6 +44,15 @@ function App() {
           element={
             <ProtectedRoute>
               <NewAppointment />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mis-turnos"
+          element={
+            <ProtectedRoute>
+              <MyAppointments />
             </ProtectedRoute>
           }
         />

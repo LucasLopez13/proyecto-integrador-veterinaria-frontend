@@ -32,6 +32,10 @@ function Navbar() {
               <Link className="nav-link" to="/mascotas/nueva">
                 Registrar mascota
               </Link>
+
+              <Link className="nav-link" to="/mis-turnos">
+                Mis turnos
+              </Link>
             </>
           )}
 
