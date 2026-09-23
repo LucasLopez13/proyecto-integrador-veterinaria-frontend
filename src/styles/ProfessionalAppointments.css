@@ -1,8 +1,211 @@
+/* =========================
+   MIS TURNOS
+   ========================= */
+
 .professional-appointments-page {
-  min-height: 100vh;
-  background-color: #f5f5f5;
+  min-height: calc(100vh - 70px);
+  background: #f8fafc;
+  padding-bottom: 50px;
 }
 
-.professional-appointments-page h1 {
-  margin-bottom: 0;
+.appointments-header {
+  padding: 25px 0 20px;
+}
+
+.appointments-header h1 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.appointments-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* Tabla */
+
+.appointments-table-wrapper {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+  border: 1px solid #eef2f7;
+}
+
+.appointments-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.appointments-table thead {
+  background: #f8fafc;
+}
+
+.appointments-table th {
+  padding: 16px 20px;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.appointments-table td {
+  padding: 18px 20px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.appointments-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.appointments-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+.appointments-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Fecha */
+
+.appointment-date {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Hora */
+
+.appointment-time {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* Mascota */
+
+.appointment-pet {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.appointment-pet-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+/* Motivo */
+
+.appointment-reason {
+  color: #64748b;
+}
+
+/* Estados */
+
+.appointment-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-pendiente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-confirmado {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-cancelado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-completado {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Sin turnos */
+
+.appointments-empty {
+  margin-top: 15px;
+  padding: 55px 25px;
+  background: #ffffff;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.07);
+}
+
+/* Selector de estado del profesional */
+
+.appointment-status-select {
+  border: none;
+  border-radius: 999px;
+  padding: 7px 30px 7px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.appointment-status-select:hover {
+  transform: translateY(-1px);
+}
+
+.appointment-status-select:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.appointment-status-select.status-pendiente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.appointment-status-select.status-confirmado {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.appointment-status-select.status-cancelado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.appointment-status-select.status-completado {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.appointment-pet-button {
+  border-radius: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.appointment-pet-button:hover {
+  transform: translateY(-1px);
 }

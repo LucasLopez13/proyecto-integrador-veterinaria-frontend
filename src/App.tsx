@@ -31,6 +31,24 @@ function App() {
         />
 
         <Route
+          path="/mascotas/:id"
+          element={
+            <ProtectedRoute>
+              <PetDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mascotas/nueva"
+          element={
+            <ProtectedRoute>
+              <NewPet />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/mascotas/nueva"
           element={
             <ProtectedRoute>

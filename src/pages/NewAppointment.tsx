@@ -1,18 +1,21 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import "../styles/NewAppointment.css";
 import { useAuth } from "../context/AuthContext";
 
 function NewAppointment() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const mascotaId = searchParams.get("mascota");
+
   const [fecha, setFecha] = useState("");
   const [hora, setHora] = useState("");
   const [motivo, setMotivo] = useState("");
 
-    const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const fechaHora = `${fecha}T${hora}:00.000Z`;
+    const fechaHora = `${fecha}T${hora}:00`;
 
     try {
       const response = await fetch("http://localhost:5000/api/turnos", {
@@ -24,7 +27,7 @@ function NewAppointment() {
           fecha: fechaHora,
           motivo: motivo,
           usuarioId: user!.id,
-          mascotaId: 1,
+          mascotaId: Number(mascotaId),
         }),
       });
 
@@ -47,53 +50,78 @@ function NewAppointment() {
   return (
     <main className="new-appointment-page">
       <div className="new-appointment-card">
-        <h1>Solicitar turno</h1>
+        <div className="new-appointment-header">
+          <div className="new-appointment-icon">📅</div>
+
+          <div>
+            <h1>Solicitar turno</h1>
+            <p>Completá los datos para solicitar una consulta veterinaria</p>
+          </div>
+        </div>
+
+        <div className="appointment-pet-info">
+          <span className="appointment-pet-info-icon">🐾</span>
+
+          <div>
+            <span>Mascota seleccionada</span>
+            <strong>Turno para tu mascota</strong>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="date" className="form-label">
-              Fecha
-            </label>
-            <input
-            type="date"
-            id="date"
-            className="form-control"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            required
-           />
+          <div className="appointment-form-grid">
+            <div className="appointment-field">
+              <label htmlFor="date">
+                📅 Fecha
+              </label>
+
+              <input
+                type="date"
+                id="date"
+                className="form-control"
+                value={fecha}
+                onChange={(e) => setFecha(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="appointment-field">
+              <label htmlFor="time">
+                🕐 Hora
+              </label>
+
+              <input
+                type="time"
+                id="time"
+                className="form-control"
+                value={hora}
+                onChange={(e) => setHora(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
-          <div className="mb-3">
-            <label htmlFor="time" className="form-label">
-              Hora
+          <div className="appointment-field">
+            <label htmlFor="reason">
+              📝 Motivo de la consulta
             </label>
-            <input
-            type="time"
-            id="time"
-            className="form-control"
-            value={hora}
-            onChange={(e) => setHora(e.target.value)}
-            required
-           />
-          </div>
 
-          <div className="mb-3">
-            <label htmlFor="reason" className="form-label">
-              Motivo de la consulta
-            </label>
             <textarea
-            id="reason"
-            className="form-control"
-            rows={4}
-            value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-            required
-           />
+              id="reason"
+              className="form-control"
+              rows={5}
+              placeholder="Contanos brevemente el motivo de la consulta..."
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              required
+            />
           </div>
 
           <div className="new-appointment-actions">
-            <Link to="/mascotas" className="btn btn-outline-secondary">
+            <Link
+              to="/mascotas"
+              className="btn btn-outline-secondary"
+            >
               Cancelar
             </Link>
 

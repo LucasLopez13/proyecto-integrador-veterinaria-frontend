@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import type { Pet } from "../types/Pet";
 import "../styles/Pets.css";
 
@@ -9,7 +9,9 @@ function Pets() {
   useEffect(() => {
     const cargarMascotas = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/mascotas");
+        const response = await fetch(
+          "http://localhost:5000/api/mascotas"
+        );
 
         if (!response.ok) {
           throw new Error("No se pudieron cargar las mascotas");
@@ -38,15 +40,17 @@ function Pets() {
 
         {pets.length === 0 ? (
           <div className="alert alert-info mt-4">
-            Todavía no tenés mascotas registradas.
+            No tenés mascotas registradas.
           </div>
         ) : (
-          <div className="row mt-4">
+          <div className="row g-4 mt-2">
             {pets.map((pet) => (
-              <div className="col-md-6 col-lg-4 mb-3" key={pet.id}>
+              <div className="col-md-6 col-lg-4" key={pet.id}>
                 <div className="card h-100">
                   <div className="card-body">
-                    <h2 className="card-title">{pet.nombre}</h2>
+                    <div className="pet-icon">🐾</div>
+
+                    <h5 className="card-title">{pet.nombre}</h5>
 
                     <p className="card-text">
                       <strong>Especie:</strong> {pet.especie}
@@ -60,11 +64,22 @@ function Pets() {
                       <strong>Edad:</strong> {pet.edad} años
                     </p>
 
+                    <p className="card-text">
+                      <strong>Sexo:</strong> {pet.sexo}
+                    </p>
+
                     <Link
                       to={`/turnos/nuevo?mascota=${pet.id}`}
-                      className="btn btn-outline-primary"
+                      className="btn btn-primary"
                     >
                       Solicitar turno
+                    </Link>
+
+                    <Link
+                      to={`/mascotas/${pet.id}`}
+                      className="btn btn-outline-secondary"
+                    >
+                      Ver detalles
                     </Link>
                   </div>
                 </div>

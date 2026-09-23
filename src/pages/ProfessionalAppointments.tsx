@@ -36,107 +36,166 @@ function ProfessionalAppointments() {
   return (
     <main className="professional-appointments-page">
       <div className="container py-4">
-        <h1>Turnos solicitados</h1>
+        <div className="appointments-header">
+          <div>
+            <h1>Turnos solicitados</h1>
+            <p>Gestioná los turnos de tus pacientes</p>
+          </div>
+        </div>
 
         {appointments.length === 0 ? (
-          <div className="alert alert-info mt-4">
-            No hay turnos solicitados.
+          <div className="appointments-empty">
+            <div className="appointments-empty-icon">📅</div>
+
+            <h3>No hay turnos solicitados</h3>
+
+            <p>
+              Los turnos solicitados por los clientes aparecerán en esta
+              sección.
+            </p>
           </div>
         ) : (
-          <div className="table-responsive mt-4">
-            <table className="table table-striped align-middle">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Hora</th>
-                  <th>Mascota</th>
-                  <th>Motivo</th>
-                  <th>Estado</th>
-                  <th></th>
-                </tr>
-              </thead>
+          <div className="appointments-table-wrapper">
+            <div className="table-responsive">
+              <table className="appointments-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Mascota</th>
+                    <th>Motivo</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
 
-              <tbody>
-                {appointments.map((appointment) => {
-                  const fecha = new Date(appointment.fecha);
+                <tbody>
+                  {appointments.map((appointment) => {
+                    const fecha = new Date(appointment.fecha);
 
-                  const mascota = pets.find(
-                    (pet) => pet.id === appointment.mascotaId
-                  );
+                    const mascota = pets.find(
+                      (pet) => pet.id === appointment.mascotaId
+                    );
 
-                  return (
-                    <tr key={appointment.id}>
-                      <td>{fecha.toLocaleDateString("es-AR")}</td>
+                    return (
+                      <tr key={appointment.id}>
+                        <td>
+                          <span className="appointment-date">
+                            {fecha.toLocaleDateString("es-AR")}
+                          </span>
+                        </td>
 
-                      <td>
-                        {fecha.toLocaleTimeString("es-AR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
+                        <td>
+                          <span className="appointment-time">
+                            {fecha.toLocaleTimeString("es-AR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </td>
 
-                      <td>{mascota ? mascota.nombre : "Mascota no encontrada"}</td>
+                        <td>
+                          <div className="appointment-pet">
+                            <span className="appointment-pet-icon">
+                              🐾
+                            </span>
 
-                      <td>{appointment.motivo}</td>
+                            <span>
+                              {mascota
+                                ? mascota.nombre
+                                : "Mascota no encontrada"}
+                            </span>
+                          </div>
+                        </td>
 
-                      <td>
-                        <select
-                          value={appointment.estado}
-                          onChange={async (e) => {
-                            const nuevoEstado = e.target.value;
+                        <td>
+                          <span className="appointment-reason">
+                            {appointment.motivo}
+                          </span>
+                        </td>
 
-                            try {
-                              const response = await fetch(
-                                `http://localhost:5000/api/turnos/${appointment.id}`,
-                                {
-                                  method: "PUT",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    estado: nuevoEstado,
-                                  }),
+                        <td>
+                          <select
+                            value={appointment.estado}
+                            onChange={async (e) => {
+                              const nuevoEstado = e.target.value;
+
+                              try {
+                                const response = await fetch(
+                                  `http://localhost:5000/api/turnos/${appointment.id}`,
+                                  {
+                                    method: "PUT",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      estado: nuevoEstado,
+                                    }),
+                                  }
+                                );
+
+                                if (!response.ok) {
+                                  throw new Error(
+                                    "No se pudo actualizar el estado"
+                                  );
                                 }
-                              );
 
-                              if (!response.ok) {
-                                throw new Error("No se pudo actualizar el estado");
+                                setAppointments((turnosActuales) =>
+                                  turnosActuales.map((turno) =>
+                                    turno.id === appointment.id
+                                      ? {
+                                          ...turno,
+                                          estado:
+                                            nuevoEstado as Appointment["estado"],
+                                        }
+                                      : turno
+                                  )
+                                );
+                              } catch (error) {
+                                console.error(
+                                  "Error al actualizar estado:",
+                                  error
+                                );
+
+                                alert(
+                                  "No se pudo actualizar el estado"
+                                );
                               }
+                            }}
+                            className={`appointment-status-select status-${appointment.estado}`}
+                          >
+                            <option value="pendiente">
+                              🟡 Pendiente
+                            </option>
 
-                              setAppointments((turnosActuales) =>
-                                turnosActuales.map((turno) =>
-                                  turno.id === appointment.id
-                                    ? { ...turno, estado: nuevoEstado as Appointment["estado"] }
-                                    : turno
-                                )
-                              );
-                            } catch (error) {
-                              console.error("Error al actualizar estado:", error);
-                              alert("No se pudo actualizar el estado");
-                            }
-                          }}
-                          className="form-select"
-                        >
-                          <option value="pendiente">Pendiente</option>
-                          <option value="confirmado">Confirmado</option>
-                          <option value="cancelado">Cancelado</option>
-                          <option value="completado">Completado</option>
-                        </select>
-                      </td>
+                            <option value="confirmado">
+                              🟢 Confirmado
+                            </option>
 
-                      <td>
-                        <Link
-                          to={`/profesional/mascotas/${appointment.mascotaId}`}
-                          className="btn btn-outline-primary btn-sm"
-                        >
-                          Ver mascota
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                            <option value="cancelado">
+                              🔴 Cancelado
+                            </option>
+
+                            <option value="completado">
+                              🔵 Completado
+                            </option>
+                          </select>
+                        </td>
+
+                        <td>
+                          <Link
+                            to={`/profesional/mascotas/${appointment.mascotaId}`}
+                            className="btn btn-outline-primary btn-sm appointment-pet-button"
+                          >
+                            Ver mascota
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

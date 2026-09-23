@@ -19,7 +19,7 @@ function Navbar() {
     <nav className="navbar navbar-expand-lg bg-dark navbar-dark">
       <div className="container">
         <Link className="navbar-brand" to="/mascotas">
-          Sistema Veterinario
+          🐾 VetCare
         </Link>
 
         <div className="navbar-nav ms-auto">
