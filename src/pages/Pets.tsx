@@ -3,15 +3,22 @@ import { Link } from "react-router-dom";
 import type { Pet } from "../types/Pet";
 import "../styles/Pets.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 function Pets() {
   const [pets, setPets] = useState<Pet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const cargarMascotas = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/mascotas"
-        );
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/mascotas`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error("No se pudieron cargar las mascotas");
@@ -19,8 +26,11 @@ function Pets() {
 
         const data = await response.json();
         setPets(data);
-      } catch (error) {
-        console.error("Error al cargar mascotas:", error);
+      } catch (err: any) {
+        console.error("Error al cargar mascotas:", err);
+        setError(err.message || "Error al cargar mascotas");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -38,9 +48,18 @@ function Pets() {
           </Link>
         </div>
 
-        {pets.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+            <p className="mt-2">Cargando tus mascotas...</p>
+          </div>
+        ) : error ? (
+          <div className="alert alert-danger mt-4">{error}</div>
+        ) : pets.length === 0 ? (
           <div className="alert alert-info mt-4">
-            No tenés mascotas registradas.
+            No tenés mascotas registradas. Hacé clic en <strong>"Registrar mascota"</strong> para agregar una.
           </div>
         ) : (
           <div className="row g-4 mt-2">
@@ -57,30 +76,32 @@ function Pets() {
                     </p>
 
                     <p className="card-text">
-                      <strong>Raza:</strong> {pet.raza}
+                      <strong>Raza:</strong> {pet.raza || "No especificada"}
                     </p>
 
                     <p className="card-text">
-                      <strong>Edad:</strong> {pet.edad} años
+                      <strong>Edad:</strong> {pet.edad !== undefined && pet.edad !== null ? `${pet.edad} años` : "No especificada"}
                     </p>
 
                     <p className="card-text">
-                      <strong>Sexo:</strong> {pet.sexo}
+                      <strong>Sexo:</strong> {pet.sexo || "No especificado"}
                     </p>
 
-                    <Link
-                      to={`/turnos/nuevo?mascota=${pet.id}`}
-                      className="btn btn-primary"
-                    >
-                      Solicitar turno
-                    </Link>
+                    <div className="d-flex gap-2 mt-3">
+                      <Link
+                        to={`/turnos/nuevo?mascota=${pet.id}`}
+                        className="btn btn-primary btn-sm flex-grow-1"
+                      >
+                        Solicitar turno
+                      </Link>
 
-                    <Link
-                      to={`/mascotas/${pet.id}`}
-                      className="btn btn-outline-secondary"
-                    >
-                      Ver detalles
-                    </Link>
+                      <Link
+                        to={`/profesional/mascotas/${pet.id}`}
+                        className="btn btn-outline-secondary btn-sm"
+                      >
+                        Ver detalles
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>

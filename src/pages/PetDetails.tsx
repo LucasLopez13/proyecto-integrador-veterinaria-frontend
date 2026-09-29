@@ -3,16 +3,23 @@ import { useEffect, useState } from "react";
 import type { Pet } from "../types/Pet";
 import "../styles/PetDetails.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 function PetDetails() {
   const { id } = useParams();
   const [pet, setPet] = useState<Pet | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const cargarMascota = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/mascotas/${id}`
-        );
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/mascotas/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error("No se pudo cargar la mascota");
@@ -20,15 +27,18 @@ function PetDetails() {
 
         const data = await response.json();
         setPet(data);
-      } catch (error) {
-        console.error("Error al cargar mascota:", error);
+      } catch (err: any) {
+        console.error("Error al cargar mascota:", err);
+        setError(err.message || "Error al cargar los datos de la mascota");
+      } finally {
+        setLoading(false);
       }
     };
 
     cargarMascota();
   }, [id]);
 
-  if (!pet) {
+  if (loading) {
     return (
       <main className="pet-details-page">
         <div className="container py-5">
@@ -36,6 +46,21 @@ function PetDetails() {
             <div className="pet-details-loading-icon">🐾</div>
             <p>Cargando información de la mascota...</p>
           </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !pet) {
+    return (
+      <main className="pet-details-page">
+        <div className="container py-5">
+          <div className="alert alert-danger">
+            {error || "No hay datos de la mascota disponibles."}
+          </div>
+          <Link to="/mascotas" className="btn btn-outline-secondary mt-3">
+            Volver a mis mascotas
+          </Link>
         </div>
       </main>
     );
@@ -51,7 +76,7 @@ function PetDetails() {
             <div>
               <h1>{pet.nombre}</h1>
               <p>
-                {pet.especie} · {pet.raza}
+                {pet.especie} · {pet.raza || "Raza mestiza"}
               </p>
             </div>
           </div>
@@ -73,7 +98,7 @@ function PetDetails() {
 
               <div>
                 <span className="pet-info-label">Raza</span>
-                <strong>{pet.raza}</strong>
+                <strong>{pet.raza || "No especificada"}</strong>
               </div>
             </div>
 
@@ -82,7 +107,11 @@ function PetDetails() {
 
               <div>
                 <span className="pet-info-label">Edad</span>
-                <strong>{pet.edad} años</strong>
+                <strong>
+                  {pet.edad !== undefined && pet.edad !== null
+                    ? `${pet.edad} años`
+                    : "No especificada"}
+                </strong>
               </div>
             </div>
 
@@ -91,7 +120,7 @@ function PetDetails() {
 
               <div>
                 <span className="pet-info-label">Sexo</span>
-                <strong>{pet.sexo}</strong>
+                <strong>{pet.sexo || "No especificado"}</strong>
               </div>
             </div>
           </div>
