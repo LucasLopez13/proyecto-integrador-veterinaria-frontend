@@ -2,43 +2,36 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "../styles/Login.css";
 import { useAuth } from "../context/AuthContext";
+import { authService } from "../services/authService";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setLoading(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/usuarios/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
+      const data = await authService.login({ email, password });
+      login(data.user, data.token);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Email o contraseña incorrectos");
-        return;
+      const userRole = data.user.rol || data.user.role;
+      if (userRole === "profesional") {
+        navigate("/profesional/turnos");
+      } else {
+        navigate("/mascotas");
       }
-
-      login(data);
-      navigate("/mascotas");
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
-      alert("No se pudo conectar con el servidor");
+    } catch (err: any) {
+      setError(err.message || "Error al iniciar sesión. Compruebe sus credenciales.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,9 +40,7 @@ function Login() {
       <div className="login-card">
         <div className="login-brand">
           <div className="login-logo">🐾</div>
-
           <h1>Cuidado veterinario</h1>
-
           <p>El cuidado que tu mascota necesita</p>
         </div>
 
@@ -60,12 +51,11 @@ function Login() {
           <p>Ingresá a tu cuenta para continuar</p>
         </div>
 
+        {error && <div className="alert alert-danger mb-3">{error}</div>}
+
         <form onSubmit={handleSubmit}>
           <div className="login-field">
-            <label htmlFor="email">
-              Correo electrónico
-            </label>
-
+            <label htmlFor="email">Correo electrónico</label>
             <input
               type="email"
               id="email"
@@ -78,10 +68,7 @@ function Login() {
           </div>
 
           <div className="login-field">
-            <label htmlFor="password">
-              Contraseña
-            </label>
-
+            <label htmlFor="password">Contraseña</label>
             <input
               type="password"
               id="password"
@@ -93,17 +80,14 @@ function Login() {
             />
           </div>
 
-          <button type="submit" className="btn login-button">
-            Ingresar
+          <button type="submit" className="btn login-button" disabled={loading}>
+            {loading ? "Ingresando..." : "Ingresar"}
           </button>
         </form>
 
         <div className="login-register">
           <span>¿No tenés una cuenta?</span>
-
-          <Link to="/registro">
-            Registrarse
-          </Link>
+          <Link to="/registro">Registrarse</Link>
         </div>
       </div>
     </main>
