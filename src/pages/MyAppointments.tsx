@@ -1,60 +1,101 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 import type { Appointment } from "../types/Appointment";
-import type { Pet } from "../types/Pet";
 import "../styles/ProfessionalAppointments.css";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function MyAppointments() {
-  const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [pets, setPets] = useState<Pet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const cargarTurnos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/turnos`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudieron cargar los turnos");
+      }
+
+      const turnos: Appointment[] = await response.json();
+      setAppointments(turnos);
+    } catch (err: any) {
+      console.error("Error al cargar turnos:", err);
+      setError(err.message || "Error al conectar con el servidor");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        const [turnosResponse, mascotasResponse] = await Promise.all([
-          fetch("http://localhost:5000/api/turnos"),
-          fetch("http://localhost:5000/api/mascotas"),
-        ]);
+    cargarTurnos();
+  }, []);
 
-        if (!turnosResponse.ok || !mascotasResponse.ok) {
-          throw new Error("No se pudieron cargar los datos");
-        }
+  const handleCancelarTurno = async (id: number) => {
+    const confirmar = window.confirm("¿Estás seguro de que deseás cancelar este turno?");
+    if (!confirmar) return;
 
-        const turnos: Appointment[] = await turnosResponse.json();
-        const mascotas: Pet[] = await mascotasResponse.json();
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/turnos/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ estado: "cancelado" }),
+      });
 
-        const misTurnos = turnos.filter(
-          (appointment) => appointment.usuarioId === user?.id
-        );
-
-        setAppointments(misTurnos);
-        setPets(mascotas);
-      } catch (error) {
-        console.error("Error al cargar datos:", error);
+      if (!response.ok) {
+        throw new Error("No se pudo cancelar el turno");
       }
-    };
 
-    cargarDatos();
-  }, [user]);
+      setAppointments((turnos) =>
+        turnos.map((t) => (t.id === id ? { ...t, estado: "cancelado" } : t))
+      );
+    } catch (err: any) {
+      console.error("Error al cancelar turno:", err);
+      alert(err.message || "Error al cancelar el turno");
+    }
+  };
 
   return (
     <main className="professional-appointments-page">
       <div className="container py-4">
-        <div className="appointments-header">
+        <div className="appointments-header d-flex justify-content-between align-items-center">
           <div>
             <h1>Mis turnos</h1>
             <p>Consultá tus próximos turnos veterinarios</p>
           </div>
+          <Link to="/turnos/nuevo" className="btn btn-primary">
+            + Solicitar nuevo turno
+          </Link>
         </div>
 
-        {appointments.length === 0 ? (
+        {error && <div className="alert alert-danger">{error}</div>}
+
+        {loading ? (
+          <div className="text-center py-5">
+            <p className="text-muted">Cargando tus turnos...</p>
+          </div>
+        ) : appointments.length === 0 ? (
           <div className="appointments-empty">
             <div className="appointments-empty-icon">📅</div>
             <h3>No tenés turnos solicitados</h3>
             <p>
               Cuando solicites un turno, vas a poder verlo en esta sección.
             </p>
+            <Link to="/turnos/nuevo" className="btn btn-primary mt-3">
+              Solicitar mi primer turno
+            </Link>
           </div>
         ) : (
           <div className="appointments-table-wrapper">
@@ -67,16 +108,15 @@ function MyAppointments() {
                     <th>Mascota</th>
                     <th>Motivo</th>
                     <th>Estado</th>
+                    <th>Acción</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {appointments.map((appointment) => {
                     const fecha = new Date(appointment.fecha);
-
-                    const mascota = pets.find(
-                      (pet) => pet.id === appointment.mascotaId
-                    );
+                    const mascotaNombre =
+                      appointment.mascota?.nombre || "Mascota";
 
                     return (
                       <tr key={appointment.id}>
@@ -98,11 +138,7 @@ function MyAppointments() {
                         <td>
                           <div className="appointment-pet">
                             <span className="appointment-pet-icon">🐾</span>
-                            <span>
-                              {mascota
-                                ? mascota.nombre
-                                : "Mascota no encontrada"}
-                            </span>
+                            <span>{mascotaNombre}</span>
                           </div>
                         </td>
 
@@ -124,6 +160,19 @@ function MyAppointments() {
                             {appointment.estado.charAt(0).toUpperCase() +
                               appointment.estado.slice(1)}
                           </span>
+                        </td>
+
+                        <td>
+                          {appointment.estado !== "cancelado" &&
+                            appointment.estado !== "completado" && (
+                              <button
+                                type="button"
+                                onClick={() => handleCancelarTurno(appointment.id)}
+                                className="btn btn-outline-danger btn-sm"
+                              >
+                                Cancelar
+                              </button>
+                            )}
                         </td>
                       </tr>
                     );

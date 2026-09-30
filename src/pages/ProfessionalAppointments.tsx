@@ -1,37 +1,77 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { Appointment } from "../types/Appointment";
-import type { Pet } from "../types/Pet";
 import "../styles/ProfessionalAppointments.css";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 function ProfessionalAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [pets, setPets] = useState<Pet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const cargarTurnos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/turnos`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudieron cargar los turnos");
+      }
+
+      const turnos: Appointment[] = await response.json();
+      setAppointments(turnos);
+    } catch (err: any) {
+      console.error("Error al cargar datos:", err);
+      setError(err.message || "Error al conectar con el servidor");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        const [turnosResponse, mascotasResponse] = await Promise.all([
-          fetch("http://localhost:5000/api/turnos"),
-          fetch("http://localhost:5000/api/mascotas"),
-        ]);
-
-        if (!turnosResponse.ok || !mascotasResponse.ok) {
-          throw new Error("No se pudieron cargar los datos");
-        }
-
-        const turnos = await turnosResponse.json();
-        const mascotas = await mascotasResponse.json();
-
-        setAppointments(turnos);
-        setPets(mascotas);
-      } catch (error) {
-        console.error("Error al cargar datos:", error);
-      }
-    };
-
-    cargarDatos();
+    cargarTurnos();
   }, []);
+
+  const handleStatusChange = async (appointmentId: number, nuevoEstado: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/turnos/${appointmentId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          estado: nuevoEstado,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudo actualizar el estado");
+      }
+
+      setAppointments((turnosActuales) =>
+        turnosActuales.map((turno) =>
+          turno.id === appointmentId
+            ? {
+                ...turno,
+                estado: nuevoEstado as Appointment["estado"],
+              }
+            : turno
+        )
+      );
+    } catch (err: any) {
+      console.error("Error al actualizar estado:", err);
+      alert(err.message || "No se pudo actualizar el estado");
+    }
+  };
 
   return (
     <main className="professional-appointments-page">
@@ -43,7 +83,13 @@ function ProfessionalAppointments() {
           </div>
         </div>
 
-        {appointments.length === 0 ? (
+        {error && <div className="alert alert-danger mb-3">{error}</div>}
+
+        {loading ? (
+          <div className="text-center py-5">
+            <p className="text-muted">Cargando turnos...</p>
+          </div>
+        ) : appointments.length === 0 ? (
           <div className="appointments-empty">
             <div className="appointments-empty-icon">📅</div>
 
@@ -63,6 +109,7 @@ function ProfessionalAppointments() {
                     <th>Fecha</th>
                     <th>Hora</th>
                     <th>Mascota</th>
+                    <th>Tutor</th>
                     <th>Motivo</th>
                     <th>Estado</th>
                     <th>Acción</th>
@@ -72,10 +119,11 @@ function ProfessionalAppointments() {
                 <tbody>
                   {appointments.map((appointment) => {
                     const fecha = new Date(appointment.fecha);
-
-                    const mascota = pets.find(
-                      (pet) => pet.id === appointment.mascotaId
-                    );
+                    const mascotaNombre =
+                      appointment.mascota?.nombre || "Mascota";
+                    const tutorNombre = appointment.usuario
+                      ? `${appointment.usuario.nombre} ${appointment.usuario.apellido}`
+                      : "Cliente";
 
                     return (
                       <tr key={appointment.id}>
@@ -99,13 +147,21 @@ function ProfessionalAppointments() {
                             <span className="appointment-pet-icon">
                               🐾
                             </span>
-
-                            <span>
-                              {mascota
-                                ? mascota.nombre
-                                : "Mascota no encontrada"}
-                            </span>
+                            <div>
+                              <strong>{mascotaNombre}</strong>
+                              {appointment.mascota?.especie && (
+                                <small className="text-muted d-block">
+                                  {appointment.mascota.especie}
+                                </small>
+                              )}
+                            </div>
                           </div>
+                        </td>
+
+                        <td>
+                          <span className="appointment-owner">
+                            {tutorNombre}
+                          </span>
                         </td>
 
                         <td>
@@ -117,51 +173,9 @@ function ProfessionalAppointments() {
                         <td>
                           <select
                             value={appointment.estado}
-                            onChange={async (e) => {
-                              const nuevoEstado = e.target.value;
-
-                              try {
-                                const response = await fetch(
-                                  `http://localhost:5000/api/turnos/${appointment.id}`,
-                                  {
-                                    method: "PUT",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      estado: nuevoEstado,
-                                    }),
-                                  }
-                                );
-
-                                if (!response.ok) {
-                                  throw new Error(
-                                    "No se pudo actualizar el estado"
-                                  );
-                                }
-
-                                setAppointments((turnosActuales) =>
-                                  turnosActuales.map((turno) =>
-                                    turno.id === appointment.id
-                                      ? {
-                                          ...turno,
-                                          estado:
-                                            nuevoEstado as Appointment["estado"],
-                                        }
-                                      : turno
-                                  )
-                                );
-                              } catch (error) {
-                                console.error(
-                                  "Error al actualizar estado:",
-                                  error
-                                );
-
-                                alert(
-                                  "No se pudo actualizar el estado"
-                                );
-                              }
-                            }}
+                            onChange={(e) =>
+                              handleStatusChange(appointment.id, e.target.value)
+                            }
                             className={`appointment-status-select status-${appointment.estado}`}
                           >
                             <option value="pendiente">
@@ -202,5 +216,4 @@ function ProfessionalAppointments() {
     </main>
   );
 }
-
 export default ProfessionalAppointments;

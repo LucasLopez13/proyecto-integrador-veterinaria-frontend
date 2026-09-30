@@ -115,6 +115,13 @@
   color: #64748b;
 }
 
+/* Tutor / Cliente */
+
+.appointment-owner {
+  font-weight: 600;
+  color: #334155;
+}
+
 /* Estados */
 
 .appointment-status {

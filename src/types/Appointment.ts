@@ -1,3 +1,5 @@
+import type { Pet } from "./Pet";
+
 export type AppointmentStatus =
   | "pendiente"
   | "confirmado"
@@ -11,4 +13,12 @@ export interface Appointment {
   estado: AppointmentStatus;
   usuarioId: number;
   mascotaId: number;
+  mascota?: Pet;
+  usuario?: {
+    id: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    telefono?: string;
+  };
 }
