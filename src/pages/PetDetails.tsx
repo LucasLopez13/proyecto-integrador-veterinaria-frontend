@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import type { Pet } from "../types/Pet";
 import "../styles/PetDetails.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 function PetDetails() {
   const { id } = useParams();
@@ -120,7 +120,11 @@ function PetDetails() {
 
               <div>
                 <span className="pet-info-label">Sexo</span>
-                <strong>{pet.sexo || "No especificado"}</strong>
+                <strong>
+                  {pet.sexo
+                    ? pet.sexo.charAt(0).toUpperCase() + pet.sexo.slice(1).toLowerCase()
+                    : "No especificado"}
+                </strong>
               </div>
             </div>
           </div>

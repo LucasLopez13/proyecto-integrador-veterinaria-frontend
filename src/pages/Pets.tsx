@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import type { Pet } from "../types/Pet";
 import "../styles/Pets.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 function Pets() {
   const [pets, setPets] = useState<Pet[]>([]);
@@ -84,7 +84,10 @@ function Pets() {
                     </p>
 
                     <p className="card-text">
-                      <strong>Sexo:</strong> {pet.sexo || "No especificado"}
+                      <strong>Sexo:</strong>{" "}
+                      {pet.sexo
+                        ? pet.sexo.charAt(0).toUpperCase() + pet.sexo.slice(1).toLowerCase()
+                        : "No especificado"}
                     </p>
 
                     <div className="d-flex gap-2 mt-3">

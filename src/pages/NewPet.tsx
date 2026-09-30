@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/NewPet.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 function NewPet() {
   const [nombre, setNombre] = useState("");
@@ -68,7 +68,7 @@ function NewPet() {
               type="text"
               id="name"
               className="form-control"
-              placeholder="Ej: Firulais"
+              placeholder="Ej: Paco"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               required
@@ -83,7 +83,7 @@ function NewPet() {
               type="text"
               id="species"
               className="form-control"
-              placeholder="Ej: Perro, Gato, Ave..."
+              placeholder="Ej: Perro, Gato..."
               value={especie}
               onChange={(e) => setEspecie(e.target.value)}
               required
