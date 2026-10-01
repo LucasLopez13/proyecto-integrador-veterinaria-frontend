@@ -5,6 +5,7 @@ import Pets from "./pages/Pets";
 import NewPet from "./pages/NewPet";
 import NewAppointment from "./pages/NewAppointment";
 import ProfessionalAppointments from "./pages/ProfessionalAppointments";
+import ActiveAppointment from "./pages/ActiveAppointment";
 import PetDetails from "./pages/PetDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
@@ -80,6 +81,15 @@ function App() {
           element={
             <ProtectedRoute>
               <ProfessionalAppointments />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profesional/turnos/:id/atencion"
+          element={
+            <ProtectedRoute>
+              <ActiveAppointment />
             </ProtectedRoute>
           }
         />

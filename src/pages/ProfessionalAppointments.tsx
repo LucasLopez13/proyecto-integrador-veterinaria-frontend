@@ -45,8 +45,6 @@ function ProfessionalAppointments() {
 
         {appointments.length === 0 ? (
           <div className="appointments-empty">
-            <div className="appointments-empty-icon">📅</div>
-
             <h3>No hay turnos solicitados</h3>
 
             <p>
@@ -95,17 +93,11 @@ function ProfessionalAppointments() {
                         </td>
 
                         <td>
-                          <div className="appointment-pet">
-                            <span className="appointment-pet-icon">
-                              🐾
-                            </span>
-
-                            <span>
-                              {mascota
-                                ? mascota.nombre
-                                : "Mascota no encontrada"}
-                            </span>
-                          </div>
+                          <span>
+                            {mascota
+                              ? mascota.nombre
+                              : "Mascota no encontrada"}
+                          </span>
                         </td>
 
                         <td>
@@ -157,38 +149,36 @@ function ProfessionalAppointments() {
                                   error
                                 );
 
-                                alert(
-                                  "No se pudo actualizar el estado"
-                                );
+                                alert("No se pudo actualizar el estado");
                               }
                             }}
                             className={`appointment-status-select status-${appointment.estado}`}
                           >
-                            <option value="pendiente">
-                              🟡 Pendiente
-                            </option>
-
-                            <option value="confirmado">
-                              🟢 Confirmado
-                            </option>
-
-                            <option value="cancelado">
-                              🔴 Cancelado
-                            </option>
-
-                            <option value="completado">
-                              🔵 Completado
-                            </option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="confirmado">Confirmado</option>
+                            <option value="cancelado">Cancelado</option>
+                            <option value="completado">Completado</option>
                           </select>
                         </td>
 
                         <td>
-                          <Link
-                            to={`/profesional/mascotas/${appointment.mascotaId}`}
-                            className="btn btn-outline-primary btn-sm appointment-pet-button"
-                          >
-                            Ver mascota
-                          </Link>
+                          <div className="d-flex gap-2">
+                            <Link
+                              to={`/profesional/mascotas/${appointment.mascotaId}`}
+                              className="btn btn-outline-primary btn-sm appointment-pet-button"
+                            >
+                              Ver mascota
+                            </Link>
+
+                            {appointment.estado === "confirmado" && (
+                              <Link
+                                to={`/profesional/turnos/${appointment.id}/atencion`}
+                                className="btn btn-primary btn-sm"
+                              >
+                                Iniciar atención
+                              </Link>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );

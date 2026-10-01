@@ -1,10 +1,13 @@
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { Pet } from "../types/Pet";
+import { useAuth } from "../context/AuthContext";
+import ClinicalHistory from "../components/ClinicalHistory";
 import "../styles/PetDetails.css";
 
 function PetDetails() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [pet, setPet] = useState<Pet | null>(null);
 
   useEffect(() => {
@@ -95,6 +98,10 @@ function PetDetails() {
               </div>
             </div>
           </div>
+
+          {user?.role === "profesional" && (
+            <ClinicalHistory mascotaId={pet.id} />
+          )}
 
           <div className="pet-details-actions">
             <Link to="/mascotas" className="btn btn-outline-secondary">
