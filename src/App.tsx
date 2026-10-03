@@ -9,6 +9,7 @@ import PetDetails from "./pages/PetDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import MyAppointments from "./pages/MyAppointments";
+import MyRecipes from "./pages/MyRecipes";
 
 function App() {
   return (
@@ -49,15 +50,6 @@ function App() {
         />
 
         <Route
-          path="/mascotas/nueva"
-          element={
-            <ProtectedRoute>
-              <NewPet />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/turnos/nuevo"
           element={
             <ProtectedRoute>
@@ -71,6 +63,15 @@ function App() {
           element={
             <ProtectedRoute>
               <MyAppointments />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/recetas"
+          element={
+            <ProtectedRoute>
+              <MyRecipes />
             </ProtectedRoute>
           }
         />
