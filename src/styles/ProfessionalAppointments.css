@@ -25,7 +25,9 @@
   font-size: 1rem;
 }
 
-/* Tabla */
+/* =========================
+   TABLA
+   ========================= */
 
 .appointments-table-wrapper {
   background: #ffffff;
@@ -74,21 +76,27 @@
   border-bottom: none;
 }
 
-/* Fecha */
+/* =========================
+   FECHA
+   ========================= */
 
 .appointment-date {
   font-weight: 600;
   color: #1e293b;
 }
 
-/* Hora */
+/* =========================
+   HORA
+   ========================= */
 
 .appointment-time {
   font-weight: 600;
   color: #2563eb;
 }
 
-/* Mascota */
+/* =========================
+   MASCOTA
+   ========================= */
 
 .appointment-pet {
   display: flex;
@@ -109,20 +117,26 @@
   font-size: 1rem;
 }
 
-/* Motivo */
+/* =========================
+   MOTIVO
+   ========================= */
 
 .appointment-reason {
   color: #64748b;
 }
 
-/* Tutor / Cliente */
+/* =========================
+   TUTOR / CLIENTE
+   ========================= */
 
 .appointment-owner {
   font-weight: 600;
   color: #334155;
 }
 
-/* Estados */
+/* =========================
+   ESTADOS
+   ========================= */
 
 .appointment-status {
   display: inline-flex;
@@ -154,7 +168,9 @@
   color: #1e40af;
 }
 
-/* Sin turnos */
+/* =========================
+   SIN TURNOS
+   ========================= */
 
 .appointments-empty {
   margin-top: 15px;
@@ -165,7 +181,10 @@
   box-shadow: 0 4px 18px rgba(15, 23, 42, 0.07);
 }
 
-/* Selector de estado del profesional */
+/* =========================
+   SELECTOR DE ESTADO
+   DEL PROFESIONAL
+   ========================= */
 
 .appointment-status-select {
   border: none;
@@ -206,6 +225,10 @@
   color: #1e40af;
 }
 
+/* =========================
+   BOTÓN DE MASCOTA
+   ========================= */
+
 .appointment-pet-button {
   border-radius: 8px;
   font-weight: 600;
@@ -215,4 +238,204 @@
 
 .appointment-pet-button:hover {
   transform: translateY(-1px);
+}
+
+/* =========================
+   ACCIONES
+   ========================= */
+
+.appointment-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.appointments-table td:last-child {
+  min-width: 230px;
+}
+
+.appointments-table .btn {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.appointments-table .btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Reprogramar */
+
+.appointments-table .btn-outline-primary {
+  border-width: 1.5px;
+}
+
+.appointments-table .btn-outline-primary:hover {
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+}
+
+/* Cancelar */
+
+.appointments-table .btn-outline-danger {
+  border-width: 1.5px;
+}
+
+.appointments-table .btn-outline-danger:hover {
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15);
+}
+
+/* =========================
+   CAJA DE REPROGRAMACIÓN
+   ========================= */
+
+.reschedule-box {
+  min-width: 270px;
+  padding: 14px;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+/* Título */
+
+.reschedule-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.reschedule-icon {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dbeafe;
+  border-radius: 9px;
+  font-size: 1rem;
+}
+
+.reschedule-title strong {
+  display: block;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.reschedule-title small {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+/* =========================
+   INPUT FECHA Y HORA
+   ========================= */
+
+.reschedule-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.82rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.reschedule-input:hover {
+  border-color: #93c5fd;
+}
+
+.reschedule-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* =========================
+   BOTONES DE REPROGRAMACIÓN
+   ========================= */
+
+.reschedule-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.reschedule-actions button {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Confirmar */
+
+.reschedule-confirm {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.reschedule-confirm:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+}
+
+/* Volver */
+
+.reschedule-cancel {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+}
+
+.reschedule-cancel:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 768px) {
+  .appointments-table th,
+  .appointments-table td {
+    padding: 14px 12px;
+  }
+
+  .appointments-table td:last-child {
+    min-width: 200px;
+  }
+
+  .reschedule-box {
+    min-width: 230px;
+  }
+
+  .reschedule-input {
+    font-size: 0.8rem;
+  }
+
+  .appointment-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .appointment-actions .btn {
+    width: 100%;
+  }
 }
