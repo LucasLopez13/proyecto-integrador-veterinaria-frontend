@@ -36,6 +36,10 @@ function Navbar() {
               <Link className="nav-link" to="/mis-turnos">
                 Mis turnos
               </Link>
+
+              <Link className="nav-link" to="/recetas">
+                Mis recetas
+              </Link>
             </>
           )}
 
