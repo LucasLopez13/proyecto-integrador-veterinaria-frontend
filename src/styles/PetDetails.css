@@ -98,6 +98,287 @@
   font-size: 1rem;
 }
 
+/* =========================================
+   ARCHIVOS MÉDICOS
+========================================= */
+
+.medical-files-section {
+  margin-top: 35px;
+}
+
+.medical-files-header {
+  margin-bottom: 20px;
+}
+
+.medical-files-header h2 {
+  margin: 0 0 6px;
+  color: #1e293b;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.medical-files-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Caja de subida */
+
+.medical-upload-box {
+  padding: 22px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+.medical-upload-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.medical-upload-title > span {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  border-radius: 10px;
+  font-size: 1.2rem;
+}
+
+.medical-upload-title div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.medical-upload-title strong {
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.medical-upload-title small {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+/* Campos */
+
+.medical-upload-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.medical-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.medical-field label {
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.medical-field input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 0.9rem;
+}
+
+.medical-field input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Input de archivo */
+
+.medical-field input[type="file"] {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.medical-field input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Botón subir */
+
+.medical-upload-button {
+  margin-top: 16px;
+  border: none;
+  border-radius: 9px;
+  padding: 10px 17px;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.medical-upload-button:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.medical-upload-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Lista de archivos */
+
+.medical-files-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.medical-file-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  transition: all 0.2s ease;
+}
+
+.medical-file-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+}
+
+.medical-file-icon {
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  border-radius: 10px;
+  font-size: 1.35rem;
+}
+
+.medical-file-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.medical-file-info strong {
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.medical-file-info span {
+  color: #64748b;
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.medical-file-info small {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+/* Acciones de archivo */
+
+.medical-file-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.medical-view-button,
+.medical-delete-button {
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.medical-view-button {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.medical-view-button:hover {
+  background: #dbeafe;
+  transform: translateY(-1px);
+}
+
+.medical-delete-button {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.medical-delete-button:hover {
+  background: #fee2e2;
+  transform: translateY(-1px);
+}
+
+/* Estado vacío */
+
+.medical-files-empty {
+  padding: 30px 20px;
+  text-align: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.medical-files-empty > div {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.medical-files-empty h3 {
+  margin: 0 0 5px;
+  color: #334155;
+  font-size: 1rem;
+}
+
+.medical-files-empty p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* =========================================
+   ACCIONES DE LA MASCOTA
+========================================= */
+
 .pet-details-actions {
   display: flex;
   justify-content: flex-end;
@@ -116,6 +397,10 @@
   transform: translateY(-1px);
 }
 
+/* =========================================
+   LOADING
+========================================= */
+
 .pet-details-loading {
   min-height: 400px;
   display: flex;
@@ -129,6 +414,10 @@
   font-size: 3rem;
   margin-bottom: 15px;
 }
+
+/* =========================================
+   RESPONSIVE
+========================================= */
 
 @media (max-width: 576px) {
   .pet-details-card {
@@ -147,6 +436,23 @@
 
   .pet-details-info {
     grid-template-columns: 1fr;
+  }
+
+  .medical-upload-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .medical-file-card {
+    align-items: flex-start;
+  }
+
+  .medical-file-actions {
+    flex-direction: column;
+  }
+
+  .medical-view-button,
+  .medical-delete-button {
+    width: 100%;
   }
 
   .pet-details-actions {
