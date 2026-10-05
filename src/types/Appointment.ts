@@ -4,7 +4,6 @@ export type AppointmentStatus =
   | "pendiente"
   | "confirmado"
   | "cancelado"
-  | "completado"
   | "atendido";
 
 export interface Appointment {

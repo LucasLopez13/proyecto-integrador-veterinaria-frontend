@@ -1,7 +1,3 @@
-/* =========================
-   MIS TURNOS
-   ========================= */
-
 .professional-appointments-page {
   min-height: calc(100vh - 70px);
   background: #f8fafc;
@@ -24,8 +20,6 @@
   color: #64748b;
   font-size: 1rem;
 }
-
-/* Tabla */
 
 .appointments-table-wrapper {
   background: #ffffff;
@@ -74,21 +68,15 @@
   border-bottom: none;
 }
 
-/* Fecha */
-
 .appointment-date {
   font-weight: 600;
   color: #1e293b;
 }
 
-/* Hora */
-
 .appointment-time {
   font-weight: 600;
   color: #2563eb;
 }
-
-/* Mascota */
 
 .appointment-pet {
   display: flex;
@@ -109,20 +97,14 @@
   font-size: 1rem;
 }
 
-/* Motivo */
-
 .appointment-reason {
   color: #64748b;
 }
-
-/* Tutor / Cliente */
 
 .appointment-owner {
   font-weight: 600;
   color: #334155;
 }
-
-/* Estados */
 
 .appointment-status {
   display: inline-flex;
@@ -159,8 +141,6 @@
   color: #7e22ce;
 }
 
-/* Sin turnos */
-
 .appointments-empty {
   margin-top: 15px;
   padding: 55px 25px;
@@ -169,8 +149,6 @@
   text-align: center;
   box-shadow: 0 4px 18px rgba(15, 23, 42, 0.07);
 }
-
-/* Selector de estado del profesional */
 
 .appointment-status-select {
   border: none;

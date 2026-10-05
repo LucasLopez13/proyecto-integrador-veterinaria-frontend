@@ -15,10 +15,15 @@ function Navbar() {
     navigate("/login");
   };
 
+  const homePath =
+    user.role === "profesional" || user.rol === "profesional"
+      ? "/profesional/turnos"
+      : "/mascotas";
+
   return (
     <nav className="navbar navbar-expand-lg bg-dark navbar-dark">
       <div className="container">
-        <Link className="navbar-brand" to="/mascotas">
+        <Link className="navbar-brand" to={homePath}>
           🐾 VetCare
         </Link>
 

@@ -23,7 +23,6 @@ export default function MedicalAttention() {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Form State
   const [subjetivo, setSubjetivo] = useState("");
   const [peso, setPeso] = useState<string>("");
   const [temperatura, setTemperatura] = useState<string>("");
@@ -46,7 +45,6 @@ export default function MedicalAttention() {
         setLoading(true);
         setError(null);
 
-        // Fetch Mascota
         const petRes = await fetch(`${API_URL}/mascotas/${mascotaIdParam}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -61,7 +59,6 @@ export default function MedicalAttention() {
           setPeso(String(petData.peso));
         }
 
-        // Fetch Turno si viene el parámetro
         if (turnoIdParam) {
           const appRes = await fetch(`${API_URL}/turnos/${turnoIdParam}`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -190,7 +187,6 @@ export default function MedicalAttention() {
   return (
     <main className="medical-attention-page">
       <div className="medical-attention-container">
-        {/* Header */}
         <div className="medical-attention-header">
           <div className="medical-attention-header-title">
             <div className="medical-attention-icon">🩺</div>
@@ -207,11 +203,9 @@ export default function MedicalAttention() {
           </Link>
         </div>
 
-        {/* Feedback Alerts */}
         {error && <div className="alert alert-danger mb-4">{error}</div>}
         {successMsg && <div className="alert alert-success mb-4">{successMsg}</div>}
 
-        {/* Patient Summary Card */}
         {pet && (
           <div className="patient-summary-card">
             <div className="patient-summary-grid">
@@ -228,7 +222,7 @@ export default function MedicalAttention() {
                 <div>
                   <span className="patient-summary-label">Especie / Raza</span>
                   <div className="patient-summary-value">
-                    {pet.especie} · {pet.raza || "Mestizo"}
+                    {pet.especie} · {pet.raza || "No especificada"}
                   </div>
                 </div>
               </div>
@@ -281,9 +275,7 @@ export default function MedicalAttention() {
           </div>
         )}
 
-        {/* SOAP Form */}
         <form onSubmit={handleSubmit} className="soap-form">
-          {/* SECTION S: SUBJETIVO */}
           <section className="soap-card">
             <div className="soap-card-header">
               <div className="soap-letter-badge badge-s">S</div>
@@ -308,7 +300,6 @@ export default function MedicalAttention() {
             </div>
           </section>
 
-          {/* SECTION O: OBJETIVO */}
           <section className="soap-card">
             <div className="soap-card-header">
               <div className="soap-letter-badge badge-o">O</div>
@@ -404,7 +395,6 @@ export default function MedicalAttention() {
             </div>
           </section>
 
-          {/* SECTION A: ANALISIS */}
           <section className="soap-card">
             <div className="soap-card-header">
               <div className="soap-letter-badge badge-a">A</div>
@@ -429,7 +419,6 @@ export default function MedicalAttention() {
             </div>
           </section>
 
-          {/* SECTION P: PLAN */}
           <section className="soap-card">
             <div className="soap-card-header">
               <div className="soap-letter-badge badge-p">P</div>
@@ -465,7 +454,6 @@ export default function MedicalAttention() {
             </div>
           </section>
 
-          {/* ACTIONS BAR */}
           <div className="soap-actions-bar">
             <Link
               to={turnoIdParam ? "/profesional/turnos" : `/profesional/mascotas/${pet?.id}`}

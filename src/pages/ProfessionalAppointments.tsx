@@ -171,33 +171,35 @@ function ProfessionalAppointments() {
                         </td>
 
                         <td>
-                          <select
-                            value={appointment.estado}
-                            onChange={(e) =>
-                              handleStatusChange(appointment.id, e.target.value)
-                            }
-                            className={`appointment-status-select status-${appointment.estado}`}
-                          >
-                            <option value="pendiente">
-                              🟡 Pendiente
-                            </option>
-
-                            <option value="confirmado">
-                              🟢 Confirmado
-                            </option>
-
-                            <option value="atendido">
+                          {appointment.estado === "atendido" ? (
+                            <span className="appointment-status status-atendido">
                               🟣 Atendido
-                            </option>
-
-                            <option value="completado">
-                              🔵 Completado
-                            </option>
-
-                            <option value="cancelado">
+                            </span>
+                          ) : appointment.estado === "cancelado" ? (
+                            <span className="appointment-status status-cancelado">
                               🔴 Cancelado
-                            </option>
-                          </select>
+                            </span>
+                          ) : (
+                            <select
+                              value={appointment.estado}
+                              onChange={(e) =>
+                                handleStatusChange(appointment.id, e.target.value)
+                              }
+                              className={`appointment-status-select status-${appointment.estado}`}
+                            >
+                              <option value="pendiente">
+                                🟡 Pendiente
+                              </option>
+
+                              <option value="confirmado">
+                                🟢 Confirmado
+                              </option>
+
+                              <option value="cancelado">
+                                🔴 Cancelado
+                              </option>
+                            </select>
+                          )}
                         </td>
 
                         <td>

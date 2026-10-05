@@ -38,7 +38,6 @@ function PetDetails() {
         const data: Pet = await response.json();
         setPet(data);
 
-        // Si es profesional o hay token, cargar consultas clínicas
         if (token && data.id) {
           try {
             setLoadingConsultas(true);
@@ -92,7 +91,6 @@ function PetDetails() {
   return (
     <main className="pet-details-page">
       <div className="container py-4">
-        {/* Main Pet Info Card */}
         <div className="pet-details-card">
           <div className="pet-details-header">
             <div className="pet-details-icon">🐾</div>
@@ -100,7 +98,7 @@ function PetDetails() {
             <div>
               <h1>{pet.nombre}</h1>
               <p>
-                {pet.especie} · {pet.raza || "Raza mestiza"}
+                {pet.especie} {pet.raza ? `· ${pet.raza}` : "· Raza no especificada"}
               </p>
             </div>
           </div>
@@ -198,7 +196,6 @@ function PetDetails() {
           </div>
         </div>
 
-        {/* Clinical History SOAP Section */}
         {isProfessional && (
           <div className="pet-details-card mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">

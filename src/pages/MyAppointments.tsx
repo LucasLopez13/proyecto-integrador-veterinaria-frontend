@@ -154,8 +154,8 @@ function MyAppointments() {
                           >
                             {appointment.estado === "pendiente" && "🟡 "}
                             {appointment.estado === "confirmado" && "🟢 "}
+                            {appointment.estado === "atendido" && "🟣 "}
                             {appointment.estado === "cancelado" && "🔴 "}
-                            {appointment.estado === "completado" && "🔵 "}
 
                             {appointment.estado.charAt(0).toUpperCase() +
                               appointment.estado.slice(1)}
@@ -164,7 +164,7 @@ function MyAppointments() {
 
                         <td>
                           {appointment.estado !== "cancelado" &&
-                            appointment.estado !== "completado" && (
+                            appointment.estado !== "atendido" && (
                               <button
                                 type="button"
                                 onClick={() => handleCancelarTurno(appointment.id)}
