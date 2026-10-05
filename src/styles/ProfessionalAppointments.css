@@ -154,6 +154,11 @@
   color: #1e40af;
 }
 
+.status-atendido {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
 /* Sin turnos */
 
 .appointments-empty {
@@ -194,6 +199,11 @@
 .appointment-status-select.status-confirmado {
   background: #dcfce7;
   color: #166534;
+}
+
+.appointment-status-select.status-atendido {
+  background: #f3e8ff;
+  color: #7e22ce;
 }
 
 .appointment-status-select.status-cancelado {

@@ -186,23 +186,38 @@ function ProfessionalAppointments() {
                               🟢 Confirmado
                             </option>
 
-                            <option value="cancelado">
-                              🔴 Cancelado
+                            <option value="atendido">
+                              🟣 Atendido
                             </option>
 
                             <option value="completado">
                               🔵 Completado
                             </option>
+
+                            <option value="cancelado">
+                              🔴 Cancelado
+                            </option>
                           </select>
                         </td>
 
                         <td>
-                          <Link
-                            to={`/profesional/mascotas/${appointment.mascotaId}`}
-                            className="btn btn-outline-primary btn-sm appointment-pet-button"
-                          >
-                            Ver mascota
-                          </Link>
+                          <div className="d-flex gap-2">
+                            {appointment.estado !== "cancelado" && appointment.estado !== "atendido" && (
+                              <Link
+                                to={`/profesional/atencion?mascotaId=${appointment.mascotaId}&turnoId=${appointment.id}`}
+                                className="btn btn-primary btn-sm"
+                                title="Iniciar atención médica SOAP"
+                              >
+                                🩺 Atender
+                              </Link>
+                            )}
+                            <Link
+                              to={`/profesional/mascotas/${appointment.mascotaId}`}
+                              className="btn btn-outline-primary btn-sm appointment-pet-button"
+                            >
+                              Ver mascota
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );

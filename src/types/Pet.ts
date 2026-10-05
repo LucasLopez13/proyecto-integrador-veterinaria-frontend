@@ -5,5 +5,13 @@ export interface Pet {
   raza: string;
   edad: number;
   sexo: string;
+  peso?: number | null;
   usuarioId: number;
+  usuario?: {
+    id: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    telefono?: string | null;
+  };
 }

@@ -6,6 +6,7 @@ import NewPet from "./pages/NewPet";
 import NewAppointment from "./pages/NewAppointment";
 import ProfessionalAppointments from "./pages/ProfessionalAppointments";
 import PetDetails from "./pages/PetDetails";
+import MedicalAttention from "./pages/MedicalAttention";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import MyAppointments from "./pages/MyAppointments";
@@ -80,6 +81,15 @@ function App() {
           element={
             <ProtectedRoute>
               <ProfessionalAppointments />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profesional/atencion"
+          element={
+            <ProtectedRoute>
+              <MedicalAttention />
             </ProtectedRoute>
           }
         />
