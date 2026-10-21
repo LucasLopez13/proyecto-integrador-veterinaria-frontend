@@ -11,7 +11,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 export default function MedicalAttention() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { token, user } = useAuth();
+  const { token } = useAuth();
 
   const mascotaIdParam = searchParams.get("mascotaId") || searchParams.get("mascota");
   const turnoIdParam = searchParams.get("turnoId") || searchParams.get("turno");
