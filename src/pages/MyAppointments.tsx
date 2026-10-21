@@ -251,8 +251,8 @@ function MyAppointments() {
                           >
                             {appointment.estado === "pendiente" && "🟡 "}
                             {appointment.estado === "confirmado" && "🟢 "}
+                            {appointment.estado === "atendido" && "🟣 "}
                             {appointment.estado === "cancelado" && "🔴 "}
-                            {appointment.estado === "completado" && "🔵 "}
 
                             {appointment.estado.charAt(0).toUpperCase() +
                               appointment.estado.slice(1)}
@@ -262,33 +262,15 @@ function MyAppointments() {
                         {/* Acciones */}
                         <td>
 
-                          {appointment.estado !== "cancelado" &&
-                            appointment.estado !== "completado" && (
-
+                          {!["cancelado", "completado", "atendido"].includes(appointment.estado) &&  (
                               reprogramandoId === appointment.id ? (
-
-                                /* =========================
-                                   FORMULARIO REPROGRAMACIÓN
-                                   ========================= */
-
                                 <div className="reschedule-box">
-
                                   <div className="reschedule-title">
-
-                                    <span className="reschedule-icon">
-                                      📅
-                                    </span>
-
+                                    <span className="reschedule-icon">📅</span>
                                     <div>
-                                      <strong>
-                                        Nueva fecha y hora
-                                      </strong>
-
-                                      <small>
-                                        Elegí cuándo querés asistir
-                                      </small>
+                                      <strong>Nueva fecha y hora</strong>
+                                      <small>Elegí cuándo querés asistir</small>
                                     </div>
-
                                   </div>
 
                                   <input
@@ -301,13 +283,10 @@ function MyAppointments() {
                                   />
 
                                   <div className="reschedule-actions">
-
                                     <button
                                       type="button"
                                       onClick={() =>
-                                        handleReprogramarTurno(
-                                          appointment.id
-                                        )
+                                        handleReprogramarTurno(appointment.id)
                                       }
                                       className="reschedule-confirm"
                                     >
@@ -324,25 +303,14 @@ function MyAppointments() {
                                     >
                                       × Volver
                                     </button>
-
                                   </div>
-
                                 </div>
-
                               ) : (
-
-                                /* =========================
-                                   BOTONES NORMALES
-                                   ========================= */
-
                                 <div className="appointment-actions">
-
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setReprogramandoId(
-                                        appointment.id
-                                      );
+                                      setReprogramandoId(appointment.id);
                                       setNuevaFecha("");
                                     }}
                                     className="btn btn-outline-primary btn-sm"
@@ -353,17 +321,15 @@ function MyAppointments() {
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      handleCancelarTurno(
-                                        appointment.id
-                                      )
+                                      handleCancelarTurno(appointment.id)
                                     }
                                     className="btn btn-outline-danger btn-sm"
                                   >
                                     Cancelar
                                   </button>
-
                                 </div>
                               )
+
                             )}
 
                         </td>

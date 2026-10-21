@@ -171,38 +171,55 @@ function ProfessionalAppointments() {
                         </td>
 
                         <td>
-                          <select
-                            value={appointment.estado}
-                            onChange={(e) =>
-                              handleStatusChange(appointment.id, e.target.value)
-                            }
-                            className={`appointment-status-select status-${appointment.estado}`}
-                          >
-                            <option value="pendiente">
-                              🟡 Pendiente
-                            </option>
-
-                            <option value="confirmado">
-                              🟢 Confirmado
-                            </option>
-
-                            <option value="cancelado">
+                          {appointment.estado === "atendido" ? (
+                            <span className="appointment-status status-atendido">
+                              🟣 Atendido
+                            </span>
+                          ) : appointment.estado === "cancelado" ? (
+                            <span className="appointment-status status-cancelado">
                               🔴 Cancelado
-                            </option>
+                            </span>
+                          ) : (
+                            <select
+                              value={appointment.estado}
+                              onChange={(e) =>
+                                handleStatusChange(appointment.id, e.target.value)
+                              }
+                              className={`appointment-status-select status-${appointment.estado}`}
+                            >
+                              <option value="pendiente">
+                                🟡 Pendiente
+                              </option>
 
-                            <option value="completado">
-                              🔵 Completado
-                            </option>
-                          </select>
+                              <option value="confirmado">
+                                🟢 Confirmado
+                              </option>
+
+                              <option value="cancelado">
+                                🔴 Cancelado
+                              </option>
+                            </select>
+                          )}
                         </td>
 
                         <td>
-                          <Link
-                            to={`/profesional/mascotas/${appointment.mascotaId}`}
-                            className="btn btn-outline-primary btn-sm appointment-pet-button"
-                          >
-                            Ver mascota
-                          </Link>
+                          <div className="d-flex gap-2">
+                            {appointment.estado !== "cancelado" && appointment.estado !== "atendido" && (
+                              <Link
+                                to={`/profesional/atencion?mascotaId=${appointment.mascotaId}&turnoId=${appointment.id}`}
+                                className="btn btn-primary btn-sm"
+                                title="Iniciar atención médica SOAP"
+                              >
+                                🩺 Atender
+                              </Link>
+                            )}
+                            <Link
+                              to={`/profesional/mascotas/${appointment.mascotaId}`}
+                              className="btn btn-outline-primary btn-sm appointment-pet-button"
+                            >
+                              Ver mascota
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );

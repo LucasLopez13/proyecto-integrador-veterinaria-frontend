@@ -1,8 +1,4 @@
-/* =========================
-   MIS TURNOS
-   ========================= */
-
-.professional-appointments-page {
+﻿.professional-appointments-page {
   min-height: calc(100vh - 70px);
   background: #f8fafc;
   padding-bottom: 50px;
@@ -171,6 +167,10 @@
 /* =========================
    SIN TURNOS
    ========================= */
+.status-atendido {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
 
 .appointments-empty {
   margin-top: 15px;
@@ -215,6 +215,11 @@
   color: #166534;
 }
 
+.appointment-status-select.status-atendido {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
 .appointment-status-select.status-cancelado {
   background: #fee2e2;
   color: #991b1b;
@@ -226,7 +231,7 @@
 }
 
 /* =========================
-   BOTÓN DE MASCOTA
+   BOTÃ“N DE MASCOTA
    ========================= */
 
 .appointment-pet-button {
@@ -287,7 +292,7 @@
 }
 
 /* =========================
-   CAJA DE REPROGRAMACIÓN
+   CAJA DE REPROGRAMACIÃ“N
    ========================= */
 
 .reschedule-box {
@@ -299,7 +304,7 @@
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
 }
 
-/* Título */
+/* TÃ­tulo */
 
 .reschedule-title {
   display: flex;
@@ -360,7 +365,7 @@
 }
 
 /* =========================
-   BOTONES DE REPROGRAMACIÓN
+   BOTONES DE REPROGRAMACIÃ“N
    ========================= */
 
 .reschedule-actions {
