@@ -1,4 +1,9 @@
-import type { Consultation, CreateConsultationDTO } from "../types/Consultation";
+import type {
+  Consultation,
+  CreateConsultationDTO,
+  UpdateConsultationDTO,
+  ConsultationVersion
+} from "../types/Consultation";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -19,6 +24,28 @@ export const consultationService = {
     const result = await response.json();
     if (!response.ok) {
       throw new Error(result.error || result.message || "Error al registrar la consulta");
+    }
+
+    return result;
+  },
+
+  async updateConsultation(
+    id: number,
+    data: UpdateConsultationDTO,
+    token: string
+  ): Promise<Consultation> {
+    const response = await fetch(`${API_URL}/consultas/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || result.message || "Error al registrar la enmienda de la consulta");
     }
 
     return result;
@@ -59,4 +86,44 @@ export const consultationService = {
 
     return response.json();
   },
+
+  async getConsultationVersions(
+    id: number,
+    token: string
+  ): Promise<ConsultationVersion[]> {
+    const response = await fetch(`${API_URL}/consultas/${id}/versiones`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || result.message || "Error al obtener el historial de versiones");
+    }
+
+    return response.json();
+  },
+
+  async anularConsultation(
+    id: number,
+    motivoAnulacion: string,
+    token: string
+  ): Promise<{ message: string; consultaId: number; versionAnulacion: number }> {
+    const response = await fetch(`${API_URL}/consultas/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ motivoAnulacion }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || result.message || "Error al anular la consulta médica");
+    }
+
+    return result;
+  }
 };

@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { consultationService } from "../services/consultationService";
 import type { Pet } from "../types/Pet";
-import type { Consultation } from "../types/Consultation";
+import type { Consultation, ConsultationVersion, UpdateConsultationDTO } from "../types/Consultation";
+import { ConsultationCard } from "../components/consultations/ConsultationCard";
+import { ConsultationAuditModal } from "../components/consultations/ConsultationAuditModal";
+import { ConsultationAmendmentModal } from "../components/consultations/ConsultationAmendmentModal";
+import { ConsultationAnnulModal } from "../components/consultations/ConsultationAnnulModal";
 import "../styles/PetDetails.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -33,7 +37,20 @@ function PetDetails() {
   const [fileName, setFileName] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const isProfessional = user?.role === "profesional" || user?.rol === "profesional";
+  const userRole = String(user?.role || user?.rol || "").toLowerCase();
+  const isProfessional = userRole === "profesional" || userRole === "admin";
+
+  // Estados para Auditoría e Inmutabilidad de Consultas
+  const [auditModalConsulta, setAuditModalConsulta] = useState<Consultation | null>(null);
+  const [versionsList, setVersionsList] = useState<ConsultationVersion[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState<boolean>(false);
+
+  // Estados para Enmienda y Anulación
+  const [editingConsulta, setEditingConsulta] = useState<Consultation | null>(null);
+  const [savingAmendment, setSavingAmendment] = useState<boolean>(false);
+
+  const [anulandoConsulta, setAnulandoConsulta] = useState<Consultation | null>(null);
+  const [savingAnulacion, setSavingAnulacion] = useState<boolean>(false);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -273,6 +290,83 @@ function PetDetails() {
     } catch (err: any) {
       console.error("Error al eliminar archivo:", err);
       alert(err.message || "No se pudo eliminar el archivo");
+    }
+  };
+
+  const handleOpenAudit = async (c: Consultation) => {
+    if (!c.id) return;
+    setAuditModalConsulta(c);
+    setLoadingVersions(true);
+    try {
+      const authToken = token ?? localStorage.getItem("token") ?? "";
+      const versions = await consultationService.getConsultationVersions(c.id, authToken);
+      setVersionsList(versions);
+    } catch (err: any) {
+      console.error("Error al cargar versiones:", err);
+      alert(err.message || "Error al cargar el historial de versiones");
+    } finally {
+      setLoadingVersions(false);
+    }
+  };
+
+  const handleOpenEdit = (c: Consultation) => {
+    setEditingConsulta(c);
+  };
+
+  const handleSaveAmendment = async (data: UpdateConsultationDTO) => {
+    if (!editingConsulta?.id) return;
+
+    try {
+      setSavingAmendment(true);
+      const authToken = token ?? localStorage.getItem("token") ?? "";
+      const updated = await consultationService.updateConsultation(
+        editingConsulta.id,
+        data,
+        authToken
+      );
+
+      setConsultas((prev) =>
+        prev.map((c) => (c.id === updated.id ? updated : c))
+      );
+
+      if (updated.peso && pet) {
+        setPet({ ...pet, peso: updated.peso });
+      }
+
+      setEditingConsulta(null);
+      alert(`Consulta enmendada correctamente. Se ha generado la Versión v${updated.version} inalterable con respaldo en auditoría.`);
+    } catch (err: any) {
+      console.error("Error al guardar enmienda:", err);
+      alert(err.message || "Error al registrar la enmienda");
+    } finally {
+      setSavingAmendment(false);
+    }
+  };
+
+  const handleOpenAnular = (c: Consultation) => {
+    setAnulandoConsulta(c);
+  };
+
+  const handleConfirmAnulacion = async (motivo: string) => {
+    if (!anulandoConsulta?.id) return;
+
+    try {
+      setSavingAnulacion(true);
+      const authToken = token ?? localStorage.getItem("token") ?? "";
+      await consultationService.anularConsultation(
+        anulandoConsulta.id,
+        motivo,
+        authToken
+      );
+
+      setConsultas((prev) => prev.filter((c) => c.id !== anulandoConsulta.id));
+      setAnulandoConsulta(null);
+      alert("La consulta fue anulada lógicamente de forma exitosa. Se preservó su registro inmutable en auditoría.");
+    } catch (err: any) {
+      console.error("Error al anular consulta:", err);
+      alert(err.message || "Error al anular la consulta");
+    } finally {
+      setSavingAnulacion(false);
     }
   };
 
@@ -566,83 +660,44 @@ function PetDetails() {
             ) : (
               <div className="consultations-timeline mt-3">
                 {consultas.map((c) => (
-                  <div
+                  <ConsultationCard
                     key={c.id}
-                    style={{
-                      border: "1px solid #e2e8f0",
-                      borderRadius: 12,
-                      padding: "18px 20px",
-                      marginBottom: "16px",
-                      background: "#ffffff",
-                    }}
-                  >
-                    <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
-                      <div>
-                        <strong style={{ color: "#0f172a", fontSize: "1rem" }}>
-                          📅 {c.fecha ? new Date(c.fecha).toLocaleDateString("es-AR") : "Fecha no disponible"}
-                        </strong>
-                        {c.veterinario && (
-                          <span className="text-muted ms-2" style={{ fontSize: "0.875rem" }}>
-                            por Dr./Dra. {c.veterinario.nombre} {c.veterinario.apellido}
-                          </span>
-                        )}
-                      </div>
-                      <div className="d-flex gap-2 flex-wrap">
-                        <span className="badge bg-light text-dark border" title="Peso actual">
-                          ⚖️ {c.peso} kg
-                        </span>
-                        <span className="badge bg-light text-dark border" title="Temperatura">
-                          🌡️ {c.temperatura} °C
-                        </span>
-                        {c.frecuenciaCardiaca !== null && c.frecuenciaCardiaca !== undefined && (
-                          <span className="badge bg-light text-dark border" title="Frecuencia Cardíaca">
-                            💓 {c.frecuenciaCardiaca} lpm
-                          </span>
-                        )}
-                        {c.frecuenciaRespiratoria !== null && c.frecuenciaRespiratoria !== undefined && (
-                          <span className="badge bg-light text-dark border" title="Frecuencia Respiratoria">
-                            🫁 {c.frecuenciaRespiratoria} rpm
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                      <div>
-                        <small className="text-primary fw-bold d-block mb-1">[S] Subjetivo (Anamnesis):</small>
-                        <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, whiteSpace: "pre-line" }}>{c.subjetivo}</p>
-                      </div>
-
-                      <div>
-                        <small className="text-warning fw-bold d-block mb-1">[A] Diagnóstico / Análisis:</small>
-                        <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, whiteSpace: "pre-line" }}>{c.analisis}</p>
-                      </div>
-
-                      <div>
-                        <small className="text-success fw-bold d-block mb-1">[O] Objetivo (Examen Físico):</small>
-                        <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, whiteSpace: "pre-line" }}>
-                          {c.objetivo ? c.objetivo : "Sin hallazgos adicionales descriptos"}
-                        </p>
-                      </div>
-
-                      <div>
-                        <small className="text-info fw-bold d-block mb-1">[P] Plan & Tratamiento:</small>
-                        <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, whiteSpace: "pre-line" }}>{c.plan}</p>
-                      </div>
-                    </div>
-
-                    {c.observaciones && (
-                      <div className="mt-3 pt-2 border-top">
-                        <small className="text-muted fw-bold d-block">Observaciones / Indicaciones al tutor:</small>
-                        <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0, whiteSpace: "pre-line" }}>{c.observaciones}</p>
-                      </div>
-                    )}
-                  </div>
+                    consulta={c}
+                    isProfessional={isProfessional}
+                    onOpenAudit={handleOpenAudit}
+                    onOpenEdit={handleOpenEdit}
+                    onOpenAnular={handleOpenAnular}
+                  />
                 ))}
               </div>
             )}
           </div>
         )}
+
+        {/* Modales delegados en componentes especializados */}
+        <ConsultationAuditModal
+          consulta={auditModalConsulta}
+          petName={pet.nombre}
+          loading={loadingVersions}
+          versions={versionsList}
+          onClose={() => setAuditModalConsulta(null)}
+        />
+
+        <ConsultationAmendmentModal
+          consulta={editingConsulta}
+          petName={pet.nombre}
+          saving={savingAmendment}
+          onClose={() => setEditingConsulta(null)}
+          onSave={handleSaveAmendment}
+        />
+
+        <ConsultationAnnulModal
+          consulta={anulandoConsulta}
+          petName={pet.nombre}
+          saving={savingAnulacion}
+          onClose={() => setAnulandoConsulta(null)}
+          onConfirm={handleConfirmAnulacion}
+        />
       </div>
     </main>
   );
