@@ -3,14 +3,8 @@ import { useState, useEffect } from "react";
 import "../styles/NewAppointment.css";
 import { useAuth } from "../context/AuthContext";
 import type { Pet } from "../types/Pet";
-
-const API_URL = import.meta.env.VITE_API_URL;
-
-const HORARIOS_DISPONIBLES = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
-  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"
-];
+import { apiFetch } from "../services/apiClient";
+import { BUSINESS_HOURS_SLOTS } from "../constants";
 
 function NewAppointment() {
   const { user } = useAuth();
@@ -32,25 +26,16 @@ function NewAppointment() {
   useEffect(() => {
     const cargarMascotas = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(`${API_URL}/mascotas`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const data = await apiFetch<Pet[]>("/mascotas");
+        setPets(data);
 
-        if (response.ok) {
-          const data: Pet[] = await response.json();
-          setPets(data);
-
-          if (mascotaIdParam) {
-            setSelectedPetId(mascotaIdParam);
-          } else if (data.length > 0) {
-            setSelectedPetId(String(data[0].id));
-          }
+        if (mascotaIdParam) {
+          setSelectedPetId(mascotaIdParam);
+        } else if (data.length > 0) {
+          setSelectedPetId(String(data[0].id));
         }
-      } catch (err) {
-        console.error("Error al cargar mascotas:", err);
+      } catch (err: any) {
+        setError(err.message || "Error al cargar mascotas");
       } finally {
         setLoadingPets(false);
       }
@@ -86,13 +71,8 @@ function NewAppointment() {
     const fechaHora = `${fecha}T${hora}:00`;
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/turnos`, {
+      await apiFetch("/turnos", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           fecha: fechaHora,
           motivo: motivo.trim(),
@@ -101,17 +81,9 @@ function NewAppointment() {
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "No se pudo crear el turno");
-      }
-
-      alert("¡Turno solicitado correctamente!");
-      navigate("/mascotas");
+      navigate("/mis-turnos");
     } catch (err: any) {
-      console.error("Error al crear turno:", err);
-      setError(err.message || "No se pudo conectar con el servidor");
+      setError(err.message || "No se pudo conectar con el servidor para agendar el turno");
     } finally {
       setLoading(false);
     }
@@ -121,28 +93,38 @@ function NewAppointment() {
     <main className="new-appointment-page">
       <div className="new-appointment-card">
         <div className="new-appointment-header">
-          <div className="new-appointment-icon">📅</div>
+          <div className="new-appointment-icon">
+            <i className="bi bi-calendar-check text-primary fs-3"></i>
+          </div>
 
           <div>
-            <h1>Solicitar turno</h1>
-            <p>Completá los datos para solicitar una consulta veterinaria</p>
+            <h1 className="h3 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+              Solicitar Turno
+            </h1>
+            <p className="text-muted small mb-0">
+              Completá los datos para solicitar una consulta veterinaria
+            </p>
           </div>
         </div>
 
-        {error && <div className="alert alert-danger mb-3">{error}</div>}
+        {error && <div className="alert alert-danger rounded-2 shadow-sm mb-3">{error}</div>}
 
         <div className="appointment-pet-info">
-          <span className="appointment-pet-info-icon">🐾</span>
+          <span className="appointment-pet-info-icon">
+            <i className="bi bi-shield-plus text-primary fs-5"></i>
+          </span>
 
           <div style={{ flexGrow: 1 }}>
-            <span>Mascota seleccionada</span>
+            <span className="small text-muted fw-semibold">Mascota seleccionada</span>
             {loadingPets ? (
-              <small className="d-block text-muted">Cargando...</small>
+              <small className="d-block text-muted">Cargando mascotas...</small>
             ) : mascotaIdParam && mascotaSeleccionada ? (
-              <strong>Turno para {mascotaSeleccionada.nombre} ({mascotaSeleccionada.especie})</strong>
+              <strong className="d-block" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                {mascotaSeleccionada.nombre} ({mascotaSeleccionada.especie})
+              </strong>
             ) : pets.length > 0 ? (
               <select
-                className="form-select form-select-sm mt-1"
+                className="form-select form-select-sm rounded-2 mt-1"
                 value={selectedPetId}
                 onChange={(e) => setSelectedPetId(e.target.value)}
               >
@@ -153,8 +135,11 @@ function NewAppointment() {
                 ))}
               </select>
             ) : (
-              <div className="text-danger small">
-                No tenés mascotas registradas. <Link to="/mascotas/nueva">Registrá una aquí</Link>
+              <div className="text-danger small mt-1">
+                No tenés mascotas registradas.{" "}
+                <Link to="/mascotas/nueva" className="fw-semibold text-decoration-none">
+                  Registrá una aquí
+                </Link>
               </div>
             )}
           </div>
@@ -163,11 +148,11 @@ function NewAppointment() {
         <form onSubmit={handleSubmit}>
           <div className="appointment-form-grid">
             <div className="appointment-field">
-              <label htmlFor="date">📅 Fecha</label>
+              <label htmlFor="date">Fecha de Atención</label>
               <input
                 type="date"
                 id="date"
-                className="form-control"
+                className="form-control rounded-2"
                 min={hoyStr}
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
@@ -177,16 +162,16 @@ function NewAppointment() {
             </div>
 
             <div className="appointment-field">
-              <label htmlFor="time">🕐 Hora (8:00 a 20:00)</label>
+              <label htmlFor="time">Horario Disponible (8:00 a 20:00)</label>
               <select
                 id="time"
-                className="form-select"
+                className="form-select rounded-2"
                 value={hora}
                 onChange={(e) => setHora(e.target.value)}
                 required
               >
                 <option value="">Seleccionar horario</option>
-                {HORARIOS_DISPONIBLES.map((h) => (
+                {BUSINESS_HOURS_SLOTS.map((h) => (
                   <option key={h} value={h}>
                     {h} hs
                   </option>
@@ -196,12 +181,13 @@ function NewAppointment() {
           </div>
 
           <div className="appointment-field">
-            <label htmlFor="reason">📝 Motivo de la consulta</label>
+            <label htmlFor="reason">Motivo de la Consulta</label>
             <textarea
               id="reason"
-              className="form-control"
-              placeholder="Contanos brevemente el motivo de la consulta..."
+              className="form-control rounded-2"
+              placeholder="Contanos brevemente el motivo o síntomas de la consulta..."
               maxLength={150}
+              rows={3}
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
               required
@@ -212,12 +198,16 @@ function NewAppointment() {
           </div>
 
           <div className="new-appointment-actions">
-            <Link to="/mascotas" className="btn btn-outline-secondary">
+            <Link to="/mascotas" className="btn btn-outline-secondary rounded-2 px-3 fw-medium">
               Cancelar
             </Link>
 
-            <button type="submit" className="btn btn-primary" disabled={loading || pets.length === 0}>
-              {loading ? "Solicitando..." : "Solicitar turno"}
+            <button
+              type="submit"
+              className="btn btn-primary rounded-2 shadow-sm px-4 fw-medium"
+              disabled={loading || pets.length === 0}
+            >
+              {loading ? "Solicitando..." : "Solicitar Turno"}
             </button>
           </div>
         </form>

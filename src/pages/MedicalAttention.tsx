@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { consultationService } from "../services/consultationService";
+import { apiFetch } from "../services/apiClient";
+import { TIMERS } from "../constants";
 import type { Pet } from "../types/Pet";
 import type { Appointment } from "../types/Appointment";
 import "../styles/MedicalAttention.css";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 export default function MedicalAttention() {
   const [searchParams] = useSearchParams();
@@ -45,34 +45,41 @@ export default function MedicalAttention() {
         setLoading(true);
         setError(null);
 
-        const petRes = await fetch(`${API_URL}/mascotas/${mascotaIdParam}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!petRes.ok) {
-          throw new Error("No se pudo cargar la información del paciente");
-        }
-
-        const petData: Pet = await petRes.json();
+        const petData = await apiFetch<Pet>(`/mascotas/${mascotaIdParam}`);
         setPet(petData);
         if (petData.peso) {
           setPeso(String(petData.peso));
         }
 
         if (turnoIdParam) {
-          const appRes = await fetch(`${API_URL}/turnos/${turnoIdParam}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (appRes.ok) {
-            const appData: Appointment = await appRes.json();
+          try {
+            const appData = await apiFetch<Appointment>(`/turnos/${turnoIdParam}`);
             setAppointment(appData);
             if (appData.motivo && !subjetivo) {
               setSubjetivo(`Motivo de consulta declarado: ${appData.motivo}\n\n`);
             }
+          } catch {
+            // No bloqueante
           }
         }
+
+        // Cargar borrador previo si existe en esta estación
+        const savedDraftStr = localStorage.getItem(`soap_draft_${mascotaIdParam}`);
+        if (savedDraftStr) {
+          try {
+            const savedDraft = JSON.parse(savedDraftStr);
+            if (savedDraft.subjetivo) setSubjetivo(savedDraft.subjetivo);
+            if (savedDraft.objetivo) setObjetivo(savedDraft.objetivo);
+            if (savedDraft.peso) setPeso(savedDraft.peso);
+            if (savedDraft.temperatura) setTemperatura(savedDraft.temperatura);
+            if (savedDraft.frecuenciaCardiaca) setFrecuenciaCardiaca(savedDraft.frecuenciaCardiaca);
+            if (savedDraft.frecuenciaRespiratoria) setFrecuenciaRespiratoria(savedDraft.frecuenciaRespiratoria);
+            if (savedDraft.analisis) setAnalisis(savedDraft.analisis);
+            if (savedDraft.plan) setPlan(savedDraft.plan);
+            if (savedDraft.observaciones) setObservaciones(savedDraft.observaciones);
+          } catch {}
+        }
       } catch (err: any) {
-        console.error("Error al inicializar consulta SOAP:", err);
         setError(err.message || "Error al cargar los datos del paciente");
       } finally {
         setLoading(false);
@@ -80,10 +87,10 @@ export default function MedicalAttention() {
     };
 
     fetchData();
-  }, [mascotaIdParam, turnoIdParam, token]);
+  }, [mascotaIdParam, turnoIdParam]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
     if (!token) {
       setError("No hay sesión activa.");
@@ -143,7 +150,12 @@ export default function MedicalAttention() {
         token
       );
 
-      setSuccessMsg("¡Atención médica registrada correctamente! El peso y el turno han sido actualizados.");
+      // Limpiar borrador local tras registro exitoso
+      if (mascotaIdParam) {
+        localStorage.removeItem(`soap_draft_${mascotaIdParam}`);
+      }
+
+      setSuccessMsg("¡Consulta finalizada y registrada correctamente! Registro inmutable y peso actualizado.");
 
       setTimeout(() => {
         if (turnoIdParam) {
@@ -151,21 +163,39 @@ export default function MedicalAttention() {
         } else {
           navigate(`/profesional/mascotas/${pet.id}`);
         }
-      }, 1500);
+      }, TIMERS.REDIRECT_DELAY_MS);
     } catch (err: any) {
-      console.error("Error al guardar consulta:", err);
       setError(err.message || "Error al registrar la atención médica");
     } finally {
       setSaving(false);
     }
   };
 
+  const handleSaveDraft = () => {
+    if (!mascotaIdParam) return;
+    const draft = {
+      subjetivo,
+      objetivo,
+      peso,
+      temperatura,
+      frecuenciaCardiaca,
+      frecuenciaRespiratoria,
+      analisis,
+      plan,
+      observaciones,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(`soap_draft_${mascotaIdParam}`, JSON.stringify(draft));
+    setSuccessMsg("Borrador guardado localmente en esta estación de trabajo.");
+    setTimeout(() => setSuccessMsg(null), 3000);
+  };
+
   if (loading) {
     return (
       <main className="medical-attention-page">
-        <div className="medical-attention-container py-5 text-center">
-          <div className="spinner-border text-primary" role="status"></div>
-          <p className="mt-3 text-muted">Cargando ficha del paciente...</p>
+        <div className="container py-5 text-center">
+          <div className="spinner-border text-primary spinner-border-sm" role="status"></div>
+          <p className="mt-3 text-muted small">Cargando estación de consulta...</p>
         </div>
       </main>
     );
@@ -174,9 +204,9 @@ export default function MedicalAttention() {
   if (error && !pet) {
     return (
       <main className="medical-attention-page">
-        <div className="medical-attention-container py-5">
-          <div className="alert alert-danger">{error}</div>
-          <Link to="/profesional/turnos" className="btn btn-outline-secondary mt-3">
+        <div className="container py-5">
+          <div className="alert alert-danger rounded-2 shadow-sm">{error}</div>
+          <Link to="/profesional/turnos" className="btn btn-outline-secondary rounded-2 mt-3">
             Volver a turnos
           </Link>
         </div>
@@ -184,295 +214,410 @@ export default function MedicalAttention() {
     );
   }
 
+  const tutorInfo = pet?.usuario || pet?.dueno;
+
   return (
     <main className="medical-attention-page">
-      <div className="medical-attention-container">
-        <div className="medical-attention-header">
-          <div className="medical-attention-header-title">
-            <div className="medical-attention-icon">🩺</div>
+      <div className="container-fluid px-lg-5">
+
+        {/* Top Header */}
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+          <div className="d-flex align-items-center gap-3">
+            <div
+              className="rounded-2 d-flex align-items-center justify-content-center"
+              style={{
+                width: "48px",
+                height: "48px",
+                backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
+                color: "var(--vet-primary, #6D28D9)",
+                border: "1px solid var(--vet-border-tint, #EDE9FE)",
+                fontSize: "1.4rem"
+              }}
+            >
+              <i className="bi bi-clipboard2-pulse"></i>
+            </div>
             <div>
-              <h1>Atención Médica (SOAP)</h1>
-              <p>Registro clínico estructurado de evolución de paciente</p>
+              <h1 className="h4 fw-bold mb-0" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                Estación de Consulta Clínica (SOAP)
+              </h1>
+              <p className="text-muted small mb-0">
+                Atención en curso para <strong>{pet?.nombre}</strong> · Registro inmutable
+              </p>
             </div>
           </div>
+
           <Link
             to={turnoIdParam ? "/profesional/turnos" : `/profesional/mascotas/${pet?.id}`}
-            className="btn btn-outline-secondary"
+            className="btn btn-outline-secondary rounded-2 btn-sm fw-medium px-3 d-inline-flex align-items-center gap-1"
           >
-            ← Volver
+            <i className="bi bi-arrow-left"></i> Volver
           </Link>
         </div>
 
-        {error && <div className="alert alert-danger mb-4">{error}</div>}
-        {successMsg && <div className="alert alert-success mb-4">{successMsg}</div>}
+        {error && <div className="alert alert-danger rounded-2 shadow-sm mb-4">{error}</div>}
+        {successMsg && <div className="alert alert-success rounded-2 shadow-sm mb-4">{successMsg}</div>}
 
-        {pet && (
-          <div className="patient-summary-card">
-            <div className="patient-summary-grid">
-              <div className="patient-summary-item">
-                <div className="patient-summary-icon">🐾</div>
-                <div>
-                  <span className="patient-summary-label">Paciente</span>
-                  <div className="patient-summary-value">{pet.nombre}</div>
-                </div>
-              </div>
+        {/* 2-Column Split: col-lg-4 (Patient Card) & col-lg-8 (Active Form) */}
+        <div className="row g-4">
 
-              <div className="patient-summary-item">
-                <div className="patient-summary-icon">🏷️</div>
-                <div>
-                  <span className="patient-summary-label">Especie / Raza</span>
-                  <div className="patient-summary-value">
-                    {pet.especie} · {pet.raza || "No especificada"}
+          {/* Left Column: Sticky Patient Card */}
+          <div className="col-12 col-lg-4">
+            <div className="sticky-patient-sidebar">
+
+              {/* Patient Data Card */}
+              <div
+                className="bg-white rounded-3 border p-4 shadow-sm mb-3"
+                style={{ borderColor: "var(--vet-border-tint, #EDE9FE)" }}
+              >
+                <div className="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom border-light-subtle">
+                  <div
+                    className="rounded-2 d-flex align-items-center justify-content-center"
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                      backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
+                      border: "1px solid var(--vet-border-tint, #EDE9FE)",
+                    }}
+                  >
+                    <i className="bi bi-shield-plus text-primary fs-3"></i>
                   </div>
-                </div>
-              </div>
-
-              <div className="patient-summary-item">
-                <div className="patient-summary-icon">🎂</div>
-                <div>
-                  <span className="patient-summary-label">Edad / Sexo</span>
-                  <div className="patient-summary-value">
-                    {pet.edad ? `${pet.edad} años` : "Edad N/E"} · {pet.sexo || "N/E"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="patient-summary-item">
-                <div className="patient-summary-icon">⚖️</div>
-                <div>
-                  <span className="patient-summary-label">Peso Registrado</span>
-                  <div className="patient-summary-value">
-                    {pet.peso ? `${pet.peso} kg` : "Sin registro previo"}
-                  </div>
-                </div>
-              </div>
-
-              {pet.usuario && (
-                <div className="patient-summary-item">
-                  <div className="patient-summary-icon">👤</div>
                   <div>
-                    <span className="patient-summary-label">Tutor</span>
-                    <div className="patient-summary-value">
-                      {pet.usuario.nombre} {pet.usuario.apellido}
-                      {pet.usuario.telefono ? ` (${pet.usuario.telefono})` : ""}
+                    <h2 className="h5 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                      {pet?.nombre}
+                    </h2>
+                    <span className="badge bg-purple-subtle text-purple-emphasis border border-purple-subtle rounded-2 px-2 py-1">
+                      {pet?.especie}
+                    </span>
+                    {pet?.raza && <small className="text-muted ms-2">{pet.raza}</small>}
+                  </div>
+                </div>
+
+                {/* Patient Attributes */}
+                <div className="d-flex flex-column gap-2 mb-3">
+                  <div className="d-flex justify-content-between small">
+                    <span className="text-muted">Edad:</span>
+                    <strong className="text-dark">{pet?.edad ? `${pet.edad} años` : "No especificada"}</strong>
+                  </div>
+                  <div className="d-flex justify-content-between small">
+                    <span className="text-muted">Sexo:</span>
+                    <strong className="text-dark">{pet?.sexo || "No especificado"}</strong>
+                  </div>
+                  <div className="d-flex justify-content-between small">
+                    <span className="text-muted">Peso anterior:</span>
+                    <strong className="text-dark">{pet?.peso ? `${pet.peso} kg` : "Sin registro"}</strong>
+                  </div>
+                </div>
+
+                {/* Weigh-in input right here */}
+                <div className="mb-3 p-3 rounded-2" style={{ backgroundColor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
+                  <label htmlFor="patient-weigh-in" className="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1">
+                    <i className="bi bi-speedometer2 text-primary"></i> Pesaje en Consulta (kg) <span className="text-danger">*</span>
+                  </label>
+                  <div className="input-group input-group-sm">
+                    <input
+                      id="patient-weigh-in"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      className="form-control rounded-2"
+                      placeholder="0.00"
+                      value={peso}
+                      onChange={(e) => setPeso(e.target.value)}
+                      required
+                    />
+                    <span className="input-group-text rounded-2 ms-1">kg</span>
+                  </div>
+                  <small className="text-muted" style={{ fontSize: "0.72rem" }}>
+                    Actualizará el peso registrado en la ficha oficial.
+                  </small>
+                </div>
+
+                {/* Emergency Contact / Tutor */}
+                {tutorInfo && (
+                  <div className="p-3 rounded-2" style={{ backgroundColor: "#FAF9FC", border: "1px solid #EDE9FE" }}>
+                    <div className="small fw-bold text-uppercase text-muted mb-1" style={{ fontSize: "0.72rem" }}>
+                      Tutor y Contacto de Urgencia
+                    </div>
+                    <strong className="d-block text-dark" style={{ fontSize: "0.95rem" }}>
+                      {tutorInfo.nombre} {tutorInfo.apellido}
+                    </strong>
+                    {tutorInfo.telefono ? (
+                      <span className="small text-secondary d-block mt-1">
+                        <i className="bi bi-telephone text-primary me-1"></i>
+                        <a href={`tel:${tutorInfo.telefono}`} className="text-decoration-none fw-medium text-dark">{tutorInfo.telefono}</a>
+                      </span>
+                    ) : (
+                      <span className="small text-muted d-block mt-1">Sin teléfono asentado</span>
+                    )}
+                    {tutorInfo.email && (
+                      <small className="text-muted d-block mt-1" style={{ fontSize: "0.75rem" }}>
+                        <i className="bi bi-envelope me-1"></i> {tutorInfo.email}
+                      </small>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Alert Card for Expired Vaccinations */}
+              <div
+                className="rounded-3 p-3 shadow-sm d-flex gap-3 align-items-start"
+                style={{
+                  backgroundColor: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  color: "#991B1B"
+                }}
+              >
+                <i className="bi bi-exclamation-triangle fs-4 text-danger flex-shrink-0"></i>
+                <div>
+                  <strong className="d-block small fw-bold mb-1">
+                    Alerta Sanitaria: Calendario Vencido
+                  </strong>
+                  <p className="small mb-0" style={{ fontSize: "0.82rem", lineHeight: 1.4 }}>
+                    Vacunación Antirrábica y Quíntuple vencidas hace más de 30 días. Se recomienda aplicar refuerzo antes del alta clínica.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Right Column: Active Consultation Form */}
+          <div className="col-12 col-lg-8">
+            <form onSubmit={handleSubmit}>
+
+              {/* [S] Subjetivo */}
+              <div className="soap-section-card">
+                <div className="soap-section-header">
+                  <div className="soap-badge-letter badge-s">S</div>
+                  <div>
+                    <h2 className="h6 fw-bold mb-0 text-dark">Subjetivo (Anamnesis)</h2>
+                    <small className="text-muted">Motivo de consulta, síntomas declarados y tiempo de evolución</small>
+                  </div>
+                </div>
+
+                <div className="mb-2">
+                  <label htmlFor="subjetivo" className="form-label small fw-semibold text-muted">
+                    Anamnesis clínica / Motivo <span className="text-danger">*</span>
+                  </label>
+                  <textarea
+                    id="subjetivo"
+                    rows={3}
+                    className="form-control rounded-2"
+                    placeholder="Describa el motivo de la consulta, síntomas observados por el tutor, antecedentes recientes, apetito..."
+                    value={subjetivo}
+                    onChange={(e) => setSubjetivo(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* [O] Objetivo */}
+              <div className="soap-section-card">
+                <div className="soap-section-header">
+                  <div className="soap-badge-letter badge-o">O</div>
+                  <div>
+                    <h2 className="h6 fw-bold mb-0 text-dark">Objetivo (Constantes y Examen Físico)</h2>
+                    <small className="text-muted">Parámetros fisiológicos medidos y hallazgos a la inspección</small>
+                  </div>
+                </div>
+
+                <div className="row g-3 mb-3">
+                  <div className="col-sm-4">
+                    <label htmlFor="temperatura" className="form-label small fw-semibold text-muted">
+                      Temperatura (°C) <span className="text-danger">*</span>
+                    </label>
+                    <div className="input-group input-group-sm">
+                      <input
+                        id="temperatura"
+                        type="number"
+                        step="0.1"
+                        min="30"
+                        max="45"
+                        placeholder="38.5"
+                        className="form-control rounded-2"
+                        value={temperatura}
+                        onChange={(e) => setTemperatura(e.target.value)}
+                        required
+                      />
+                      <span className="input-group-text rounded-2 ms-1">°C</span>
+                    </div>
+                  </div>
+
+                  <div className="col-sm-4">
+                    <label htmlFor="fc" className="form-label small fw-semibold text-muted">
+                      Frec. Cardíaca (lpm)
+                    </label>
+                    <div className="input-group input-group-sm">
+                      <input
+                        id="fc"
+                        type="number"
+                        min="20"
+                        max="300"
+                        placeholder="110"
+                        className="form-control rounded-2"
+                        value={frecuenciaCardiaca}
+                        onChange={(e) => setFrecuenciaCardiaca(e.target.value)}
+                      />
+                      <span className="input-group-text rounded-2 ms-1">lpm</span>
+                    </div>
+                  </div>
+
+                  <div className="col-sm-4">
+                    <label htmlFor="fr" className="form-label small fw-semibold text-muted">
+                      Frec. Respiratoria (rpm)
+                    </label>
+                    <div className="input-group input-group-sm">
+                      <input
+                        id="fr"
+                        type="number"
+                        min="5"
+                        max="150"
+                        placeholder="28"
+                        className="form-control rounded-2"
+                        value={frecuenciaRespiratoria}
+                        onChange={(e) => setFrecuenciaRespiratoria(e.target.value)}
+                      />
+                      <span className="input-group-text rounded-2 ms-1">rpm</span>
                     </div>
                   </div>
                 </div>
-              )}
 
-              {appointment && (
-                <div className="patient-summary-item">
-                  <div className="patient-summary-icon">📅</div>
+                <div>
+                  <label htmlFor="objetivo" className="form-label small fw-semibold text-muted">
+                    Examen Físico / Hallazgos Clínicos
+                  </label>
+                  <textarea
+                    id="objetivo"
+                    rows={3}
+                    className="form-control rounded-2"
+                    placeholder="Mucosas, tiempo de llenado capilar, auscultación cardiopulmonar, palpación abdominal, ganglios, hidratación..."
+                    value={objetivo}
+                    onChange={(e) => setObjetivo(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* [A] Análisis */}
+              <div className="soap-section-card">
+                <div className="soap-section-header">
+                  <div className="soap-badge-letter badge-a">A</div>
                   <div>
-                    <span className="patient-summary-label">Turno Asociado</span>
-                    <div className="patient-summary-value">
-                      {new Date(appointment.fecha).toLocaleDateString("es-AR")} {new Date(appointment.fecha).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })} hs
-                    </div>
+                    <h2 className="h6 fw-bold mb-0 text-dark">Análisis (Diagnóstico)</h2>
+                    <small className="text-muted">Diagnóstico presuntivo o definitivo y juicio profesional</small>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="soap-form">
-          <section className="soap-card">
-            <div className="soap-card-header">
-              <div className="soap-letter-badge badge-s">S</div>
-              <div className="soap-card-title">
-                <h2>Subjetivo</h2>
-                <p>Anamnesis, motivo de consulta, síntomas referidos por el tutor y evolución</p>
-              </div>
-            </div>
-
-            <div className="soap-field">
-              <label htmlFor="subjetivo">
-                Anamnesis clínica / Motivo de consulta <span className="text-danger">*</span>
-              </label>
-              <textarea
-                id="subjetivo"
-                className="form-control"
-                placeholder="Describa el motivo de la consulta, síntomas observados por el tutor, tiempo de evolución, antecedentes recientes, apetito, ingesta de agua, deposiciones, etc."
-                value={subjetivo}
-                onChange={(e) => setSubjetivo(e.target.value)}
-                required
-              />
-            </div>
-          </section>
-
-          <section className="soap-card">
-            <div className="soap-card-header">
-              <div className="soap-letter-badge badge-o">O</div>
-              <div className="soap-card-title">
-                <h2>Objetivo</h2>
-                <p>Signos vitales, constantes fisiológicas y hallazgos del examen físico</p>
-              </div>
-            </div>
-
-            <div className="vitals-grid">
-              <div className="vital-input-group">
-                <label htmlFor="peso">
-                  Peso Actual <span className="text-danger">*</span>
-                </label>
-                <div className="vital-input-wrapper">
-                  <input
-                    id="peso"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    placeholder="0.00"
-                    value={peso}
-                    onChange={(e) => setPeso(e.target.value)}
+                <div>
+                  <label htmlFor="analisis" className="form-label small fw-semibold text-muted">
+                    Diagnóstico Clínico <span className="text-danger">*</span>
+                  </label>
+                  <textarea
+                    id="analisis"
+                    rows={2}
+                    className="form-control rounded-2"
+                    placeholder="Diagnóstico presuntivo, diagnósticos diferenciales, evaluación y estado del paciente..."
+                    value={analisis}
+                    onChange={(e) => setAnalisis(e.target.value)}
                     required
                   />
-                  <span className="vital-unit">kg</span>
                 </div>
-                <small className="vital-helper">✓ Actualiza ficha base</small>
               </div>
 
-              <div className="vital-input-group">
-                <label htmlFor="temperatura">
-                  Temperatura <span className="text-danger">*</span>
-                </label>
-                <div className="vital-input-wrapper">
-                  <input
-                    id="temperatura"
-                    type="number"
-                    step="0.1"
-                    min="30"
-                    max="45"
-                    placeholder="38.5"
-                    value={temperatura}
-                    onChange={(e) => setTemperatura(e.target.value)}
+              {/* [P] Plan & Prescripciones */}
+              <div className="soap-section-card">
+                <div className="soap-section-header">
+                  <div className="soap-badge-letter badge-p">P</div>
+                  <div>
+                    <h2 className="h6 fw-bold mb-0 text-dark">Plan (Tratamiento y Prescripción)</h2>
+                    <small className="text-muted">Indicaciones farmacológicas, posología, estudios solicitados y recomendaciones</small>
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label htmlFor="plan" className="form-label small fw-semibold text-muted">
+                    Tratamiento y Medicación Indicada <span className="text-danger">*</span>
+                  </label>
+                  <textarea
+                    id="plan"
+                    rows={3}
+                    className="form-control rounded-2"
+                    placeholder="Medicamentos (fármaco, dosis, vía, frecuencia y días de tratamiento), pautas de manejo..."
+                    value={plan}
+                    onChange={(e) => setPlan(e.target.value)}
                     required
                   />
-                  <span className="vital-unit">°C</span>
                 </div>
-              </div>
 
-              <div className="vital-input-group">
-                <label htmlFor="frecuenciaCardiaca">Frec. Cardíaca</label>
-                <div className="vital-input-wrapper">
-                  <input
-                    id="frecuenciaCardiaca"
-                    type="number"
-                    min="20"
-                    max="300"
-                    placeholder="100"
-                    value={frecuenciaCardiaca}
-                    onChange={(e) => setFrecuenciaCardiaca(e.target.value)}
+                <div>
+                  <label htmlFor="observaciones" className="form-label small fw-semibold text-muted">
+                    Observaciones y Pautas de Alarma para el Tutor
+                  </label>
+                  <textarea
+                    id="observaciones"
+                    rows={2}
+                    className="form-control rounded-2"
+                    placeholder="Fecha de control sugerida, pautas ante empeoramiento de síntomas..."
+                    value={observaciones}
+                    onChange={(e) => setObservaciones(e.target.value)}
                   />
-                  <span className="vital-unit">lpm</span>
                 </div>
               </div>
 
-              <div className="vital-input-group">
-                <label htmlFor="frecuenciaRespiratoria">Frec. Respiratoria</label>
-                <div className="vital-input-wrapper">
-                  <input
-                    id="frecuenciaRespiratoria"
-                    type="number"
-                    min="5"
-                    max="150"
-                    placeholder="25"
-                    value={frecuenciaRespiratoria}
-                    onChange={(e) => setFrecuenciaRespiratoria(e.target.value)}
-                  />
-                  <span className="vital-unit">rpm</span>
+              {/* Upload Zone for Medical Files */}
+              <div className="soap-section-card">
+                <h3 className="h6 fw-bold mb-2 text-dark">Estudios Complementarios & Archivos</h3>
+                <p className="text-muted small mb-3">Adjuntar análisis de laboratorio, RX o ecografías a esta consulta</p>
+
+                <div className="consultation-upload-zone">
+                  <div className="fs-2 mb-2" style={{ color: "var(--vet-primary, #6D28D9)" }}>
+                    <i className="bi bi-cloud-arrow-up"></i>
+                  </div>
+                  <strong className="d-block small text-dark">Arrastrá archivos aquí o hacé clic para explorar</strong>
+                  <span className="text-muted" style={{ fontSize: "0.78rem" }}>
+                    Formatos admitidos: PDF, JPG, PNG (hasta 5 MB por archivo)
+                  </span>
                 </div>
               </div>
-            </div>
 
-            <div className="soap-field">
-              <label htmlFor="objetivo">Hallazgos del Examen Físico</label>
-              <textarea
-                id="objetivo"
-                className="form-control"
-                placeholder="Inspección general, mucosas, tiempo de llenado capilar, palpación abdominal, auscultación cardiopulmonar, ganglios linfáticos, estado de hidratación, etc."
-                value={objetivo}
-                onChange={(e) => setObjetivo(e.target.value)}
-              />
-            </div>
-          </section>
+              {/* Bottom Action Bar */}
+              <div className="soap-actions-bar">
+                <Link
+                  to={turnoIdParam ? "/profesional/turnos" : `/profesional/mascotas/${pet?.id}`}
+                  className="btn btn-outline-secondary rounded-2 px-3 fw-medium"
+                >
+                  Cancelar
+                </Link>
 
-          <section className="soap-card">
-            <div className="soap-card-header">
-              <div className="soap-letter-badge badge-a">A</div>
-              <div className="soap-card-title">
-                <h2>Análisis</h2>
-                <p>Diagnóstico presuntivo, diagnóstico definitivo y juicio clínico</p>
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  className="btn btn-outline-primary rounded-2 px-3 fw-medium"
+                >
+                  Guardar Borrador
+                </button>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary rounded-2 shadow-sm px-4 fw-medium"
+                  style={{ backgroundColor: "var(--vet-primary, #6D28D9)", borderColor: "var(--vet-primary, #6D28D9)" }}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Finalizando...
+                    </>
+                  ) : (
+                    "Finalizar Consulta"
+                  )}
+                </button>
               </div>
-            </div>
 
-            <div className="soap-field">
-              <label htmlFor="analisis">
-                Diagnóstico / Juicio Clínico <span className="text-danger">*</span>
-              </label>
-              <textarea
-                id="analisis"
-                className="form-control"
-                placeholder="Diagnóstico presuntivo o definitivo, diagnósticos diferenciales, severidad y evaluación integral del cuadro clínico."
-                value={analisis}
-                onChange={(e) => setAnalisis(e.target.value)}
-                required
-              />
-            </div>
-          </section>
-
-          <section className="soap-card">
-            <div className="soap-card-header">
-              <div className="soap-letter-badge badge-p">P</div>
-              <div className="soap-card-title">
-                <h2>Plan</h2>
-                <p>Tratamiento, plan terapéutico farmacológico, estudios y seguimiento</p>
-              </div>
-            </div>
-
-            <div className="soap-field">
-              <label htmlFor="plan">
-                Plan Terapéutico y Tratamiento <span className="text-danger">*</span>
-              </label>
-              <textarea
-                id="plan"
-                className="form-control"
-                placeholder="Indicaciones farmacológicas (medicamentos, dosis, vía, frecuencia y duración), procedimientos en consulta, estudios complementarios solicitados (análisis de sangre, ecografía, RX), pautas de manejo o nutrición."
-                value={plan}
-                onChange={(e) => setPlan(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="soap-field">
-              <label htmlFor="observaciones">Observaciones / Indicaciones al Tutor</label>
-              <textarea
-                id="observaciones"
-                className="form-control"
-                placeholder="Signos de alarma que requieran consulta de urgencia, fecha estimada de control o seguimiento, recomendaciones de cuidado en el hogar."
-                value={observaciones}
-                onChange={(e) => setObservaciones(e.target.value)}
-              />
-            </div>
-          </section>
-
-          <div className="soap-actions-bar">
-            <Link
-              to={turnoIdParam ? "/profesional/turnos" : `/profesional/mascotas/${pet?.id}`}
-              className="btn btn-outline-secondary"
-            >
-              Cancelar
-            </Link>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? (
-                <>
-                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                  Guardando Atención...
-                </>
-              ) : (
-                <>💾 Guardar Atención Médica (SOAP)</>
-              )}
-            </button>
+            </form>
           </div>
-        </form>
+
+        </div>
+
       </div>
     </main>
   );

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Consultation } from "../../types/Consultation";
+import "../../styles/ConsultationModals.css";
 
 interface ConsultationAnnulModalProps {
   consulta: Consultation | null;
@@ -33,7 +34,10 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
       <div className="audit-modal-container" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
         <div className="audit-modal-header">
           <div>
-            <h3 className="text-danger">🚫 Anular Consulta Médica</h3>
+            <h3 className="text-danger">
+              <i className="bi bi-slash-circle me-2"></i>
+              Anular Consulta Médica
+            </h3>
             <p>Consulta #{consulta.id} · Paciente: {petName}</p>
           </div>
           <button
@@ -47,7 +51,10 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
 
         <div className="audit-modal-body">
           <div className="alert alert-danger" style={{ fontSize: "0.85rem" }}>
-            <strong>⚠️ Prohibición de Borrado Físico:</strong>
+            <strong>
+              <i className="bi bi-exclamation-triangle-fill me-1"></i>
+              Prohibición de Borrado Físico:
+            </strong>
             <div style={{ marginTop: 4 }}>
               Por normativa legal y médica, los registros clínicos nunca se eliminan físicamente de la base de datos.
               Esta consulta será dada de baja lógicamente y el evento quedará asentado en el registro de auditoría.
@@ -71,7 +78,7 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
         <div className="audit-modal-footer">
           <button
             type="button"
-            className="btn btn-outline-secondary"
+            className="btn btn-outline-secondary rounded-2 px-3 fw-medium"
             onClick={onClose}
             disabled={saving}
           >
@@ -79,7 +86,8 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
           </button>
           <button
             type="button"
-            className="btn btn-danger"
+            className="btn btn-danger rounded-2 shadow-sm px-4 fw-medium"
+            style={{ backgroundColor: "#DC2626", borderColor: "#DC2626" }}
             onClick={handleConfirm}
             disabled={saving}
           >

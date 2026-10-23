@@ -1,8 +1,260 @@
+/* ==========================================================================
+   VETCARE DESIGN SYSTEM - DEEP VIOLET MINIMALIST THEME
+   ========================================================================== */
+
+:root {
+  /* Color Palette */
+  --primary-violet: #6D28D9;
+  --primary-hover: #7C3AED;
+  --primary-active: #5B21B6;
+  --lavender-tint: #F5F3FF;
+  --lavender-border: #EDE9FE;
+  --lavender-border-hover: #DDD6FE;
+  --app-canvas: #FAF9FC;
+
+  /* High Contrast Typography */
+  --text-heading: #1E1B4B;
+  --text-body: #334155;
+  --text-muted: #64748B;
+
+  /* Surfaces & Geometry */
+  --surface-card: #FFFFFF;
+  --radius-sm: 4px;
+  --radius-btn: 6px;       /* Strict 6px architectural radius (Bootstrap rounded-2) */
+  --radius-card: 12px;     /* Rounded-3 */
+  --border-subtle: 1px solid #EDE9FE;
+  --border-input: 1px solid #D1D5DB;
+
+  /* Semantic Highlights */
+  --color-success: #059669;
+  --color-success-bg: #ECFDF5;
+  --color-warning: #D97706;
+  --color-warning-bg: #FFFBEB;
+  --color-danger: #DC2626;
+  --color-danger-bg: #FEF2F2;
+}
+
+/* Global Reset & Base Typography */
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--app-canvas);
+  color: var(--text-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-heading);
+  letter-spacing: -0.02em;
+}
+
+/* --------------------------------------------------------------------------
+   CRITICAL BUTTONS STYLING: STRICT 6PX ARCHITECTURAL RADIUS, NO PILLS
+   -------------------------------------------------------------------------- */
+.btn {
+  border-radius: var(--radius-btn) !important;
+  font-weight: 500 !important;
+  font-size: 0.925rem;
+  letter-spacing: -0.01em;
+  padding: 0.5rem 1rem;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary {
+  background-color: var(--primary-violet) !important;
+  border-color: var(--primary-violet) !important;
+  color: #FFFFFF !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  box-shadow: 0 2px 4px rgba(109, 40, 217, 0.25) !important;
+}
+
+.btn-primary:active {
+  background-color: var(--primary-active) !important;
+  border-color: var(--primary-active) !important;
+}
+
+.btn-outline-primary {
+  background-color: transparent !important;
+  border-color: var(--primary-violet) !important;
+  color: var(--primary-violet) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: var(--lavender-tint) !important;
+  border-color: var(--primary-hover) !important;
+  color: var(--primary-hover) !important;
+}
+
+.btn-light {
+  background-color: #FFFFFF !important;
+  border-color: var(--lavender-border) !important;
+  color: var(--text-body) !important;
+}
+
+.btn-light:hover {
+  background-color: var(--lavender-tint) !important;
+  border-color: var(--lavender-border-hover) !important;
+  color: var(--text-heading) !important;
+}
+
+.btn-outline-secondary {
+  border-color: var(--lavender-border-hover) !important;
+  color: var(--text-muted) !important;
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--lavender-tint) !important;
+  border-color: var(--primary-violet) !important;
+  color: var(--primary-violet) !important;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.825rem;
+  border-radius: var(--radius-btn) !important;
+}
+
+/* --------------------------------------------------------------------------
+   FORM CONTROLS & INPUTS: 6PX RADIUS WITH VIOLET FOCUS RING
+   -------------------------------------------------------------------------- */
+.form-control,
+.form-select {
+  border-radius: var(--radius-btn) !important;
+  border: var(--border-input);
+  font-size: 0.925rem;
+  padding: 0.55rem 0.85rem;
+  color: var(--text-heading);
+  background-color: #FFFFFF;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-hover) !important;
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.15) !important;
+  outline: none;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+/* --------------------------------------------------------------------------
+   CARDS & SURFACES: 12PX RADIUS (rounded-3), #EDE9FE BORDERS, ZERO HEAVY SHADOWS
+   -------------------------------------------------------------------------- */
+.card {
+  background-color: var(--surface-card);
+  border: var(--border-subtle) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: var(--border-subtle);
+  padding: 1rem 1.25rem;
+}
+
+.card-footer {
+  background-color: transparent;
+  border-top: var(--border-subtle);
+  padding: 1rem 1.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   BADGES & TAGS: FLAT RECTANGULAR WITH 6PX RADIUS & SOFT LAVENDER
+   -------------------------------------------------------------------------- */
+.badge {
+  border-radius: var(--radius-btn) !important;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.775rem;
+  letter-spacing: 0.01em;
+}
+
+.bg-purple-subtle,
+.badge-violet {
+  background-color: var(--lavender-tint) !important;
+  color: var(--primary-violet) !important;
+  border: 1px solid var(--lavender-border-hover) !important;
+}
+
+.badge-success-subtle {
+  background-color: var(--color-success-bg) !important;
+  color: var(--color-success) !important;
+  border: 1px solid #A7F3D0 !important;
+}
+
+.badge-warning-subtle {
+  background-color: var(--color-warning-bg) !important;
+  color: var(--color-warning) !important;
+  border: 1px solid #FDE68A !important;
+}
+
+.badge-danger-subtle {
+  background-color: var(--color-danger-bg) !important;
+  color: var(--color-danger) !important;
+  border: 1px solid #FECACA !important;
+}
+
+/* Squircles & Avatars */
+.squircle-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-btn);
+  background-color: var(--lavender-tint);
+  color: var(--primary-violet);
+  flex-shrink: 0;
+}
+
+/* Nav Pills & Underline Tabs */
+.nav-underline .nav-link {
+  color: var(--text-muted);
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  padding-bottom: 0.6rem;
+  transition: all 0.15s ease;
+}
+
+.nav-underline .nav-link:hover {
+  color: var(--primary-violet);
+}
+
+.nav-underline .nav-link.active {
+  color: var(--primary-violet) !important;
+  border-bottom-color: var(--primary-violet) !important;
+  font-weight: 600;
+}
+
+/* Modals */
+.modal-content {
+  border-radius: var(--radius-card) !important;
+  border: var(--border-subtle) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Vector Line Icon Styling (Subtle Stroke & Alignment) */
+i.bi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.125em;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
 }

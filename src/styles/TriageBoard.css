@@ -1,322 +1,217 @@
-/* Triage & Guardia Kanban Board Styling */
+/* ==========================================================================
+   TriageBoard.css - Ultra-Minimalist Deep Violet Emergency Triage Board
+   ========================================================================== */
 
-.triage-page {
-  background-color: #f4f6f9;
-  min-height: calc(100vh - 60px);
+.triage-canvas {
+  background-color: var(--vet-bg-canvas, #FAF9FC);
+  min-height: calc(100vh - 72px);
+  padding: 1.5rem;
 }
 
-.triage-header h1 {
-  font-weight: 700;
-  color: #1e293b;
+/* Live Pulse Dot */
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10B981;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: livePulse 2s infinite;
 }
 
-.triage-metrics-bar {
-  border: 1px solid #e2e8f0;
+@keyframes livePulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
 }
 
-.metric-pill {
-  font-size: 0.9rem;
-  background-color: #f8fafc;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-}
-
-/* Kanban Board Container & Columns */
-.kanban-board-container {
+/* Kanban Columns */
+.kanban-board-scroll {
+  display: flex;
+  gap: 1rem;
   overflow-x: auto;
-  padding-bottom: 24px;
+  padding-bottom: 1.5rem;
+  min-height: 80vh;
 }
 
-.kanban-scroll-row {
-  min-width: 1080px;
-}
-
-.kanban-col-wrapper {
+.kanban-column-container {
+  flex: 0 0 320px;
+  max-width: 340px;
+  background-color: #F1F3F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 0.875rem;
   display: flex;
   flex-direction: column;
+  transition: all 0.2s ease;
 }
 
-.kanban-column {
-  background-color: #ebedf2;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 230px);
-  min-height: 580px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border-top: 5px solid transparent;
-  transition: all 0.2s ease-in-out;
+.kanban-column-container.drop-zone-active {
+  outline: 2px dashed var(--vet-primary, #6D28D9);
+  background-color: var(--vet-subtle-lavender, #F5F3FF);
 }
 
-/* Colores temáticos por columna */
-.badge-critica {
-  border-top-color: #e63946;
-  background-color: #fdf2f2;
+.kanban-column-header-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--vet-border-tint, #EDE9FE);
+  border-radius: 6px;
+  padding: 0.625rem 0.875rem;
+  margin-bottom: 0.875rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-.badge-moderada {
-  border-top-color: #f59e0b;
-  background-color: #fffbeb;
-}
-
-.badge-programada {
-  border-top-color: #10b981;
-  background-color: #f0fdf4;
-}
-
-.badge-internacion {
-  border-top-color: #3b82f6;
-  background-color: #eff6ff;
-}
-
-/* Efecto cuando se arrastra una tarjeta sobre la columna */
-.kanban-column.column-drag-over {
-  outline: 2px dashed #4f46e5;
-  background-color: #e0e7ff;
-  transform: scale(1.01);
-}
-
-.column-header {
-  padding: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.col-icon {
-  font-size: 1.3rem;
-}
-
-.col-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.col-subtitle {
-  color: #64748b;
-  font-size: 0.8rem;
-}
-
-.col-badge {
-  background: white;
-  color: #1e293b;
-  font-weight: 700;
-  font-size: 0.85rem;
-  padding: 2px 10px;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.add-card-btn {
-  border: 1px dashed #cbd5e1;
-  font-size: 0.82rem;
-  font-weight: 500;
-  transition: background 0.15s;
-}
-
-.add-card-btn:hover {
-  background-color: #ffffff;
-  color: #0f172a !important;
-}
-
-.column-body {
-  padding: 12px;
+.kanban-cards-feed {
+  flex: 1 1 auto;
   overflow-y: auto;
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem;
+  min-height: 200px;
 }
 
-/* Triage Card Styling */
-.triage-card {
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 14px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  border-left: 4px solid #94a3b8;
+/* Triage Card Component */
+.triage-kanban-card {
+  background-color: #FFFFFF;
+  border-radius: 6px; /* strictly 6px */
+  border: 1px solid var(--vet-border-tint, #EDE9FE);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 0.875rem;
   cursor: grab;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
 }
 
-.triage-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-}
-
-.triage-card.dragging {
-  opacity: 0.4;
+.triage-kanban-card:active {
   cursor: grabbing;
 }
 
-/* Bordes laterales por estado */
-.triage-card.column-emergencia_critica {
-  border-left-color: #e63946;
+.triage-kanban-card.is-dragging {
+  opacity: 0.45;
+  transform: scale(0.98);
 }
 
-.triage-card.column-urgencia_moderada {
-  border-left-color: #f59e0b;
-}
-
-.triage-card.column-consulta_programada {
-  border-left-color: #10b981;
-}
-
-.triage-card.column-internacion_quirofano {
-  border-left-color: #3b82f6;
-}
-
-.triage-card-header {
+/* Squircle Avatar inside Card */
+.triage-squircle-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background-color: var(--vet-subtle-lavender, #F5F3FF);
+  color: var(--vet-primary, #6D28D9);
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.patient-title-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.species-icon {
-  font-size: 1.5rem;
-}
-
-.patient-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.patient-breed {
-  font-size: 0.8rem;
-}
-
-.triage-card-reason strong {
-  font-size: 0.82rem;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.triage-card-reason p {
-  font-size: 0.92rem;
-  color: #1e293b;
-  line-height: 1.35;
-}
-
-/* Cronómetro en tiempo real */
-.triage-timer-container {
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-}
-
-.triage-timer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.triage-timer-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.triage-timer-display {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-weight: 700;
-  font-size: 1.05rem;
-  color: #0f172a;
-}
-
-.triage-timer-sub {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 2px;
-}
-
-/* Animaciones y alertas de tiempo */
-.timer-warning {
-  border-color: #fbbf24;
-  background-color: #fefce8;
-}
-
-.timer-warning .triage-timer-display {
-  color: #b45309;
-}
-
-.timer-warning-pulse {
-  border-color: #f59e0b;
-  background-color: #fef3c7;
-  animation: pulse-border-warning 2s infinite ease-in-out;
-}
-
-.timer-critical-pulse {
-  border-color: #ef4444;
-  background-color: #fee2e2;
-  animation: pulse-border-critical 1.5s infinite ease-in-out;
-}
-
-.timer-critical-pulse .triage-timer-display {
-  color: #dc2626;
-}
-
-@keyframes pulse-border-critical {
-  0% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-  }
-}
-
-@keyframes pulse-border-warning {
-  0% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 5px rgba(245, 158, 11, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-  }
-}
-
-/* Empty Column State */
-.empty-column-placeholder {
-  text-align: center;
-  padding: 32px 16px;
-  color: #94a3b8;
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 2px dashed #cbd5e1;
-  border-radius: 8px;
-  margin-top: 16px;
+  font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
-.placeholder-icon {
-  font-size: 2rem;
-  margin-bottom: 8px;
-  opacity: 0.6;
-}
-
-.placeholder-text {
+/* Timer Chip */
+.triage-timer-chip {
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: var(--bs-font-monospace, monospace);
+  font-size: 0.75rem;
   font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
 }
 
-.placeholder-sub {
-  font-size: 0.78rem;
+.triage-timer-chip.timer-normal {
+  background-color: #F8FAFC;
+  color: #475569;
+  border-color: #E2E8F0;
+}
+
+.triage-timer-chip.timer-warn {
+  background-color: #FFFBEB;
+  color: #D97706;
+  border-color: #FDE68A;
+}
+
+/* Offcanvas Reception Drawer */
+.reception-offcanvas-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 1045;
+}
+
+.reception-offcanvas-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 440px;
+  max-width: 90vw;
+  background-color: #FFFFFF;
+  border-left: 1px solid var(--vet-border-tint, #EDE9FE);
+  padding: 1.5rem;
+  box-shadow: -10px 0 25px -5px rgba(0, 0, 0, 0.1);
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  animation: offcanvasSlideIn 0.25s ease-out;
+}
+
+@keyframes offcanvasSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Admission Item Card */
+.admission-feed-card {
+  background-color: #FFFFFF;
+  border: 1px solid var(--vet-border-tint, #EDE9FE);
+  border-radius: 6px;
+  padding: 0.875rem;
+  margin-bottom: 0.625rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* Level Selection Cards in Modal */
+.level-selection-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.level-select-card {
+  border: 1.5px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 0.75rem;
+  cursor: pointer;
+  background-color: #FFFFFF;
+  transition: all 0.15s ease;
+}
+
+.level-select-card:hover {
+  border-color: var(--vet-primary, #6D28D9);
+  background-color: var(--vet-subtle-lavender, #F5F3FF);
+}
+
+.level-select-card.active {
+  border-color: var(--vet-primary, #6D28D9);
+  background-color: var(--vet-subtle-lavender, #F5F3FF);
+  box-shadow: 0 0 0 1px var(--vet-primary, #6D28D9);
 }

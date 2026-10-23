@@ -20,119 +20,129 @@ export const ConsultationCard: React.FC<ConsultationCardProps> = ({
 
   return (
     <div
-      key={c.id}
-      style={{
-        border: "1px solid #e2e8f0",
-        borderRadius: 12,
-        padding: "18px 20px",
-        marginBottom: "16px",
-        background: "#ffffff",
-      }}
+      className="card rounded-3 p-4 mb-3 bg-white shadow-sm border"
+      style={{ borderColor: "#EDE9FE" }}
     >
-      <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+      <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-light-subtle flex-wrap gap-2">
         <div className="d-flex align-items-center gap-2 flex-wrap">
-          <strong style={{ color: "#0f172a", fontSize: "1rem" }}>
-            📅 {c.fecha ? new Date(c.fecha).toLocaleDateString("es-AR") : "Fecha no disponible"}
-          </strong>
-          <span
-            className={`consultation-badge-version ${
-              c.version && c.version > 1
-                ? "consultation-badge-amended"
-                : "consultation-badge-original"
-            }`}
-            title={
-              c.version && c.version > 1
-                ? `Versión ${c.version} (Consulta con enmiendas registradas)`
-                : "Versión 1 (Registro original inalterado)"
-            }
-          >
-            🏷️ v{c.version || 1} · {c.version && c.version > 1 ? "Enmendada" : "Original"}
+          {/* Date badge in bg-purple-subtle with rounded-2 */}
+          <span className="badge bg-purple-subtle rounded-2 px-2 py-1 fs-6">
+            <i className="bi bi-calendar-event me-1"></i>
+            {c.fecha ? new Date(c.fecha).toLocaleDateString("es-AR") : "Fecha no disponible"}
           </span>
+
+          <span
+            className={`badge rounded-2 ${
+              c.version && c.version > 1
+                ? "bg-warning-subtle text-warning border border-warning"
+                : "bg-light text-muted border"
+            }`}
+          >
+            v{c.version || 1} · {c.version && c.version > 1 ? "Enmendada" : "Original"}
+          </span>
+
           {c.veterinario && (
-            <span className="text-muted ms-1" style={{ fontSize: "0.875rem" }}>
+            <span className="text-muted ms-1 small">
               por Dr./Dra. {c.veterinario.nombre} {c.veterinario.apellido}
             </span>
           )}
         </div>
+
         <div className="d-flex gap-2 flex-wrap">
-          <span className="badge bg-light text-dark border" title="Peso actual">
-            ⚖️ {c.peso} kg
+          <span className="badge bg-light text-dark border rounded-2" title="Peso actual">
+            <i className="bi bi-speedometer2 me-1 text-secondary"></i>{c.peso} kg
           </span>
-          <span className="badge bg-light text-dark border" title="Temperatura">
-            🌡️ {c.temperatura} °C
+          <span className="badge bg-light text-dark border rounded-2" title="Temperatura">
+            <i className="bi bi-thermometer-half me-1 text-secondary"></i>{c.temperatura} °C
           </span>
           {c.frecuenciaCardiaca !== null && c.frecuenciaCardiaca !== undefined && (
-            <span className="badge bg-light text-dark border" title="Frecuencia Cardíaca">
-              💓 {c.frecuenciaCardiaca} lpm
+            <span className="badge bg-light text-dark border rounded-2" title="Frecuencia Cardíaca">
+              <i className="bi bi-heart-pulse me-1 text-danger"></i>{c.frecuenciaCardiaca} lpm
             </span>
           )}
           {c.frecuenciaRespiratoria !== null && c.frecuenciaRespiratoria !== undefined && (
-            <span className="badge bg-light text-dark border" title="Frecuencia Respiratoria">
-              🫁 {c.frecuenciaRespiratoria} rpm
+            <span className="badge bg-light text-dark border rounded-2" title="Frecuencia Respiratoria">
+              <i className="bi bi-lungs me-1 text-primary"></i>{c.frecuenciaRespiratoria} rpm
             </span>
           )}
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-        <div>
+      <div className="row g-3">
+        <div className="col-md-6">
           <small className="text-primary fw-bold d-block mb-1">[S] Subjetivo (Anamnesis):</small>
-          <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, whiteSpace: "pre-line" }}>{c.subjetivo}</p>
+          <p className="small text-dark mb-0" style={{ whiteSpace: "pre-line" }}>{c.subjetivo}</p>
         </div>
 
-        <div>
-          <small className="text-warning fw-bold d-block mb-1">[A] Diagnóstico / Análisis:</small>
-          <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, whiteSpace: "pre-line" }}>{c.analisis}</p>
+        <div className="col-md-6">
+          <small className="text-warning-emphasis fw-bold d-block mb-1">[A] Diagnóstico / Análisis:</small>
+          <p className="small text-dark mb-0" style={{ whiteSpace: "pre-line" }}>{c.analisis}</p>
         </div>
 
-        <div>
+        <div className="col-md-6">
           <small className="text-success fw-bold d-block mb-1">[O] Objetivo (Examen Físico):</small>
-          <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, whiteSpace: "pre-line" }}>
+          <p className="small text-dark mb-0" style={{ whiteSpace: "pre-line" }}>
             {c.objetivo ? c.objetivo : "Sin hallazgos adicionales descriptos"}
           </p>
         </div>
 
-        <div>
-          <small className="text-info fw-bold d-block mb-1">[P] Plan & Tratamiento:</small>
-          <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, whiteSpace: "pre-line" }}>{c.plan}</p>
+        <div className="col-md-6">
+          <small className="text-info-emphasis fw-bold d-block mb-1">[P] Plan & Tratamiento:</small>
+          <p className="small text-dark mb-0" style={{ whiteSpace: "pre-line" }}>{c.plan}</p>
         </div>
       </div>
 
       {c.observaciones && (
-        <div className="mt-3 pt-2 border-top">
+        <div className="mt-3 pt-2 border-top border-light-subtle">
           <small className="text-muted fw-bold d-block">Observaciones / Indicaciones al tutor:</small>
-          <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0, whiteSpace: "pre-line" }}>{c.observaciones}</p>
+          <p className="small text-muted mb-0" style={{ whiteSpace: "pre-line" }}>{c.observaciones}</p>
         </div>
       )}
 
-      <div className="consultation-actions-bar">
+      {/* Expandable Prescriptions if available */}
+      {c.prescripciones && c.prescripciones.length > 0 && (
+        <div className="mt-3 pt-2 border-top border-light-subtle">
+          <small className="text-muted fw-bold d-block mb-2">
+            <i className="bi bi-capsule me-1 text-purple"></i> Medicamentos Prescriptos:
+          </small>
+          <div className="d-flex flex-wrap gap-2">
+            {c.prescripciones.map((p, idx) => (
+              <span key={idx} className="badge bg-purple-subtle rounded-2 p-2 text-start">
+                <strong>{p.medicamento}</strong> - {p.dosis} ({p.frecuencia})
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="d-flex justify-content-end gap-2 mt-3 pt-2 border-top border-light-subtle flex-wrap">
         <button
           type="button"
-          className="consultation-action-btn btn-audit"
+          className="btn btn-light btn-sm rounded-2 text-secondary"
           onClick={() => onOpenAudit(c)}
           title="Ver historial de cambios inmutables y trazabilidad legal"
         >
-          📜 Auditoría e Inmutabilidad (v{c.version || 1})
+          <i className="bi bi-clock-history me-1"></i> Auditoría (v{c.version || 1})
         </button>
 
         {isProfessional && (
           <>
             <button
               type="button"
-              className="consultation-action-btn btn-amend"
+              className="btn btn-outline-secondary btn-sm rounded-2"
               onClick={() => onOpenEdit(c)}
               title="Crear una nueva versión histórica con enmienda médica"
             >
-              ✏️ Enmendar Consulta
+              <i className="bi bi-pencil-square me-1"></i> Enmendar
             </button>
 
             <button
               type="button"
-              className="consultation-action-btn btn-annul"
+              className="btn btn-outline-danger btn-sm rounded-2"
               onClick={() => onOpenAnular(c)}
               title="Anulación lógica de la consulta (soft delete)"
             >
-              🗑️ Anular
+              <i className="bi bi-trash3 me-1"></i> Anular
             </button>
           </>
         )}

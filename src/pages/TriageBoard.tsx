@@ -3,50 +3,41 @@ import type { TriageItem, TriageColumn, CreateTriageDTO } from "../types/Triage"
 import { triageService } from "../services/triageService";
 import { TriageCard } from "../components/triage/TriageCard";
 import { NewTriageModal } from "../components/triage/NewTriageModal";
+import { ReceptionQueue } from "../components/triage/ReceptionQueue";
+import { TIMERS } from "../constants";
 import "../styles/TriageBoard.css";
 
 interface ColumnConfig {
   key: TriageColumn;
   title: string;
   subtitle: string;
-  icon: string;
-  badgeClass: string;
-  themeColor: string;
+  indicatorColor: string;
 }
 
-// Orden requerido: Consulta programada, Urgencia moderada, Emergencia Crítica e Internación/Quirófano
 const COLUMNAS: ColumnConfig[] = [
   {
     key: "CONSULTA_PROGRAMADA",
     title: "Consulta Programada",
-    subtitle: "Turnos agendados del día y controles",
-    icon: "🟢",
-    badgeClass: "badge-programada",
-    themeColor: "#198754",
+    subtitle: "Turnos agendados y controles",
+    indicatorColor: "#059669",
   },
   {
     key: "URGENCIA_MODERADA",
     title: "Urgencia Moderada",
-    subtitle: "Atención prioritaria - Monitoreo constante",
-    icon: "🟡",
-    badgeClass: "badge-moderada",
-    themeColor: "#ffc107",
+    subtitle: "Atención prioritaria",
+    indicatorColor: "#D97706",
   },
   {
     key: "EMERGENCIA_CRITICA",
     title: "Emergencia Crítica",
-    subtitle: "Riesgo vital - Atención inmediata",
-    icon: "🔴",
-    badgeClass: "badge-critica",
-    themeColor: "#dc3545",
+    subtitle: "Riesgo vital inmediato",
+    indicatorColor: "#DC2626",
   },
   {
     key: "INTERNACION_QUIROFANO",
     title: "Internación / Quirófano",
-    subtitle: "En cirugía, anestesia o internación activa",
-    icon: "🏥",
-    badgeClass: "badge-internacion",
-    themeColor: "#0d6efd",
+    subtitle: "En cirugía o internación",
+    indicatorColor: "#6D28D9",
   },
 ];
 
@@ -57,7 +48,8 @@ export const TriageBoard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [dragOverCol, setDragOverCol] = useState<TriageColumn | null>(null);
 
-  // Modal para ingresar paciente sin turno o walk-in
+  // Reception Drawer Offcanvas & New Entry Modal
+  const [isReceptionOpen, setIsReceptionOpen] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [targetColumnForNew, setTargetColumnForNew] = useState<TriageColumn>("URGENCIA_MODERADA");
 
@@ -65,12 +57,10 @@ export const TriageBoard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem("token") || "";
-      const data = await triageService.getKanban(token);
+      const data = await triageService.getKanban();
       setItems(data);
     } catch (err: any) {
-      console.error("Error al cargar tablero de triage:", err);
-      setError(err.message || "Error al conectar con el servidor");
+      setError(err.message || "Error al conectar con el servidor de triage");
     } finally {
       setLoading(false);
     }
@@ -79,42 +69,33 @@ export const TriageBoard: React.FC = () => {
   useEffect(() => {
     cargarTablero();
 
-    // Auto-recarga periódica cada 30 segundos
     const timerId = setInterval(() => {
-      const token = localStorage.getItem("token") || "";
-      if (token) {
-        triageService
-          .getKanban(token)
-          .then((data) => setItems(data))
-          .catch(() => {});
-      }
-    }, 30000);
+      triageService
+        .getKanban()
+        .then((data) => setItems(data))
+        .catch(() => {});
+    }, TIMERS.TRIAGE_POLLING_INTERVAL_MS);
 
     return () => clearInterval(timerId);
   }, []);
 
-  // Mover tarjeta (Drag & Drop o Selector)
   const handleMoverTarjeta = async (id: number, nuevaColumna: TriageColumn) => {
     const itemActual = items.find((it) => it.id === id);
     if (!itemActual || itemActual.columna === nuevaColumna) return;
 
-    // Actualización optimista en el front
     const itemsAnteriores = [...items];
     setItems((prev) =>
       prev.map((it) => (it.id === id ? { ...it, columna: nuevaColumna } : it))
     );
 
     try {
-      const token = localStorage.getItem("token") || "";
-      await triageService.moverTriage(id, nuevaColumna, token);
+      await triageService.moverTriage(id, nuevaColumna);
     } catch (err: any) {
-      // Revertir ante error
       setItems(itemsAnteriores);
-      alert(`No se pudo mover el paciente: ${err.message || "Error desconocido"}`);
+      setError(`No se pudo mover el paciente: ${err.message || "Error desconocido"}`);
     }
   };
 
-  // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, colKey: TriageColumn) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -143,26 +124,22 @@ export const TriageBoard: React.FC = () => {
     }
   };
 
-  // Egresar paciente (Dar de alta o finalizar atención en guardia)
   const handleFinalizar = async (id: number, nombrePaciente: string) => {
     const confirm = window.confirm(
-      `¿Desea egresar a "${nombrePaciente}" del tablero de guardia?\n\nEsto finalizará su permanencia en el triage.`
+      `¿Desea egresar a "${nombrePaciente}" del tablero de guardia?\n\nEsto finalizará su permanencia en la sala de triage.`
     );
     if (!confirm) return;
 
     try {
-      const token = localStorage.getItem("token") || "";
-      await triageService.finalizarTriage(id, token);
+      await triageService.finalizarTriage(id);
       setItems((prev) => prev.filter((it) => it.id !== id));
     } catch (err: any) {
-      alert(`Error al egresar paciente: ${err.message || "Error desconocido"}`);
+      setError(`Error al egresar paciente: ${err.message || "Error desconocido"}`);
     }
   };
 
-  // Crear nuevo ingreso (agendar paciente que llegó sin turno)
-  const handleCreateTriage = async (dto: CreateTriageDTO) => {
-    const token = localStorage.getItem("token") || "";
-    const nuevo = await triageService.createTriage(dto, token);
+  const handleAdmitPatient = async (dto: CreateTriageDTO) => {
+    const nuevo = await triageService.createTriage(dto);
     setItems((prev) => [nuevo, ...prev]);
   };
 
@@ -171,7 +148,6 @@ export const TriageBoard: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Filtrado de tarjetas
   const filteredItems = items.filter((item) => {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
@@ -183,164 +159,184 @@ export const TriageBoard: React.FC = () => {
     );
   });
 
-  // Estadísticas en el orden exacto solicitado:
-  // Consulta programada, Urgencia moderada, Emergencia Crítica e Internación/Quirófano
-  const countProgramados = items.filter((i) => i.columna === "CONSULTA_PROGRAMADA").length;
-  const countModerados = items.filter((i) => i.columna === "URGENCIA_MODERADA").length;
-  const countCriticos = items.filter((i) => i.columna === "EMERGENCIA_CRITICA").length;
-  const countInternados = items.filter((i) => i.columna === "INTERNACION_QUIROFANO").length;
+  const activeTriagePetIds = items.map((i) => i.mascotaId).filter(Boolean);
 
   return (
-    <main className="triage-page">
-      <div className="container-fluid px-4 py-4">
-        {/* Cabecera del Tablero */}
-        <div className="triage-header mb-4">
-          <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div>
-              <h1 className="h2 mb-1 d-flex align-items-center gap-2">
-                <span>🚨</span> Tablero Kanban de Triage y Guardia
+    <main className="triage-canvas">
+      <div className="container-fluid px-0">
+
+        {/* Top Action Bar */}
+        <div className="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
+          
+          {/* Left: Title & Live pulse indicator */}
+          <div>
+            <div className="d-flex align-items-center gap-2">
+              <h1 className="h4 fw-bold mb-0" style={{ color: "#1E1B4B" }}>
+                Tablero de Triage & Urgencias
               </h1>
-              <p className="text-muted mb-0">
-                Monitoreo en tiempo real, clasificación y gestión de pacientes en sala
-              </p>
             </div>
-
-            <div className="d-flex gap-2 flex-wrap">
-              <button
-                type="button"
-                className="btn btn-outline-secondary d-flex align-items-center gap-1"
-                onClick={cargarTablero}
-                disabled={loading}
-                title="Actualizar datos del tablero"
-              >
-                <span>🔄</span> {loading ? "Cargando..." : "Actualizar"}
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-primary d-flex align-items-center gap-2 px-3 shadow-sm"
-                onClick={() => handleOpenModal("CONSULTA_PROGRAMADA")}
-                title="Ingresar o agendar paciente que llegó a la clínica"
-              >
-                <span>➕</span> Ingresar Paciente
-              </button>
+            <div className="d-flex align-items-center gap-2 mt-1">
+              <span className="live-pulse-dot" />
+              <small className="text-muted" style={{ fontSize: "0.8rem" }}>
+                Sistema en vivo · Actualización automática
+              </small>
             </div>
           </div>
 
-          {/* Barra de métricas y filtros en el orden exacto solicitado */}
-          <div className="triage-metrics-bar mt-3 p-3 rounded bg-white shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div className="d-flex gap-3 flex-wrap">
-              <div className="metric-pill">
-                <strong>Total en Sala:</strong> {items.length}
-              </div>
-              <div className="metric-pill text-success">
-                <strong>🟢 Programados:</strong> {countProgramados}
-              </div>
-              <div className="metric-pill text-warning">
-                <strong>🟡 Moderados:</strong> {countModerados}
-              </div>
-              <div className="metric-pill text-danger">
-                <strong>🔴 Críticos:</strong> {countCriticos}
-              </div>
-              <div className="metric-pill text-primary">
-                <strong>🏥 Quirófano / Internados:</strong> {countInternados}
-              </div>
-            </div>
+          {/* Center: Search input */}
+          <div className="flex-grow-1" style={{ maxWidth: "340px" }}>
+            <input
+              type="text"
+              className="form-control rounded-2"
+              placeholder="Buscar por paciente, tutor o chip..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                borderColor: "var(--vet-border-tint, #EDE9FE)",
+                fontSize: "0.875rem",
+              }}
+            />
+          </div>
 
-            <div className="search-box">
-              <input
-                type="text"
-                className="form-control form-control-sm"
-                placeholder="🔍 Buscar paciente, tutor o motivo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ minWidth: "260px" }}
-              />
-            </div>
+          {/* Right: Button group with strict 6px radius (rounded-2, NO pills) */}
+          <div className="d-flex gap-2">
+            <button
+              type="button"
+              className="btn btn-outline-secondary rounded-2 fw-medium d-inline-flex align-items-center gap-2 px-3 shadow-sm"
+              onClick={() => setIsReceptionOpen(true)}
+            >
+              <i className="bi bi-inbox text-primary" style={{ color: "var(--vet-primary, #6D28D9)" }}></i>
+              <span>Cola de Recepción</span>
+              <span
+                className="badge rounded-2"
+                style={{
+                  backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
+                  color: "var(--vet-primary, #6D28D9)",
+                  border: "1px solid var(--vet-border-tint, #EDE9FE)",
+                }}
+              >
+                {items.filter((it) => it.columna === "CONSULTA_PROGRAMADA").length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-primary rounded-2 fw-medium d-inline-flex align-items-center gap-2 px-3 shadow-sm"
+              style={{
+                backgroundColor: "var(--vet-primary, #6D28D9)",
+                borderColor: "var(--vet-primary, #6D28D9)",
+              }}
+              onClick={() => handleOpenModal("URGENCIA_MODERADA")}
+            >
+              <i className="bi bi-plus-lg"></i> Ingreso Directo
+            </button>
           </div>
         </div>
 
         {error && (
-          <div className="alert alert-danger d-flex justify-content-between align-items-center">
+          <div className="alert alert-danger rounded-2 shadow-sm d-flex justify-content-between align-items-center mb-4">
             <span>{error}</span>
-            <button className="btn btn-sm btn-outline-danger" onClick={cargarTablero}>
+            <button className="btn btn-sm btn-outline-danger rounded-2" onClick={cargarTablero}>
               Reintentar
             </button>
           </div>
         )}
 
-        {/* Tablero Kanban con las 4 Columnas */}
-        <div className="kanban-board-container">
-          <div className="row g-3 flex-nowrap kanban-scroll-row">
-            {COLUMNAS.map((col) => {
-              const colItems = filteredItems.filter((it) => it.columna === col.key);
-              const isOver = dragOverCol === col.key;
+        {/* Kanban Columns Layout (4 columns flex-nowrap) */}
+        <div className="kanban-board-scroll">
+          {COLUMNAS.map((col) => {
+            const colItems = filteredItems.filter((it) => it.columna === col.key);
+            const isOver = dragOverCol === col.key;
 
-              return (
-                <div key={col.key} className="col-12 col-md-6 col-xl-3 kanban-col-wrapper">
-                  <div
-                    className={`kanban-column ${col.badgeClass} ${
-                      isOver ? "column-drag-over" : ""
-                    }`}
-                    onDragOver={(e) => handleDragOver(e, col.key)}
-                    onDragLeave={(e) => handleDragLeave(e, col.key)}
-                    onDrop={(e) => handleDrop(e, col.key)}
-                  >
-                    {/* Encabezado de la Columna */}
-                    <div className="column-header">
-                      <div className="d-flex align-items-center justify-content-between mb-1">
-                        <div className="d-flex align-items-center gap-2">
-                          <span className="col-icon">{col.icon}</span>
-                          <h3 className="col-title mb-0">{col.title}</h3>
-                        </div>
-                        <span className="col-badge">{colItems.length}</span>
-                      </div>
-                      <p className="col-subtitle small mb-0">{col.subtitle}</p>
-
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-light w-100 mt-2 py-1 text-muted add-card-btn"
-                        onClick={() => handleOpenModal(col.key)}
-                        title={`Ingresar paciente directamente en ${col.title}`}
-                      >
-                        + Ingresar aquí
-                      </button>
+            return (
+              <div
+                key={col.key}
+                className={`kanban-column-container ${isOver ? "drop-zone-active" : ""}`}
+                onDragOver={(e) => handleDragOver(e, col.key)}
+                onDragLeave={(e) => handleDragLeave(e, col.key)}
+                onDrop={(e) => handleDrop(e, col.key)}
+              >
+                {/* Column Header Card */}
+                <div className="kanban-column-header-card">
+                  <div className="d-flex align-items-center justify-content-between mb-1">
+                    <div className="d-flex align-items-center gap-2">
+                      <span
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: col.indicatorColor,
+                          display: "inline-block",
+                        }}
+                      />
+                      <h2 className="fs-6 fw-bold mb-0" style={{ color: "#1E1B4B" }}>
+                        {col.title}
+                      </h2>
                     </div>
 
-                    {/* Lista de Tarjetas */}
-                    <div className="column-body">
-                      {colItems.length === 0 ? (
-                        <div className="empty-column-placeholder">
-                          <span className="placeholder-icon">📥</span>
-                          <p className="placeholder-text">Sin pacientes en esta columna</p>
-                          <small className="placeholder-sub">
-                            Arrastre una tarjeta aquí o presione "+ Ingresar"
-                          </small>
-                        </div>
-                      ) : (
-                        colItems.map((item) => (
-                          <TriageCard
-                            key={item.id}
-                            item={item}
-                            onMover={handleMoverTarjeta}
-                            onFinalizar={handleFinalizar}
-                          />
-                        ))
-                      )}
-                    </div>
+                    <span
+                      className="badge rounded-2 font-monospace fw-semibold"
+                      style={{
+                        backgroundColor: "#FAF9FC",
+                        color: "#475569",
+                        border: "1px solid #E2E8F0",
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      {colItems.length}
+                    </span>
                   </div>
+
+                  <p className="text-muted small mb-0" style={{ fontSize: "0.75rem" }}>
+                    {col.subtitle}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Cards Feed */}
+                <div className="kanban-cards-feed">
+                  {colItems.length === 0 ? (
+                    <div
+                      className="text-center py-5 rounded-2 d-flex flex-column align-items-center justify-content-center flex-grow-1"
+                      style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.4)",
+                        border: "1px dashed #CBD5E1",
+                      }}
+                    >
+                      <span className="text-muted small" style={{ fontSize: "0.8rem" }}>
+                        Sin pacientes en espera
+                      </span>
+                    </div>
+                  ) : (
+                    colItems.map((item) => (
+                      <TriageCard
+                        key={item.id}
+                        item={item}
+                        onMover={handleMoverTarjeta}
+                        onFinalizar={handleFinalizar}
+                      />
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
+
       </div>
 
-      {/* Modal de ingreso para pacientes sin turno previo o emergencias */}
+      {/* Reception Queue Offcanvas */}
+      <ReceptionQueue
+        activeTriagePetIds={activeTriagePetIds}
+        onAdmitPatient={handleAdmitPatient}
+        isOpen={isReceptionOpen}
+        onToggleOpen={() => setIsReceptionOpen(!isReceptionOpen)}
+      />
+
+      {/* New Triage Walk-in Modal */}
       <NewTriageModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateTriage}
+        onSubmit={handleAdmitPatient}
         initialColumn={targetColumnForNew}
       />
     </main>

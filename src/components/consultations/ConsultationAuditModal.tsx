@@ -1,5 +1,6 @@
 import React from "react";
 import type { Consultation, ConsultationVersion } from "../../types/Consultation";
+import "../../styles/ConsultationModals.css";
 
 interface ConsultationAuditModalProps {
   consulta: Consultation | null;
@@ -23,7 +24,10 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
       <div className="audit-modal-container" onClick={(e) => e.stopPropagation()}>
         <div className="audit-modal-header">
           <div>
-            <h3>📜 Auditoría e Inmutabilidad de Historia Clínica</h3>
+            <h3>
+              <i className="bi bi-journal-medical me-2"></i>
+              Auditoría e Inmutabilidad de Historia Clínica
+            </h3>
             <p>
               Paciente: <strong>{petName}</strong> · Consulta #{consulta.id} · Versión actual: v{consulta.version || 1}
             </p>
@@ -39,7 +43,7 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
 
         <div className="audit-modal-body">
           <div className="legal-notice-banner">
-            <span style={{ fontSize: "1.4rem" }}>⚖️</span>
+            <i className="bi bi-shield-check text-purple" style={{ fontSize: "1.4rem" }}></i>
             <div>
               <strong>Garantía Legal de Inalterabilidad e Inmutabilidad</strong>
               <div style={{ marginTop: 2, fontSize: "0.82rem" }}>
@@ -89,13 +93,29 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                             }`}
                             style={{ fontSize: "0.74rem" }}
                           >
-                            {isCreation && "🌱 Creación Inicial"}
-                            {!isCreation && !isAnnulment && "✏️ Enmienda / Modificación"}
-                            {isAnnulment && "🚫 Anulación Lógica"}
+                            {isCreation && (
+                              <>
+                                <i className="bi bi-plus-circle me-1"></i>
+                                Creación Inicial
+                              </>
+                            )}
+                            {!isCreation && !isAnnulment && (
+                              <>
+                                <i className="bi bi-pencil-square me-1"></i>
+                                Enmienda / Modificación
+                              </>
+                            )}
+                            {isAnnulment && (
+                              <>
+                                <i className="bi bi-slash-circle me-1"></i>
+                                Anulación Lógica
+                              </>
+                            )}
                           </span>
                         </div>
                         <div className="version-meta">
-                          📅 {new Date(ver.fechaVersion || ver.createdAt).toLocaleString("es-AR")}
+                          <i className="bi bi-calendar-event me-1"></i>
+                          {new Date(ver.fechaVersion || ver.createdAt).toLocaleString("es-AR")}
                         </div>
                       </div>
 
@@ -153,7 +173,9 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                       )}
 
                       <div className="version-sha-box mt-2">
-                        <span>🔐 SHA-256:</span>
+                        <span>
+                          <i className="bi bi-fingerprint me-1"></i>SHA-256:
+                        </span>
                         <span className="sha-code">{ver.hashSha256}</span>
                       </div>
                     </div>
@@ -167,7 +189,7 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
         <div className="audit-modal-footer">
           <button
             type="button"
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary rounded-2 btn-sm px-3"
             onClick={onClose}
           >
             Cerrar

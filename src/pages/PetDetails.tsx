@@ -2,25 +2,18 @@ import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { consultationService } from "../services/consultationService";
+import { apiFetch } from "../services/apiClient";
+import { FILE_UPLOAD_LIMITS } from "../constants";
+import { getSpeciesIcon } from "../utils/speciesIcon";
+import { formatDate } from "../utils/dateUtils";
 import type { Pet } from "../types/Pet";
+import type { MedicalFile } from "../types/MedicalFile";
 import type { Consultation, ConsultationVersion, UpdateConsultationDTO } from "../types/Consultation";
 import { ConsultationCard } from "../components/consultations/ConsultationCard";
 import { ConsultationAuditModal } from "../components/consultations/ConsultationAuditModal";
 import { ConsultationAmendmentModal } from "../components/consultations/ConsultationAmendmentModal";
 import { ConsultationAnnulModal } from "../components/consultations/ConsultationAnnulModal";
 import "../styles/PetDetails.css";
-
-const API_URL = import.meta.env.VITE_API_URL;
-
-interface MedicalFile {
-  id: number;
-  nombre: string;
-  nombreArchivo: string;
-  tipo: string;
-  ruta: string;
-  fecha: string;
-  mascotaId: number;
-}
 
 function PetDetails() {
   const { id } = useParams();
@@ -30,6 +23,8 @@ function PetDetails() {
   const [loading, setLoading] = useState(true);
   const [loadingConsultas, setLoadingConsultas] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<"historial" | "archivos" | "ficha">("historial");
 
   const [medicalFiles, setMedicalFiles] = useState<MedicalFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(true);
@@ -58,32 +53,21 @@ function PetDetails() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`${API_URL}/mascotas/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token ?? localStorage.getItem("token") ?? ""}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("No se pudo cargar la información de la mascota");
-        }
-
-        const data: Pet = await response.json();
+        const data = await apiFetch<Pet>(`/mascotas/${id}`);
         setPet(data);
 
-        if (token && data.id) {
+        if (data.id) {
           try {
             setLoadingConsultas(true);
-            const list = await consultationService.getConsultationsByPet(data.id, token);
+            const list = await consultationService.getConsultationsByPet(data.id);
             setConsultas(list);
-          } catch (cErr) {
-            console.warn("No se pudieron cargar las consultas:", cErr);
+          } catch {
+            // No bloqueante
           } finally {
             setLoadingConsultas(false);
           }
         }
       } catch (err: any) {
-        console.error("Error al cargar mascota:", err);
         setError(err.message || "Error al cargar los datos de la mascota");
       } finally {
         setLoading(false);
@@ -91,7 +75,7 @@ function PetDetails() {
     };
 
     cargarDatos();
-  }, [id, token]);
+  }, [id]);
 
   const cargarArchivosMedicos = async () => {
     if (!id) {
@@ -101,21 +85,10 @@ function PetDetails() {
 
     try {
       setLoadingFiles(true);
-      const authToken = token ?? localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/archivos-medicos/mascota/${id}`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudieron cargar los archivos médicos");
-      }
-
-      const data = await response.json();
+      const data = await apiFetch<MedicalFile[]>(`/archivos-medicos/mascota/${id}`);
       setMedicalFiles(data);
-    } catch (err) {
-      console.error("Error al cargar archivos médicos:", err);
+    } catch {
+      // No bloqueante
     } finally {
       setLoadingFiles(false);
     }
@@ -123,103 +96,67 @@ function PetDetails() {
 
   useEffect(() => {
     cargarArchivosMedicos();
-  }, [id, token]);
+  }, [id]);
 
-  const handleFileChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0] || null;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
 
-    if (!file) {
-      setSelectedFile(null);
-      return;
-    }
+      if (file.size > FILE_UPLOAD_LIMITS.MAX_SIZE_BYTES) {
+        setError(`El archivo no puede superar los ${FILE_UPLOAD_LIMITS.MAX_SIZE_MB} MB`);
+        e.target.value = "";
+        return;
+      }
 
-    const tiposPermitidos = [
-      "application/pdf",
-      "image/jpeg",
-      "image/png",
-    ];
+      if (!FILE_UPLOAD_LIMITS.ALLOWED_MIME_TYPES.includes(file.type as any)) {
+        setError("Solo se permiten archivos PDF, JPG o PNG");
+        e.target.value = "";
+        return;
+      }
 
-    if (!tiposPermitidos.includes(file.type)) {
-      alert("Solo se permiten archivos PDF, JPG y PNG.");
-      event.target.value = "";
-      setSelectedFile(null);
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("El archivo no puede superar los 5 MB.");
-      event.target.value = "";
-      setSelectedFile(null);
-      return;
-    }
-
-    setSelectedFile(file);
-
-    if (!fileName) {
-      setFileName(file.name);
+      setError(null);
+      setSelectedFile(file);
     }
   };
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      alert("Seleccioná un archivo médico.");
+      setError("Seleccioná un archivo");
       return;
     }
 
-    if (!id) {
-      alert("No se pudo identificar la mascota.");
+    if (!fileName.trim()) {
+      setError("Ingresá un nombre para el archivo");
       return;
     }
 
     try {
       setUploading(true);
-
-      const token = localStorage.getItem("token");
+      setError(null);
 
       const formData = new FormData();
-
       formData.append("archivo", selectedFile);
-      formData.append(
-        "nombre",
-        fileName.trim() || selectedFile.name
-      );
-      formData.append("mascotaId", id);
+      formData.append("nombre", fileName.trim());
+      formData.append("mascotaId", String(id));
 
-      const response = await fetch(`${API_URL}/archivos-medicos`, {
+      await apiFetch("/archivos-medicos", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         body: formData,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "No se pudo adjuntar el archivo"
-        );
-      }
-
-      setMedicalFiles((archivos) => [data, ...archivos]);
 
       setSelectedFile(null);
       setFileName("");
 
-      const input = document.getElementById(
+      const fileInput = document.getElementById(
         "medical-file-input"
       ) as HTMLInputElement | null;
-
-      if (input) {
-        input.value = "";
+      if (fileInput) {
+        fileInput.value = "";
       }
 
-      alert("Archivo médico adjuntado correctamente.");
+      await cargarArchivosMedicos();
     } catch (err: any) {
-      console.error("Error al subir archivo:", err);
-      alert(err.message || "Error al adjuntar el archivo");
+      setError(err.message || "Error al adjuntar el archivo");
     } finally {
       setUploading(false);
     }
@@ -227,32 +164,15 @@ function PetDetails() {
 
   const handleViewFile = async (file: MedicalFile) => {
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(
-        `${API_URL}/archivos-medicos/${file.id}/archivo`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("No se pudo abrir el archivo");
-      }
-
-      const blob = await response.blob();
+      const blob = await apiFetch<Blob>(`/archivos-medicos/${file.id}/archivo`);
       const url = URL.createObjectURL(blob);
-
       window.open(url, "_blank");
 
       setTimeout(() => {
         URL.revokeObjectURL(url);
-      }, 60000);
+      }, FILE_UPLOAD_LIMITS.BLOB_REVOKE_TIMEOUT_MS);
     } catch (err: any) {
-      console.error("Error al visualizar archivo:", err);
-      alert(err.message || "No se pudo abrir el archivo");
+      setError(err.message || "No se pudo abrir el archivo médico");
     }
   };
 
@@ -264,32 +184,15 @@ function PetDetails() {
     if (!confirmar) return;
 
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(
-        `${API_URL}/archivos-medicos/${fileId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "No se pudo eliminar el archivo"
-        );
-      }
+      await apiFetch(`/archivos-medicos/${fileId}`, {
+        method: "DELETE",
+      });
 
       setMedicalFiles((archivos) =>
         archivos.filter((archivo) => archivo.id !== fileId)
       );
     } catch (err: any) {
-      console.error("Error al eliminar archivo:", err);
-      alert(err.message || "No se pudo eliminar el archivo");
+      setError(err.message || "No se pudo eliminar el archivo");
     }
   };
 
@@ -298,12 +201,10 @@ function PetDetails() {
     setAuditModalConsulta(c);
     setLoadingVersions(true);
     try {
-      const authToken = token ?? localStorage.getItem("token") ?? "";
-      const versions = await consultationService.getConsultationVersions(c.id, authToken);
+      const versions = await consultationService.getConsultationVersions(c.id);
       setVersionsList(versions);
     } catch (err: any) {
-      console.error("Error al cargar versiones:", err);
-      alert(err.message || "Error al cargar el historial de versiones");
+      setError(err.message || "Error al cargar el historial de versiones");
     } finally {
       setLoadingVersions(false);
     }
@@ -318,11 +219,9 @@ function PetDetails() {
 
     try {
       setSavingAmendment(true);
-      const authToken = token ?? localStorage.getItem("token") ?? "";
       const updated = await consultationService.updateConsultation(
         editingConsulta.id,
-        data,
-        authToken
+        data
       );
 
       setConsultas((prev) =>
@@ -334,10 +233,8 @@ function PetDetails() {
       }
 
       setEditingConsulta(null);
-      alert(`Consulta enmendada correctamente. Se ha generado la Versión v${updated.version} inalterable con respaldo en auditoría.`);
     } catch (err: any) {
-      console.error("Error al guardar enmienda:", err);
-      alert(err.message || "Error al registrar la enmienda");
+      setError(err.message || "Error al registrar la enmienda");
     } finally {
       setSavingAmendment(false);
     }
@@ -352,19 +249,23 @@ function PetDetails() {
 
     try {
       setSavingAnulacion(true);
-      const authToken = token ?? localStorage.getItem("token") ?? "";
       await consultationService.anularConsultation(
         anulandoConsulta.id,
-        motivo,
-        authToken
+        motivo
       );
 
-      setConsultas((prev) => prev.filter((c) => c.id !== anulandoConsulta.id));
+      setConsultas((prev) =>
+        prev.map((c) =>
+          c.id === anulandoConsulta.id
+            ? { ...c, estado: "ANULADA", motivoAnulacion: motivo }
+            : c
+        )
+      );
+
       setAnulandoConsulta(null);
-      alert("La consulta fue anulada lógicamente de forma exitosa. Se preservó su registro inmutable en auditoría.");
+      alert("Consulta médica anulada. El registro permanece visible en auditoría con su motivo correspondiente.");
     } catch (err: any) {
-      console.error("Error al anular consulta:", err);
-      alert(err.message || "Error al anular la consulta");
+      setError(err.message || "Error al anular la consulta médica");
     } finally {
       setSavingAnulacion(false);
     }
@@ -373,11 +274,11 @@ function PetDetails() {
   if (loading) {
     return (
       <main className="pet-details-page">
-        <div className="container py-5">
-          <div className="pet-details-loading">
-            <div className="pet-details-loading-icon">🐾</div>
-            <p>Cargando información de la mascota...</p>
+        <div className="container py-5 text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Cargando...</span>
           </div>
+          <p className="text-muted mt-3">Cargando perfil de la mascota...</p>
         </div>
       </main>
     );
@@ -387,12 +288,12 @@ function PetDetails() {
     return (
       <main className="pet-details-page">
         <div className="container py-5">
-          <div className="alert alert-danger">
+          <div className="alert alert-danger rounded-2 shadow-sm">
             {error || "No hay datos de la mascota disponibles."}
           </div>
           <Link
             to={isProfessional ? "/profesional/turnos" : "/mascotas"}
-            className="btn btn-outline-secondary mt-3"
+            className="btn btn-outline-secondary rounded-2 mt-3"
           >
             {isProfessional ? "Volver a turnos" : "Volver a mis mascotas"}
           </Link>
@@ -401,264 +302,152 @@ function PetDetails() {
     );
   }
 
+  const tutorInfo = pet.usuario || pet.dueno;
+
   return (
     <main className="pet-details-page">
       <div className="container py-4">
-        <div className="pet-details-card">
 
-          <div className="pet-details-header">
-            <div className="pet-details-icon">🐾</div>
+        {/* Breadcrumb / Back button */}
+        <div className="mb-3">
+          <Link
+            to={isProfessional ? "/profesional/turnos" : "/mascotas"}
+            className="text-decoration-none text-muted small fw-medium d-inline-flex align-items-center gap-1"
+          >
+            ← {isProfessional ? "Volver a la Agenda" : "Volver a Mis Mascotas"}
+          </Link>
+        </div>
 
-            <div>
-              <h1>{pet.nombre}</h1>
-
-              <p>
-                {pet.especie} {pet.raza ? `· ${pet.raza}` : "· Raza no especificada"}
-              </p>
-            </div>
-          </div>
-
-          <div className="pet-details-divider"></div>
-
-          <div className="pet-details-info">
-
-            <div className="pet-info-item">
-              <span className="pet-info-icon">🐶</span>
-              <div>
-                <span className="pet-info-label">
-                  Especie
-                </span>
-
-                <strong>{pet.especie}</strong>
+        {/* Profile Header Card */}
+        <div className="bg-white rounded-3 border border-light-subtle p-4 mb-4 shadow-sm">
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div className="d-flex align-items-center gap-3">
+              <div className="pet-profile-avatar">
+                {getSpeciesIcon(pet.especie)}
               </div>
-            </div>
-
-            <div className="pet-info-item">
-              <span className="pet-info-icon">🏷️</span>
               <div>
-                <span className="pet-info-label">
-                  Raza
-                </span>
+                <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
+                  <h1 className="h3 fw-bold mb-0" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                    {pet.nombre}
+                  </h1>
+                  <span className="badge bg-purple-subtle text-purple-emphasis border border-purple-subtle rounded-2 px-2 py-1">
+                    {pet.especie}
+                  </span>
+                  {pet.sexo && (
+                    <span className="badge bg-purple-subtle text-purple-emphasis border border-purple-subtle rounded-2 px-2 py-1">
+                      {pet.sexo}
+                    </span>
+                  )}
+                  {pet.peso && (
+                    <span className="badge bg-purple-subtle text-purple-emphasis border border-purple-subtle rounded-2 px-2 py-1">
+                      {pet.peso} kg
+                    </span>
+                  )}
+                </div>
 
-                <strong>
-                  {pet.raza || "No especificada"}
-                </strong>
-              </div>
-            </div>
-
-            <div className="pet-info-item">
-              <span className="pet-info-icon">🎂</span>
-              <div>
-                <span className="pet-info-label">
-                  Edad
-                </span>
-
-                <strong>
-                  {pet.edad !== undefined &&
-                  pet.edad !== null
-                    ? `${pet.edad} años`
-                    : "No especificada"}
-                </strong>
-              </div>
-            </div>
-
-            <div className="pet-info-item">
-              <span className="pet-info-icon">⚥</span>
-              <div>
-                <span className="pet-info-label">
-                  Sexo
-                </span>
-
-                <strong>
-                  {pet.sexo
-                    ? pet.sexo.charAt(0).toUpperCase() +
-                      pet.sexo.slice(1).toLowerCase()
-                    : "No especificado"}
-                </strong>
-              </div>
-            </div>
-
-          <div className="pet-info-item">
-            <span className="pet-info-icon">⚖️</span>
-            <div>
-              <span className="pet-info-label">Peso Actual Base</span>
-              <strong>{pet.peso ? `${pet.peso} kg` : "Sin registro"}</strong>
-            </div>
-          </div>
-
-          {pet.usuario && (
-            <div className="pet-info-item">
-              <span className="pet-info-icon">👤</span>
-              <div>
-                <span className="pet-info-label">Tutor</span>
-                <strong>
-                  {pet.usuario.nombre} {pet.usuario.apellido}
-                </strong>
-              </div>
-            </div>
-          )}
-          </div>
-
-          <div className="medical-files-section">
-            <div className="medical-files-header">
-              <div>
-                <h2>📁 Archivos médicos</h2>
-                <p>
-                  Adjuntá y consultá estudios, análisis y documentos de {pet.nombre}.
+                <p className="text-muted small mb-0">
+                  {pet.raza ? pet.raza : "Raza no especificada"}
+                  {tutorInfo && (
+                    <span>
+                      {" "}· Tutor: <strong className="text-dark">{tutorInfo.nombre} {tutorInfo.apellido}</strong>
+                      {tutorInfo.telefono && ` (${tutorInfo.telefono})`}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
 
-            <div className="medical-upload-box">
-              <div className="medical-upload-title">
-                <span>📎</span>
-                <div>
-                  <strong>Adjuntar archivo</strong>
-                  <small>PDF, JPG o PNG · Máximo 5 MB</small>
-                </div>
-              </div>
-
-              <div className="medical-upload-fields">
-                <div className="medical-field">
-                  <label htmlFor="medical-file-name">Nombre del archivo</label>
-                  <input
-                    id="medical-file-name"
-                    type="text"
-                    value={fileName}
-                    onChange={(e) => setFileName(e.target.value)}
-                    placeholder="Ej. Análisis de sangre"
-                  />
-                </div>
-
-                <div className="medical-field">
-                  <label htmlFor="medical-file-input">Archivo</label>
-                  <input
-                    id="medical-file-input"
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileChange}
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="medical-upload-button"
-                onClick={handleUpload}
-                disabled={uploading}
-              >
-                {uploading ? "Subiendo..." : "⬆️ Adjuntar archivo"}
-              </button>
-            </div>
-
-            <div className="medical-files-list">
-              {loadingFiles ? (
-                <div className="medical-files-empty">
-                  <p>Cargando archivos médicos...</p>
-                </div>
-              ) : medicalFiles.length === 0 ? (
-                <div className="medical-files-empty">
-                  <div>📄</div>
-                  <h3>No hay archivos médicos</h3>
-                  <p>Todavía no se adjuntaron documentos para esta mascota.</p>
-                </div>
+            {/* Quick action buttons */}
+            <div className="d-flex gap-2">
+              {isProfessional ? (
+                <Link
+                  to={`/profesional/atencion?mascotaId=${pet.id}`}
+                  className="btn btn-primary rounded-2 shadow-sm d-inline-flex align-items-center gap-2 px-3"
+                >
+                  <i className="bi bi-clipboard2-pulse"></i> Iniciar Consulta SOAP
+                </Link>
               ) : (
-                medicalFiles.map((file) => (
-                  <div key={file.id} className="medical-file-card">
-                    <div className="medical-file-icon">
-                      {file.tipo === "application/pdf" ? "📄" : "🖼️"}
-                    </div>
-                    <div className="medical-file-info">
-                      <strong>{file.nombre}</strong>
-                      <span>{file.nombreArchivo}</span>
-                      <small>{new Date(file.fecha).toLocaleDateString("es-AR")}</small>
-                    </div>
-                    <div className="medical-file-actions">
-                      <button
-                        type="button"
-                        className="medical-view-button"
-                        onClick={() => handleViewFile(file)}
-                      >
-                        👁️ Ver
-                      </button>
-                      <button
-                        type="button"
-                        className="medical-delete-button"
-                        onClick={() => handleDeleteFile(file.id)}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                ))
+                <Link
+                  to={`/turnos/nuevo?mascota=${pet.id}`}
+                  className="btn btn-primary rounded-2 shadow-sm d-inline-flex align-items-center gap-2 px-3"
+                >
+                  <i className="bi bi-calendar-check"></i> Solicitar Turno
+                </Link>
               )}
             </div>
           </div>
-
-          <div className="pet-details-actions">
-            {isProfessional ? (
-              <>
-                <Link to="/profesional/turnos" className="btn btn-outline-secondary">
-                  Volver a turnos
-                </Link>
-                <Link
-                  to={`/profesional/atencion?mascotaId=${pet.id}`}
-                  className="btn btn-primary"
-                >
-                  🩺 Iniciar Consulta SOAP
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/mascotas" className="btn btn-outline-secondary">
-                  Volver a mis mascotas
-                </Link>
-                <Link
-                  to={`/turnos/nuevo?mascota=${pet.id}`}
-                  className="btn btn-primary"
-                >
-                  Solicitar turno
-                </Link>
-              </>
-            )}
-          </div>
-        
-
         </div>
 
-        {isProfessional && (
-          <div className="pet-details-card mt-4">
+        {/* Minimalist Underline Tabs */}
+        <nav className="pet-tabs-nav d-flex mb-4">
+          <button
+            type="button"
+            className={`pet-tab-btn ${activeTab === "historial" ? "active" : ""}`}
+            onClick={() => setActiveTab("historial")}
+          >
+            Historial Clínico ({consultas.length})
+          </button>
+          <button
+            type="button"
+            className={`pet-tab-btn ${activeTab === "archivos" ? "active" : ""}`}
+            onClick={() => setActiveTab("archivos")}
+          >
+            Archivos y Estudios ({medicalFiles.length})
+          </button>
+          <button
+            type="button"
+            className={`pet-tab-btn ${activeTab === "ficha" ? "active" : ""}`}
+            onClick={() => setActiveTab("ficha")}
+          >
+            Ficha Médica
+          </button>
+        </nav>
+
+        {/* Tab 1: Historial Clínico */}
+        {activeTab === "historial" && (
+          <div className="tab-pane-content">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
-                <h2 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0, color: "#1e293b" }}>
-                  📋 Historial de Consultas SOAP
+                <h2 className="h5 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                  Consultas y Evolución Clínica
                 </h2>
-                <p className="text-muted mb-0" style={{ fontSize: "0.9rem" }}>
-                  Evolución clínica registrada para {pet.nombre}
+                <p className="text-muted small mb-0">
+                  Registros médicos inmutables y versionados con validez legal.
                 </p>
               </div>
-              <Link
-                to={`/profesional/atencion?mascotaId=${pet.id}`}
-                className="btn btn-sm btn-outline-primary"
-              >
-                + Nueva Consulta
-              </Link>
+              {isProfessional && (
+                <Link
+                  to={`/profesional/atencion?mascotaId=${pet.id}`}
+                  className="btn btn-sm btn-outline-primary rounded-2 d-inline-flex align-items-center gap-1"
+                >
+                  <i className="bi bi-plus-lg"></i> Nueva Consulta
+                </Link>
+              )}
             </div>
 
             {loadingConsultas ? (
-              <p className="text-muted text-center py-4">Cargando historial clínico...</p>
+              <div className="bg-white rounded-3 border border-light-subtle p-5 text-center">
+                <div className="spinner-border text-primary spinner-border-sm" role="status"></div>
+                <p className="text-muted small mt-2 mb-0">Cargando historial...</p>
+              </div>
             ) : consultas.length === 0 ? (
-              <div className="text-center py-4" style={{ background: "#f8fafc", borderRadius: 12 }}>
-                <p className="text-muted mb-2">No hay registros clínicos SOAP para este paciente aún.</p>
-                <Link
-                  to={`/profesional/atencion?mascotaId=${pet.id}`}
-                  className="btn btn-sm btn-primary"
-                >
-                  🩺 Registrar primera atención
-                </Link>
+              <div className="bg-white rounded-3 border border-light-subtle p-5 text-center">
+                <i className="bi bi-clipboard2-pulse fs-1 text-muted d-block mb-2"></i>
+                <h3 className="h6 fw-semibold text-dark">Sin registros de consulta aún</h3>
+                <p className="text-muted small mb-3">
+                  No hay atenciones médicas registradas formalmente para este paciente.
+                </p>
+                {isProfessional && (
+                  <Link
+                    to={`/profesional/atencion?mascotaId=${pet.id}`}
+                    className="btn btn-primary rounded-2 btn-sm d-inline-flex align-items-center gap-2"
+                  >
+                    <i className="bi bi-plus-lg"></i> Registrar Primera Consulta
+                  </Link>
+                )}
               </div>
             ) : (
-              <div className="consultations-timeline mt-3">
+              <div className="d-flex flex-column gap-3">
                 {consultas.map((c) => (
                   <ConsultationCard
                     key={c.id}
@@ -674,7 +463,188 @@ function PetDetails() {
           </div>
         )}
 
-        {/* Modales delegados en componentes especializados */}
+        {/* Tab 2: Archivos y Estudios */}
+        {activeTab === "archivos" && (
+          <div className="tab-pane-content">
+            <div className="bg-white rounded-3 border border-light-subtle p-4 mb-4 shadow-sm">
+              <h2 className="h6 fw-bold mb-3" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                Adjuntar Nuevo Estudio o Análisis
+              </h2>
+
+              <div className="row g-3 align-items-end">
+                <div className="col-md-5">
+                  <label htmlFor="medical-file-name" className="form-label small fw-medium text-muted">
+                    Título o Descripción del Documento
+                  </label>
+                  <input
+                    id="medical-file-name"
+                    type="text"
+                    className="form-control rounded-2"
+                    placeholder="Ej. Análisis de sangre, Ecografía abdominal..."
+                    value={fileName}
+                    onChange={(e) => setFileName(e.target.value)}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label htmlFor="medical-file-input" className="form-label small fw-medium text-muted">
+                    Archivo (PDF, JPG, PNG · Máx 5MB)
+                  </label>
+                  <input
+                    id="medical-file-input"
+                    type="file"
+                    className="form-control rounded-2"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleFileChange}
+                  />
+                </div>
+                <div className="col-md-3">
+                  <button
+                    type="button"
+                    className="btn btn-primary rounded-2 w-100 fw-medium"
+                    onClick={handleUpload}
+                    disabled={uploading}
+                  >
+                    {uploading ? "Subiendo..." : "Adjuntar Documento"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* List of files */}
+            <div className="bg-white rounded-3 border border-light-subtle p-4 shadow-sm">
+              <h2 className="h6 fw-bold mb-3" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                Estudios Adjuntos ({medicalFiles.length})
+              </h2>
+
+              {loadingFiles ? (
+                <p className="text-muted small text-center py-3">Cargando archivos...</p>
+              ) : medicalFiles.length === 0 ? (
+                <div className="text-center py-4 text-muted">
+                  <i className="bi bi-folder2-open fs-1 text-muted d-block mb-2"></i>
+                  <p className="small mt-2 mb-0">No hay archivos ni análisis complementarios adjuntos.</p>
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-2">
+                  {medicalFiles.map((file) => (
+                    <div key={file.id} className="medical-file-row">
+                      <div className="d-flex align-items-center gap-3">
+                        <span className="fs-4">
+                          {file.tipo === "application/pdf" ? (
+                            <i className="bi bi-file-earmark-pdf text-danger"></i>
+                          ) : (
+                            <i className="bi bi-file-earmark-image text-primary"></i>
+                          )}
+                        </span>
+                        <div>
+                          <strong className="d-block" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                            {file.nombre}
+                          </strong>
+                          <span className="text-muted small">
+                            {file.nombreArchivo} · {formatDate(file.fecha)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="d-flex gap-2">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-primary rounded-2 d-inline-flex align-items-center gap-1"
+                          onClick={() => handleViewFile(file)}
+                        >
+                          <i className="bi bi-eye"></i> Ver
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger rounded-2 d-inline-flex align-items-center gap-1"
+                          onClick={() => handleDeleteFile(file.id)}
+                          title="Eliminar archivo"
+                        >
+                          <i className="bi bi-trash3"></i>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Ficha Médica General */}
+        {activeTab === "ficha" && (
+          <div className="tab-pane-content">
+            <div className="pet-info-grid">
+              <div className="pet-info-cell">
+                <div className="pet-info-cell-icon">
+                  <i className="bi bi-shield-plus text-primary fs-5"></i>
+                </div>
+                <div>
+                  <div className="pet-info-cell-label">Especie</div>
+                  <div className="pet-info-cell-value">{pet.especie}</div>
+                </div>
+              </div>
+
+              <div className="pet-info-cell">
+                <div className="pet-info-cell-icon">
+                  <i className="bi bi-tag text-primary fs-5"></i>
+                </div>
+                <div>
+                  <div className="pet-info-cell-label">Raza</div>
+                  <div className="pet-info-cell-value">{pet.raza || "No especificada"}</div>
+                </div>
+              </div>
+
+              <div className="pet-info-cell">
+                <div className="pet-info-cell-icon">
+                  <i className="bi bi-calendar-event text-primary fs-5"></i>
+                </div>
+                <div>
+                  <div className="pet-info-cell-label">Edad</div>
+                  <div className="pet-info-cell-value">
+                    {pet.edad !== undefined && pet.edad !== null ? `${pet.edad} años` : "No especificada"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pet-info-cell">
+                <div className="pet-info-cell-icon">
+                  <i className="bi bi-gender-ambiguous text-primary fs-5"></i>
+                </div>
+                <div>
+                  <div className="pet-info-cell-label">Sexo</div>
+                  <div className="pet-info-cell-value">
+                    {pet.sexo ? pet.sexo.charAt(0).toUpperCase() + pet.sexo.slice(1).toLowerCase() : "No especificado"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pet-info-cell">
+                <div className="pet-info-cell-icon">
+                  <i className="bi bi-speedometer2 text-primary fs-5"></i>
+                </div>
+                <div>
+                  <div className="pet-info-cell-label">Peso Registrado</div>
+                  <div className="pet-info-cell-value">{pet.peso ? `${pet.peso} kg` : "Sin registro"}</div>
+                </div>
+              </div>
+
+              {tutorInfo && (
+                <div className="pet-info-cell">
+                  <div className="pet-info-cell-icon">
+                    <i className="bi bi-person-circle text-primary fs-5"></i>
+                  </div>
+                  <div>
+                    <div className="pet-info-cell-label">Tutor Asignado</div>
+                    <div className="pet-info-cell-value">
+                      {tutorInfo.nombre} {tutorInfo.apellido}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modales delegados */}
         <ConsultationAuditModal
           consulta={auditModalConsulta}
           petName={pet.nombre}
@@ -698,6 +668,7 @@ function PetDetails() {
           onClose={() => setAnulandoConsulta(null)}
           onConfirm={handleConfirmAnulacion}
         />
+
       </div>
     </main>
   );

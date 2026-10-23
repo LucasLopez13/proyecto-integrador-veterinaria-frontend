@@ -1,0 +1,231 @@
+/* ==========================================================================
+   ConsultationModals.css - Minimalist Deep Violet Modals & Audit Timeline
+   ========================================================================== */
+
+.audit-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.audit-modal-container {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--vet-border-tint, #EDE9FE);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.audit-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--vet-border-tint, #EDE9FE);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  background-color: #ffffff;
+}
+
+.audit-modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--vet-text-main, #1E1B4B);
+}
+
+.audit-modal-header p {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--vet-text-muted, #64748B);
+}
+
+.audit-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.audit-modal-close:hover {
+  color: #1e293b;
+  background-color: #f1f5f9;
+}
+
+.audit-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.audit-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--vet-border-tint, #EDE9FE);
+  background-color: #FAF9FC;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+/* Legal Notice Banner */
+.legal-notice-banner {
+  background-color: var(--vet-subtle-lavender, #F5F3FF);
+  border: 1px solid var(--vet-border-tint, #EDE9FE);
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  gap: 0.875rem;
+  margin-bottom: 1.25rem;
+  color: var(--vet-text-main, #1E1B4B);
+  font-size: 0.85rem;
+}
+
+.legal-notice-banner-warning {
+  background-color: #FEF3C7;
+  border-color: #FDE68A;
+  color: #92400E;
+}
+
+/* Vertical Timeline for Audit Modal */
+.versions-timeline {
+  position: relative;
+  padding-left: 2rem;
+  margin-top: 1rem;
+}
+
+.versions-timeline::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 9px;
+  width: 2px;
+  background-color: var(--vet-border-tint, #EDE9FE);
+}
+
+.version-item {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.version-item:last-child {
+  margin-bottom: 0;
+}
+
+.version-indicator {
+  position: absolute;
+  left: -2rem;
+  top: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 4px solid var(--vet-primary, #6D28D9);
+  box-shadow: 0 0 0 2px rgba(109, 40, 217, 0.15);
+  z-index: 2;
+}
+
+.version-indicator.action-creacion {
+  border-color: #059669;
+}
+
+.version-indicator.action-anulacion {
+  border-color: #DC2626;
+}
+
+.version-indicator.action-modificacion {
+  border-color: var(--vet-primary, #6D28D9);
+}
+
+.version-card {
+  background: #ffffff;
+  border: 1px solid var(--vet-border-tint, #EDE9FE);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.version-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.version-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: var(--vet-text-main, #1E1B4B);
+  font-size: 0.95rem;
+}
+
+.version-meta {
+  font-size: 0.78rem;
+  color: var(--vet-text-muted, #64748B);
+}
+
+.version-author {
+  font-size: 0.82rem;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.version-reason-box {
+  background-color: #F8FAFC;
+  border-left: 3px solid var(--vet-primary, #6D28D9);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+  color: #334155;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 0.75rem;
+}
+
+.version-diff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.version-diff-item {
+  background: #FAF9FC;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #EDE9FE;
+}

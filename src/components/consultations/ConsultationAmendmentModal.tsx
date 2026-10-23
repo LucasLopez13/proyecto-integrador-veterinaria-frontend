@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { Consultation, UpdateConsultationDTO } from "../../types/Consultation";
+import "../../styles/ConsultationModals.css";
 
 interface ConsultationAmendmentModalProps {
   consulta: Consultation | null;
@@ -78,7 +79,10 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
       >
         <div className="audit-modal-header">
           <div>
-            <h3>✏️ Enmendar Consulta Médica</h3>
+            <h3>
+              <i className="bi bi-pencil-square me-2"></i>
+              Enmendar Consulta Médica
+            </h3>
             <p>
               Se generará la <strong>Versión v{(consulta.version || 1) + 1}</strong> · Paciente: {petName}
             </p>
@@ -94,7 +98,7 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
 
         <div className="audit-modal-body">
             <div className="legal-notice-banner legal-notice-banner-warning">
-              <span style={{ fontSize: "1.4rem" }}>⚖️</span>
+              <i className="bi bi-shield-check text-warning" style={{ fontSize: "1.4rem" }}></i>
               <div>
                 <strong>Aviso de Inmutabilidad Clínica:</strong>
                 <div style={{ marginTop: 2, fontSize: "0.82rem" }}>
@@ -121,7 +125,9 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
 
             <div className="row g-3 mb-3">
               <div className="col-md-3 col-6">
-                <label className="form-label fw-semibold">⚖️ Peso (kg)</label>
+                <label className="form-label fw-semibold">
+                  <i className="bi bi-speedometer2 me-1 text-secondary"></i>Peso (kg)
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -132,7 +138,9 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
                 />
               </div>
               <div className="col-md-3 col-6">
-                <label className="form-label fw-semibold">🌡️ Temperatura (°C)</label>
+                <label className="form-label fw-semibold">
+                  <i className="bi bi-thermometer-half me-1 text-secondary"></i>Temperatura (°C)
+                </label>
                 <input
                   type="number"
                   step="0.1"
@@ -143,7 +151,9 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
                 />
               </div>
               <div className="col-md-3 col-6">
-                <label className="form-label fw-semibold">💓 Frec. Cardíaca</label>
+                <label className="form-label fw-semibold">
+                  <i className="bi bi-heart-pulse me-1 text-danger"></i>Frec. Cardíaca
+                </label>
                 <input
                   type="number"
                   className="form-control"
@@ -153,7 +163,9 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
                 />
               </div>
               <div className="col-md-3 col-6">
-                <label className="form-label fw-semibold">🫁 Frec. Respiratoria</label>
+                <label className="form-label fw-semibold">
+                  <i className="bi bi-lungs me-1 text-primary"></i>Frec. Respiratoria
+                </label>
                 <input
                   type="number"
                   className="form-control"
@@ -221,7 +233,7 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
           <div className="audit-modal-footer">
             <button
               type="button"
-              className="btn btn-outline-secondary"
+              className="btn btn-outline-secondary rounded-2 px-3 fw-medium"
               onClick={onClose}
               disabled={saving}
             >
@@ -229,10 +241,17 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
             </button>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary rounded-2 shadow-sm px-4 fw-medium"
               disabled={saving}
             >
-              {saving ? "Guardando Enmienda..." : `💾 Guardar Enmienda (v${(consulta.version || 1) + 1})`}
+              {saving ? (
+                "Guardando Enmienda..."
+              ) : (
+                <>
+                  <i className="bi bi-check-lg me-1"></i>
+                  Guardar Enmienda (v{(consulta.version || 1) + 1})
+                </>
+              )}
             </button>
           </div>
         </form>

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import type { CreateTriageDTO, TriageColumn } from "../../types/Triage";
 import type { Pet } from "../../types/Pet";
+import { apiFetch } from "../../services/apiClient";
+import { TRIAGE_COLUMNS_CONFIG, TRIAGE_COLUMNS_ORDER, SPECIES_OPTIONS } from "../../constants";
 
 interface NewTriageModalProps {
   isOpen: boolean;
@@ -9,7 +11,13 @@ interface NewTriageModalProps {
   initialColumn?: TriageColumn;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
+const TRIAGE_LEVELS = TRIAGE_COLUMNS_ORDER.map((key) => ({
+  key,
+  title: TRIAGE_COLUMNS_CONFIG[key].title,
+  desc: TRIAGE_COLUMNS_CONFIG[key].subtitle,
+  color: TRIAGE_COLUMNS_CONFIG[key].indicatorColor,
+  dotColor: TRIAGE_COLUMNS_CONFIG[key].indicatorColor,
+}));
 
 export const NewTriageModal: React.FC<NewTriageModalProps> = ({
   isOpen,
@@ -23,7 +31,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
 
   const [selectedPetId, setSelectedPetId] = useState<number | "">("");
   const [nombrePaciente, setNombrePaciente] = useState("");
-  const [especie, setEspecie] = useState("Canino");
+  const [especie, setEspecie] = useState<string>(SPECIES_OPTIONS[0]);
   const [raza, setRaza] = useState("");
   const [nombreTutor, setNombreTutor] = useState("");
   const [telefonoTutor, setTelefonoTutor] = useState("");
@@ -43,16 +51,10 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
   const cargarMascotas = async () => {
     try {
       setLoadingPets(true);
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/mascotas`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setPets(data);
-      }
-    } catch (err) {
-      console.error("Error al cargar mascotas para triage:", err);
+      const data = await apiFetch<Pet[]>("/mascotas");
+      setPets(data);
+    } catch {
+      // Manejo silencioso en modal
     } finally {
       setLoadingPets(false);
     }
@@ -88,7 +90,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
     }
 
     if (!motivo.trim()) {
-      setError("El motivo de ingreso es obligatorio.");
+      setError("El motivo de ingreso o síntoma principal es obligatorio.");
       return;
     }
 
@@ -106,7 +108,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
         mascotaId: isExistingPet && selectedPetId ? Number(selectedPetId) : null,
       });
 
-      // Limpiar formulario y cerrar
+      // Limpiar y cerrar
       setSelectedPetId("");
       setNombrePaciente("");
       setRaza("");
@@ -128,283 +130,248 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
     <div
       className="modal fade show d-block"
       tabIndex={-1}
-      style={{ backgroundColor: "rgba(0,0,0,0.6)", zIndex: 1055 }}
+      style={{ backgroundColor: "rgba(15, 23, 42, 0.55)", backdropFilter: "blur(4px)", zIndex: 1055 }}
       role="dialog"
+      onClick={onClose}
     >
-      <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div className="modal-content shadow-lg border-0">
-          <div className="modal-header bg-dark text-white">
-            <h5 className="modal-title d-flex align-items-center gap-2">
-              <span>🚨</span> Ingreso de Paciente a Triage / Guardia
-            </h5>
+      <div
+        className="modal-dialog modal-dialog-centered"
+        style={{ maxWidth: "640px" }}
+        role="document"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="modal-content rounded-3 border shadow-lg p-4 bg-white"
+          style={{ borderColor: "var(--vet-border-tint, #EDE9FE)" }}
+        >
+          {/* Header */}
+          <div className="modal-header border-0 pb-0 pt-0 px-0 d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex align-items-center gap-2">
+              <h2 className="h4 fw-bold mb-0" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                Nuevo Ingreso a Triage
+              </h2>
+              <span
+                className="badge rounded-2 fw-medium"
+                style={{
+                  backgroundColor: "#FEF2F2",
+                  color: "#DC2626",
+                  border: "1px solid #FECACA",
+                  fontSize: "0.75rem",
+                }}
+              >
+                Urgencia / Sin Turno
+              </span>
+            </div>
             <button
               type="button"
-              className="btn-close btn-close-white"
+              className="btn btn-light rounded-2 btn-sm text-secondary p-1"
               onClick={onClose}
-              disabled={submitting}
-            />
+              aria-label="Cerrar modal"
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
           </div>
 
+          {error && <div className="alert alert-danger rounded-2 small p-2 mb-3">{error}</div>}
+
           <form onSubmit={handleSubmit}>
-            <div className="modal-body p-4">
-              {error && <div className="alert alert-danger">{error}</div>}
+            {/* Switch Segment: Radio Group with 6px radius */}
+            <div
+              className="d-flex p-1 mb-3 rounded-2"
+              style={{ backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)" }}
+            >
+              <button
+                type="button"
+                className="btn btn-sm rounded-2 flex-grow-1 fw-medium"
+                style={{
+                  backgroundColor: isExistingPet ? "var(--vet-primary, #6D28D9)" : "transparent",
+                  color: isExistingPet ? "#FFFFFF" : "var(--vet-text-muted, #64748B)",
+                  border: "none",
+                }}
+                onClick={() => setIsExistingPet(true)}
+              >
+                Mascota ya registrada en el sistema
+              </button>
+              <button
+                type="button"
+                className="btn btn-sm rounded-2 flex-grow-1 fw-medium"
+                style={{
+                  backgroundColor: !isExistingPet ? "var(--vet-primary, #6D28D9)" : "transparent",
+                  color: !isExistingPet ? "#FFFFFF" : "var(--vet-text-muted, #64748B)",
+                  border: "none",
+                }}
+                onClick={() => {
+                  setIsExistingPet(false);
+                  setSelectedPetId("");
+                  setNombrePaciente("");
+                  setNombreTutor("");
+                  setTelefonoTutor("");
+                }}
+              >
+                Paciente nuevo / Sin registro previo
+              </button>
+            </div>
 
-              {/* Selector de Clasificación Inicial */}
-              <div className="mb-4">
-                <label className="form-label fw-bold">
-                  Clasificación Inicial de Triage:
+            {/* Option A: Pet Select dropdown */}
+            {isExistingPet ? (
+              <div className="mb-3">
+                <label htmlFor="triage-pet-select" className="form-label small fw-semibold text-muted">
+                  Seleccionar Mascota Registrada
                 </label>
-                <div className="row g-2">
-                  <div className="col-md-6 col-lg-3">
-                    <label
-                      className={`card p-2 text-center h-100 cursor-pointer border-2 ${
-                        columna === "CONSULTA_PROGRAMADA"
-                          ? "border-success bg-success-subtle text-success fw-bold"
-                          : "border-secondary-subtle"
-                      }`}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <input
-                        type="radio"
-                        name="triageColumn"
-                        className="d-none"
-                        value="CONSULTA_PROGRAMADA"
-                        checked={columna === "CONSULTA_PROGRAMADA"}
-                        onChange={() => setColumna("CONSULTA_PROGRAMADA")}
-                      />
-                      <div className="fs-3">🟢</div>
-                      <div>Consulta Programada</div>
-                      <small className="text-muted">Control o turno agendado</small>
-                    </label>
-                  </div>
-
-                  <div className="col-md-6 col-lg-3">
-                    <label
-                      className={`card p-2 text-center h-100 cursor-pointer border-2 ${
-                        columna === "URGENCIA_MODERADA"
-                          ? "border-warning bg-warning-subtle text-dark fw-bold"
-                          : "border-secondary-subtle"
-                      }`}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <input
-                        type="radio"
-                        name="triageColumn"
-                        className="d-none"
-                        value="URGENCIA_MODERADA"
-                        checked={columna === "URGENCIA_MODERADA"}
-                        onChange={() => setColumna("URGENCIA_MODERADA")}
-                      />
-                      <div className="fs-3">🟡</div>
-                      <div>Urgencia Moderada</div>
-                      <small className="text-muted">Atención prioritaria</small>
-                    </label>
-                  </div>
-
-                  <div className="col-md-6 col-lg-3">
-                    <label
-                      className={`card p-2 text-center h-100 cursor-pointer border-2 ${
-                        columna === "EMERGENCIA_CRITICA"
-                          ? "border-danger bg-danger-subtle text-danger fw-bold"
-                          : "border-secondary-subtle"
-                      }`}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <input
-                        type="radio"
-                        name="triageColumn"
-                        className="d-none"
-                        value="EMERGENCIA_CRITICA"
-                        checked={columna === "EMERGENCIA_CRITICA"}
-                        onChange={() => setColumna("EMERGENCIA_CRITICA")}
-                      />
-                      <div className="fs-3">🔴</div>
-                      <div>Emergencia Crítica</div>
-                      <small className="text-muted">Riesgo vital inmediato</small>
-                    </label>
-                  </div>
-
-                  <div className="col-md-6 col-lg-3">
-                    <label
-                      className={`card p-2 text-center h-100 cursor-pointer border-2 ${
-                        columna === "INTERNACION_QUIROFANO"
-                          ? "border-primary bg-primary-subtle text-primary fw-bold"
-                          : "border-secondary-subtle"
-                      }`}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <input
-                        type="radio"
-                        name="triageColumn"
-                        className="d-none"
-                        value="INTERNACION_QUIROFANO"
-                        checked={columna === "INTERNACION_QUIROFANO"}
-                        onChange={() => setColumna("INTERNACION_QUIROFANO")}
-                      />
-                      <div className="fs-3">🏥</div>
-                      <div>Internación / Quirófano</div>
-                      <small className="text-muted">Monitoreo o cirugía</small>
-                    </label>
-                  </div>
-                </div>
+                <select
+                  id="triage-pet-select"
+                  className="form-select rounded-2"
+                  value={selectedPetId}
+                  onChange={(e) => handleSelectPet(e.target.value)}
+                  disabled={loadingPets}
+                  required={isExistingPet}
+                >
+                  <option value="">-- Buscar por nombre de paciente o tutor --</option>
+                  {pets.map((p) => {
+                    const tutor = p.dueno || p.usuario;
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {p.nombre} ({p.especie}) · Tutor: {tutor ? `${tutor.nombre} ${tutor.apellido}` : "Sin tutor"}
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
-
-              {/* Selector entre mascota existente vs ingreso rápido */}
-              <div className="mb-3 d-flex gap-3 align-items-center">
-                <span className="fw-semibold">Tipo de paciente:</span>
-                <div className="btn-group" role="group">
-                  <button
-                    type="button"
-                    className={`btn btn-sm ${
-                      isExistingPet ? "btn-primary" : "btn-outline-secondary"
-                    }`}
-                    onClick={() => setIsExistingPet(true)}
-                  >
-                    🐾 Mascota Registrada
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn btn-sm ${
-                      !isExistingPet ? "btn-primary" : "btn-outline-secondary"
-                    }`}
-                    onClick={() => {
-                      setIsExistingPet(false);
-                      setSelectedPetId("");
-                    }}
-                  >
-                    ⚡ Ingreso Directo / No Registrado
-                  </button>
-                </div>
-              </div>
-
-              {isExistingPet && (
-                <div className="mb-3">
-                  <label className="form-label">
-                    Seleccionar Mascota de la Clínica:
-                  </label>
-                  <select
-                    className="form-select"
-                    value={selectedPetId}
-                    onChange={(e) => handleSelectPet(e.target.value)}
-                    disabled={loadingPets}
-                  >
-                    <option value="">-- Seleccionar o buscar mascota --</option>
-                    {pets.map((p) => {
-                      const tutor = p.dueno || p.usuario;
-                      const tutorNombre = tutor
-                        ? `${tutor.nombre} ${tutor.apellido}`.trim()
-                        : "Sin tutor";
-                      return (
-                        <option key={p.id} value={p.id}>
-                          {p.nombre} ({p.especie} - {p.raza || "Mestizo"}) - Tutor: {tutorNombre}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              )}
-
-              {/* Datos del Paciente */}
-              <div className="row g-3">
-                <div className="col-md-6">
-                  <label className="form-label">
+            ) : (
+              /* Option B: Quick Fields */
+              <div className="row g-2 mb-3">
+                <div className="col-sm-6">
+                  <label htmlFor="nombrePaciente" className="form-label small fw-semibold text-muted">
                     Nombre del Paciente <span className="text-danger">*</span>
                   </label>
                   <input
+                    id="nombrePaciente"
                     type="text"
-                    className="form-control"
-                    placeholder="Ej: Milo, Luna..."
+                    className="form-control form-control-sm rounded-2"
+                    placeholder="Ej. Milo, Luna..."
                     value={nombrePaciente}
                     onChange={(e) => setNombrePaciente(e.target.value)}
-                    required
+                    required={!isExistingPet}
                   />
                 </div>
-
-                <div className="col-md-3">
-                  <label className="form-label">Especie</label>
+                <div className="col-sm-6">
+                  <label htmlFor="especie" className="form-label small fw-semibold text-muted">
+                    Especie
+                  </label>
                   <select
-                    className="form-select"
+                    id="especie"
+                    className="form-select form-select-sm rounded-2"
                     value={especie}
                     onChange={(e) => setEspecie(e.target.value)}
                   >
                     <option value="Canino">Canino</option>
                     <option value="Felino">Felino</option>
                     <option value="Ave">Ave</option>
-                    <option value="Conejo">Conejo</option>
-                    <option value="Roedor">Roedor</option>
                     <option value="Otro">Otro</option>
                   </select>
                 </div>
-
-                <div className="col-md-3">
-                  <label className="form-label">Raza</label>
+                <div className="col-sm-6">
+                  <label htmlFor="nombreTutor" className="form-label small fw-semibold text-muted">
+                    Nombre del Tutor
+                  </label>
                   <input
+                    id="nombreTutor"
                     type="text"
-                    className="form-control"
-                    placeholder="Ej: Labrador, Siamés..."
-                    value={raza}
-                    onChange={(e) => setRaza(e.target.value)}
-                  />
-                </div>
-
-                {/* Tutor y Teléfono */}
-                <div className="col-md-6">
-                  <label className="form-label">Nombre del Tutor / Acompañante</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Ej: Juan Pérez"
+                    className="form-control form-control-sm rounded-2"
+                    placeholder="Nombre y apellido"
                     value={nombreTutor}
                     onChange={(e) => setNombreTutor(e.target.value)}
                   />
                 </div>
-
-                <div className="col-md-6">
-                  <label className="form-label">Teléfono de Contacto</label>
+                <div className="col-sm-6">
+                  <label htmlFor="telefonoTutor" className="form-label small fw-semibold text-muted">
+                    Teléfono (+54)
+                  </label>
                   <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Ej: 11 4455 6677"
+                    id="telefonoTutor"
+                    type="tel"
+                    className="form-control form-control-sm rounded-2"
+                    placeholder="11-4567-8901"
                     value={telefonoTutor}
                     onChange={(e) => setTelefonoTutor(e.target.value)}
                   />
                 </div>
+              </div>
+            )}
 
-                {/* Motivo de ingreso */}
-                <div className="col-12">
-                  <label className="form-label">
-                    Motivo de Llegada / Urgencia <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Ej: Traumatismo por atropello, disnea aguda, vómitos reiterados..."
-                    value={motivo}
-                    onChange={(e) => setMotivo(e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* Observaciones / Notas clínicas iniciales */}
-                <div className="col-12">
-                  <label className="form-label">
-                    Signos vitales iniciales / Observaciones de triage:
-                  </label>
-                  <textarea
-                    className="form-control"
-                    rows={2}
-                    placeholder="T° rectal, FC, FR, tiempo de llenado capilar, estado de consciencia..."
-                    value={notas}
-                    onChange={(e) => setNotas(e.target.value)}
-                  />
-                </div>
+            {/* Initial Triage Level Selector: 2x2 grid */}
+            <div className="mb-3">
+              <label className="form-label small fw-bold text-dark mb-2">
+                Nivel de Triage Inicial (Clasificación de Guardia)
+              </label>
+              <div className="level-selection-grid">
+                {TRIAGE_LEVELS.map((level) => {
+                  const isSelected = columna === level.key;
+                  return (
+                    <div
+                      key={level.key}
+                      className={`level-select-card ${isSelected ? "active" : ""}`}
+                      onClick={() => setColumna(level.key)}
+                    >
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span
+                          style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: level.dotColor,
+                            display: "inline-block",
+                          }}
+                        />
+                        <strong className="small" style={{ color: isSelected ? "var(--vet-primary, #6D28D9)" : "#1E1B4B" }}>
+                          {level.title}
+                        </strong>
+                      </div>
+                      <small className="text-muted d-block" style={{ fontSize: "0.74rem" }}>
+                        {level.desc}
+                      </small>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="modal-footer bg-light">
+            {/* Motivo de ingreso */}
+            <div className="mb-3">
+              <label htmlFor="motivoIngreso" className="form-label small fw-semibold text-muted">
+                Motivo de ingreso o síntoma principal <span className="text-danger">*</span>
+              </label>
+              <input
+                id="motivoIngreso"
+                type="text"
+                className="form-control rounded-2"
+                placeholder="Ej. Dificultad respiratoria aguda tras paseo, vómitos reiterados..."
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Observaciones iniciales / signos vitales rápidos */}
+            <div className="mb-3">
+              <label htmlFor="notasTriage" className="form-label small fw-semibold text-muted">
+                Observaciones iniciales / Signos vitales rápidos
+              </label>
+              <textarea
+                id="notasTriage"
+                rows={2}
+                className="form-control rounded-2"
+                placeholder="Temperatura, estado de mucosas, frecuencia estimada, convulsiones..."
+                value={notas}
+                onChange={(e) => setNotas(e.target.value)}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top border-light-subtle">
               <button
                 type="button"
-                className="btn btn-outline-secondary"
+                className="btn btn-light text-secondary rounded-2 px-3 fw-medium"
                 onClick={onClose}
                 disabled={submitting}
               >
@@ -412,13 +379,15 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="btn btn-primary px-4"
+                className="btn btn-primary rounded-2 shadow-sm px-4 fw-medium"
+                style={{ backgroundColor: "var(--vet-primary, #6D28D9)", borderColor: "var(--vet-primary, #6D28D9)" }}
                 disabled={submitting}
               >
-                {submitting ? "Ingresando..." : "Ingresar a Guardia"}
+                {submitting ? "Admitiendo..." : "Admitir Paciente al Tablero"}
               </button>
             </div>
           </form>
+
         </div>
       </div>
     </div>

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/NewPet.css";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiFetch } from "../services/apiClient";
+import { SPECIES_OPTIONS } from "../constants";
 
 function NewPet() {
   const [nombre, setNombre] = useState("");
-  const [especie, setEspecie] = useState("");
+  const [especie, setEspecie] = useState<string>(SPECIES_OPTIONS[0]);
   const [raza, setRaza] = useState("");
   const [edad, setEdad] = useState("");
+  const [peso, setPeso] = useState("");
   const [sexo, setSexo] = useState("macho");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,31 +21,20 @@ function NewPet() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/mascotas`, {
+      await apiFetch("/mascotas", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           nombre: nombre.trim(),
           especie: especie.trim(),
           raza: raza.trim() || undefined,
           edad: edad ? Number(edad) : undefined,
+          peso: peso ? Number(peso) : undefined,
           sexo,
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Error al registrar la mascota");
-      }
-
       navigate("/mascotas");
     } catch (err: any) {
-      console.error("Error al registrar mascota:", err);
       setError(err.message || "No se pudo registrar la mascota");
     } finally {
       setLoading(false);
@@ -53,100 +42,158 @@ function NewPet() {
   };
 
   return (
-    <main className="new-pet-page">
-      <div className="new-pet-card">
-        <h1>Registrar mascota</h1>
-
-        {error && <div className="alert alert-danger mb-3">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="name" className="form-label">
-              Nombre *
-            </label>
-            <input
-              type="text"
-              id="name"
-              className="form-control"
-              placeholder="Ej: Paco"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-            />
+    <main className="py-5" style={{ backgroundColor: "#FAF9FC", minHeight: "calc(100vh - 65px)" }}>
+      <div className="container" style={{ maxWidth: "720px" }}>
+        <div className="card rounded-3 p-4 p-md-5 bg-white shadow-sm border" style={{ borderColor: "#EDE9FE" }}>
+          {/* Header */}
+          <div className="mb-4 pb-2 border-bottom border-light-subtle">
+            <h2 className="fw-bold mb-1" style={{ color: "#1E1B4B" }}>Registrar Nueva Mascota</h2>
+            <p className="text-muted small mb-0">Completá los datos básicos para abrir su historia clínica</p>
           </div>
 
-          <div className="mb-3">
-            <label htmlFor="species" className="form-label">
-              Especie *
-            </label>
-            <input
-              type="text"
-              id="species"
-              className="form-control"
-              placeholder="Ej: Perro, Gato..."
-              value={especie}
-              onChange={(e) => setEspecie(e.target.value)}
-              required
-            />
-          </div>
+          {error && <div className="alert alert-danger rounded-2 py-2 px-3 small mb-4">{error}</div>}
 
-          <div className="mb-3">
-            <label htmlFor="breed" className="form-label">
-              Raza
-            </label>
-            <input
-              type="text"
-              id="breed"
-              className="form-control"
-              placeholder="Ej: Mestizo, Caniche..."
-              value={raza}
-              onChange={(e) => setRaza(e.target.value)}
-            />
-          </div>
+          <form onSubmit={handleSubmit}>
+            {/* 2-column grid */}
+            <div className="row g-3">
+              {/* Nombre */}
+              <div className="col-md-6">
+                <label htmlFor="name" className="form-label">
+                  Nombre del Paciente <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  className="form-control rounded-2"
+                  placeholder="Ej: Milo, Luna..."
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="row">
-            <div className="col-md-6 mb-3">
-              <label htmlFor="age" className="form-label">
-                Edad (años)
-              </label>
-              <input
-                type="number"
-                id="age"
-                className="form-control"
-                min="0"
-                placeholder="Ej: 3"
-                value={edad}
-                onChange={(e) => setEdad(e.target.value)}
-              />
+              {/* Especie dropdown */}
+              <div className="col-md-6">
+                <label htmlFor="species" className="form-label">
+                  Especie <span className="text-danger">*</span>
+                </label>
+                <select
+                  id="species"
+                  className="form-select rounded-2"
+                  value={especie}
+                  onChange={(e) => setEspecie(e.target.value)}
+                  required
+                >
+                  {SPECIES_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Raza */}
+              <div className="col-md-6">
+                <label htmlFor="breed" className="form-label">
+                  Raza
+                </label>
+                <input
+                  type="text"
+                  id="breed"
+                  className="form-control rounded-2"
+                  placeholder="Ej: Golden Retriever, Siamés..."
+                  value={raza}
+                  onChange={(e) => setRaza(e.target.value)}
+                />
+              </div>
+
+              {/* Edad */}
+              <div className="col-md-6">
+                <label htmlFor="age" className="form-label">
+                  Edad (años)
+                </label>
+                <input
+                  type="number"
+                  id="age"
+                  className="form-control rounded-2"
+                  min="0"
+                  max="40"
+                  placeholder="Ej: 3"
+                  value={edad}
+                  onChange={(e) => setEdad(e.target.value)}
+                />
+              </div>
+
+              {/* Peso */}
+              <div className="col-md-6">
+                <label htmlFor="peso" className="form-label">
+                  Peso aproximado (kg)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  id="peso"
+                  className="form-control rounded-2"
+                  placeholder="Ej: 28.5"
+                  value={peso}
+                  onChange={(e) => setPeso(e.target.value)}
+                />
+              </div>
+
+              {/* Sexo radio buttons */}
+              <div className="col-md-6">
+                <label className="form-label d-block">
+                  Sexo <span className="text-danger">*</span>
+                </label>
+                <div className="d-flex gap-3 pt-1">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="sexoRadio"
+                      id="sexoMacho"
+                      value="macho"
+                      checked={sexo === "macho"}
+                      onChange={() => setSexo("macho")}
+                    />
+                    <label className="form-check-label" htmlFor="sexoMacho">
+                      Macho
+                    </label>
+                  </div>
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="sexoRadio"
+                      id="sexoHembra"
+                      value="hembra"
+                      checked={sexo === "hembra"}
+                      onChange={() => setSexo("hembra")}
+                    />
+                    <label className="form-check-label" htmlFor="sexoHembra">
+                      Hembra
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="col-md-6 mb-3">
-              <label htmlFor="sexo" className="form-label">
-                Sexo
-              </label>
-              <select
-                id="sexo"
-                className="form-select"
-                value={sexo}
-                onChange={(e) => setSexo(e.target.value)}
+            {/* Action buttons with rounded-2: "Cancelar" (btn-light) and "Guardar Mascota" (btn-primary #6D28D9) */}
+            <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top border-light-subtle">
+              <Link to="/mascotas" className="btn btn-light rounded-2 px-3">
+                Cancelar
+              </Link>
+
+              <button
+                type="submit"
+                className="btn btn-primary rounded-2 px-4 shadow-sm"
+                disabled={loading}
               >
-                <option value="macho">Macho</option>
-                <option value="hembra">Hembra</option>
-                <option value="desconocido">Desconocido</option>
-              </select>
+                {loading ? "Guardando..." : "Guardar Mascota"}
+              </button>
             </div>
-          </div>
-
-          <div className="new-pet-actions mt-3">
-            <Link to="/mascotas" className="btn btn-outline-secondary">
-              Cancelar
-            </Link>
-
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? "Registrando..." : "Registrar mascota"}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </main>
   );

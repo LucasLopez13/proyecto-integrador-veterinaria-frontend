@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Appointment } from "../types/Appointment";
-import "../styles/ProfessionalAppointments.css";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiFetch } from "../services/apiClient";
+import { MONTH_NAMES, formatTime } from "../utils/dateUtils";
+import { getSpeciesIcon } from "../utils/speciesIcon";
 
 function MyAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -17,24 +17,9 @@ function MyAppointments() {
     try {
       setLoading(true);
       setError(null);
-
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`${API_URL}/turnos`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudieron cargar los turnos");
-      }
-
-      const turnos: Appointment[] = await response.json();
-
+      const turnos = await apiFetch<Appointment[]>("/turnos");
       setAppointments(turnos);
     } catch (err: any) {
-      console.error("Error al cargar turnos:", err);
       setError(err.message || "Error al conectar con el servidor");
     } finally {
       setLoading(false);
@@ -53,61 +38,34 @@ function MyAppointments() {
     if (!confirmar) return;
 
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`${API_URL}/turnos/${id}`, {
+      await apiFetch(`/turnos/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          estado: "cancelado",
-        }),
+        body: JSON.stringify({ estado: "cancelado" }),
       });
-
-      if (!response.ok) {
-        throw new Error("No se pudo cancelar el turno");
-      }
 
       setAppointments((turnos) =>
         turnos.map((turno) =>
-          turno.id === id
-            ? { ...turno, estado: "cancelado" }
-            : turno
+          turno.id === id ? { ...turno, estado: "cancelado" } : turno
         )
       );
     } catch (err: any) {
-      console.error("Error al cancelar turno:", err);
-      alert(err.message || "Error al cancelar el turno");
+      setError(err.message || "Error al cancelar el turno");
     }
   };
 
   const handleReprogramarTurno = async (id: number) => {
     if (!nuevaFecha) {
-      alert("Seleccioná una nueva fecha y hora");
+      setError("Seleccioná una nueva fecha y hora para reprogramar");
       return;
     }
 
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`${API_URL}/turnos/${id}`, {
+      const turnoActualizado = await apiFetch<Appointment>(`/turnos/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           fecha: new Date(nuevaFecha).toISOString(),
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("No se pudo reprogramar el turno");
-      }
-
-      const turnoActualizado: Appointment = await response.json();
 
       setAppointments((turnos) =>
         turnos.map((turno) =>
@@ -118,231 +76,222 @@ function MyAppointments() {
       setReprogramandoId(null);
       setNuevaFecha("");
     } catch (err: any) {
-      console.error("Error al reprogramar turno:", err);
-      alert(err.message || "Error al reprogramar el turno");
+      setError(err.message || "Error al reprogramar el turno");
+    }
+  };
+
+  const getStatusBadge = (estado: string) => {
+    switch (estado.toLowerCase()) {
+      case "confirmado":
+        return (
+          <span className="badge rounded-2 px-2 py-1 bg-success-subtle text-success border border-success-subtle fw-medium d-inline-flex align-items-center gap-1">
+            <i className="bi bi-check-circle"></i> Confirmado
+          </span>
+        );
+      case "pendiente":
+        return (
+          <span className="badge rounded-2 px-2 py-1 bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-medium d-inline-flex align-items-center gap-1">
+            <i className="bi bi-clock-history"></i> Pendiente
+          </span>
+        );
+      case "atendido":
+      case "completado":
+        return (
+          <span className="badge rounded-2 px-2 py-1 bg-purple-subtle text-purple-emphasis border border-purple-subtle fw-medium d-inline-flex align-items-center gap-1">
+            <i className="bi bi-check2-circle"></i> Atendido
+          </span>
+        );
+      case "cancelado":
+        return (
+          <span className="badge rounded-2 px-2 py-1 bg-danger-subtle text-danger border border-danger-subtle fw-medium d-inline-flex align-items-center gap-1">
+            <i className="bi bi-x-circle"></i> Cancelado
+          </span>
+        );
+      default:
+        return (
+          <span className="badge rounded-2 px-2 py-1 bg-light text-secondary border fw-medium">
+            {estado}
+          </span>
+        );
     }
   };
 
   return (
-    <main className="professional-appointments-page">
-      <div className="container py-4">
+    <main style={{ minHeight: "calc(100vh - 72px)", backgroundColor: "var(--vet-bg-canvas, #FAF9FC)", paddingBottom: "60px" }}>
+      <div className="container py-4" style={{ maxWidth: "860px" }}>
 
         {/* Encabezado */}
-        <div className="appointments-header d-flex justify-content-between align-items-center">
+        <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
-            <h1>Mis turnos</h1>
-            <p>Consultá tus próximos turnos veterinarios</p>
+            <h1 className="h3 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+              Mis Turnos
+            </h1>
+            <p className="text-muted small mb-0">
+              Consultá y gestioná las próximas citas veterinarias de tus mascotas
+            </p>
           </div>
 
-          <Link to="/turnos/nuevo" className="btn btn-primary">
-            + Solicitar nuevo turno
+          <Link
+            to="/turnos/nuevo"
+            className="btn btn-primary rounded-2 shadow-sm d-inline-flex align-items-center gap-2 px-3 fw-medium"
+          >
+            <span>+</span> Solicitar Nuevo Turno
           </Link>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="alert alert-danger">
+          <div className="alert alert-danger rounded-2 shadow-sm mb-4">
             {error}
           </div>
         )}
 
         {/* Loading */}
         {loading ? (
-          <div className="text-center py-5">
-            <p className="text-muted">
-              Cargando tus turnos...
-            </p>
+          <div className="bg-white rounded-3 border border-light-subtle p-5 text-center shadow-sm">
+            <div className="spinner-border text-primary spinner-border-sm" role="status"></div>
+            <p className="text-muted small mt-2 mb-0">Cargando tus turnos...</p>
           </div>
-
         ) : appointments.length === 0 ? (
-
           /* Sin turnos */
-          <div className="appointments-empty">
-            <div className="appointments-empty-icon">
-              📅
-            </div>
-
-            <h3>No tenés turnos solicitados</h3>
-
-            <p>
-              Cuando solicites un turno, vas a poder verlo en esta sección.
+          <div className="bg-white rounded-3 border border-light-subtle p-5 text-center shadow-sm">
+            <i className="bi bi-calendar-check fs-1 text-muted d-block mb-2"></i>
+            <h2 className="h5 fw-bold" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+              No tenés turnos solicitados
+            </h2>
+            <p className="text-muted small mb-3">
+              Cuando solicites una cita, vas a poder darle seguimiento desde esta sección.
             </p>
-
             <Link
               to="/turnos/nuevo"
-              className="btn btn-primary mt-3"
+              className="btn btn-primary rounded-2 px-3 fw-medium d-inline-flex align-items-center gap-2"
             >
-              Solicitar mi primer turno
+              <i className="bi bi-plus-lg"></i> Solicitar mi primer turno
             </Link>
           </div>
-
         ) : (
+          /* Stack of Appointment Cards */
+          <div className="d-flex flex-column gap-3">
+            {appointments.map((appointment) => {
+              const d = new Date(appointment.fecha);
+              const day = String(d.getDate()).padStart(2, "0");
+              const month = MONTH_NAMES[d.getMonth()] || "";
+              const hours = String(d.getHours()).padStart(2, "0");
+              const mins = String(d.getMinutes()).padStart(2, "0");
+              const timeStr = `${hours}:${mins} hs`;
 
-          /* Tabla */
-          <div className="appointments-table-wrapper">
-            <div className="table-responsive">
+              const mascotaNombre = appointment.mascota?.nombre || "Mascota";
+              const isReprogramando = reprogramandoId === appointment.id;
+              const isPastOrCancelled = ["cancelado", "completado", "atendido"].includes(appointment.estado);
 
-              <table className="appointments-table">
+              return (
+                <div
+                  key={appointment.id}
+                  className="bg-white rounded-3 border border-light-subtle p-3 shadow-sm transition-all"
+                  style={{ borderColor: "var(--vet-border-tint, #EDE9FE)" }}
+                >
+                  <div className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3">
+                    
+                    {/* Left: Date Block & Info */}
+                    <div className="d-flex align-items-center gap-3">
+                      {/* Compact rectangular Date Block */}
+                      <div
+                        className="rounded-2 d-flex flex-column align-items-center justify-content-center p-2 text-center"
+                        style={{
+                          width: "74px",
+                          height: "74px",
+                          backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
+                          border: "1px solid var(--vet-border-tint, #EDE9FE)",
+                          flexShrink: 0
+                        }}
+                      >
+                        <span className="small text-uppercase fw-semibold" style={{ color: "var(--vet-primary, #6D28D9)", fontSize: "0.72rem", letterSpacing: "0.5px" }}>
+                          {month}
+                        </span>
+                        <span className="fw-bold" style={{ color: "var(--vet-text-main, #1E1B4B)", fontSize: "1.3rem", lineHeight: 1.1 }}>
+                          {day}
+                        </span>
+                        <span className="small font-monospace" style={{ color: "var(--vet-primary, #6D28D9)", fontSize: "0.75rem" }}>
+                          {timeStr}
+                        </span>
+                      </div>
 
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Mascota</th>
-                    <th>Motivo</th>
-                    <th>Estado</th>
-                    <th>Acción</th>
-                  </tr>
-                </thead>
+                      {/* Info */}
+                      <div>
+                        <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
+                          <h3 className="h6 fw-bold mb-0 d-inline-flex align-items-center gap-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                            {getSpeciesIcon(appointment.mascota?.especie)} {mascotaNombre}
+                          </h3>
+                          {getStatusBadge(appointment.estado)}
+                        </div>
 
-                <tbody>
+                        <p className="small text-muted mb-0">
+                          <strong>Motivo:</strong> {appointment.motivo || "Consulta de rutina / Revisión"}
+                        </p>
+                        <small className="text-secondary" style={{ fontSize: "0.8rem" }}>
+                          Veterinario: <span className="fw-medium text-dark">Servicio General VetCare</span>
+                        </small>
+                      </div>
+                    </div>
 
-                  {appointments.map((appointment) => {
+                    {/* Right: Actions */}
+                    {!isPastOrCancelled && (
+                      <div className="d-flex align-items-center gap-2 flex-shrink-0 align-self-sm-center">
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary rounded-2 btn-sm fw-medium px-3"
+                          onClick={() => {
+                            if (isReprogramando) {
+                              setReprogramandoId(null);
+                            } else {
+                              setReprogramandoId(appointment.id);
+                              setNuevaFecha("");
+                            }
+                          }}
+                        >
+                          {isReprogramando ? "Cerrar" : "Reprogramar"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-outline-danger rounded-2 btn-sm fw-medium px-3"
+                          onClick={() => handleCancelarTurno(appointment.id)}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-                    const fecha = new Date(appointment.fecha);
+                  {/* Reschedule inline drawer */}
+                  {isReprogramando && (
+                    <div
+                      className="mt-3 pt-3 border-top border-light-subtle d-flex flex-column flex-sm-row align-items-sm-center gap-2"
+                      style={{ backgroundColor: "#FAF9FC", padding: "12px", borderRadius: "6px" }}
+                    >
+                      <label htmlFor={`reschedule-date-${appointment.id}`} className="small fw-semibold text-muted mb-0">
+                        Nueva fecha y hora:
+                      </label>
+                      <input
+                        id={`reschedule-date-${appointment.id}`}
+                        type="datetime-local"
+                        value={nuevaFecha}
+                        onChange={(e) => setNuevaFecha(e.target.value)}
+                        className="form-control form-control-sm rounded-2"
+                        style={{ maxWidth: "240px" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleReprogramarTurno(appointment.id)}
+                        className="btn btn-primary btn-sm rounded-2 fw-medium px-3"
+                      >
+                        Confirmar Reprogramación
+                      </button>
+                    </div>
+                  )}
 
-                    const mascotaNombre =
-                      appointment.mascota?.nombre || "Mascota";
-
-                    return (
-                      <tr key={appointment.id}>
-
-                        {/* Fecha */}
-                        <td>
-                          <span className="appointment-date">
-                            {fecha.toLocaleDateString("es-AR")}
-                          </span>
-                        </td>
-
-                        {/* Hora */}
-                        <td>
-                          <span className="appointment-time">
-                            {fecha.toLocaleTimeString("es-AR", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </td>
-
-                        {/* Mascota */}
-                        <td>
-                          <div className="appointment-pet">
-                            <span className="appointment-pet-icon">
-                              🐾
-                            </span>
-
-                            <span>
-                              {mascotaNombre}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Motivo */}
-                        <td>
-                          <span className="appointment-reason">
-                            {appointment.motivo}
-                          </span>
-                        </td>
-
-                        {/* Estado */}
-                        <td>
-                          <span
-                            className={`appointment-status status-${appointment.estado}`}
-                          >
-                            {appointment.estado === "pendiente" && "🟡 "}
-                            {appointment.estado === "confirmado" && "🟢 "}
-                            {appointment.estado === "atendido" && "🟣 "}
-                            {appointment.estado === "cancelado" && "🔴 "}
-
-                            {appointment.estado.charAt(0).toUpperCase() +
-                              appointment.estado.slice(1)}
-                          </span>
-                        </td>
-
-                        {/* Acciones */}
-                        <td>
-
-                          {!["cancelado", "completado", "atendido"].includes(appointment.estado) &&  (
-                              reprogramandoId === appointment.id ? (
-                                <div className="reschedule-box">
-                                  <div className="reschedule-title">
-                                    <span className="reschedule-icon">📅</span>
-                                    <div>
-                                      <strong>Nueva fecha y hora</strong>
-                                      <small>Elegí cuándo querés asistir</small>
-                                    </div>
-                                  </div>
-
-                                  <input
-                                    type="datetime-local"
-                                    value={nuevaFecha}
-                                    onChange={(e) =>
-                                      setNuevaFecha(e.target.value)
-                                    }
-                                    className="reschedule-input"
-                                  />
-
-                                  <div className="reschedule-actions">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleReprogramarTurno(appointment.id)
-                                      }
-                                      className="reschedule-confirm"
-                                    >
-                                      ✓ Confirmar
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setReprogramandoId(null);
-                                        setNuevaFecha("");
-                                      }}
-                                      className="reschedule-cancel"
-                                    >
-                                      × Volver
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="appointment-actions">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setReprogramandoId(appointment.id);
-                                      setNuevaFecha("");
-                                    }}
-                                    className="btn btn-outline-primary btn-sm"
-                                  >
-                                    📅 Reprogramar
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleCancelarTurno(appointment.id)
-                                    }
-                                    className="btn btn-outline-danger btn-sm"
-                                  >
-                                    Cancelar
-                                  </button>
-                                </div>
-                              )
-
-                            )}
-
-                        </td>
-
-                      </tr>
-                    );
-                  })}
-
-                </tbody>
-
-              </table>
-
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
 

@@ -2,128 +2,67 @@ import type {
   Consultation,
   CreateConsultationDTO,
   UpdateConsultationDTO,
-  ConsultationVersion
+  ConsultationVersion,
 } from "../types/Consultation";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiFetch } from "./apiClient";
 
 export const consultationService = {
   async createConsultation(
     data: CreateConsultationDTO,
-    token: string
+    token?: string | null
   ): Promise<{ message: string; consulta: Consultation }> {
-    const response = await fetch(`${API_URL}/consultas`, {
+    return apiFetch<{ message: string; consulta: Consultation }>("/consultas", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       body: JSON.stringify(data),
+      token,
     });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || result.message || "Error al registrar la consulta");
-    }
-
-    return result;
   },
 
   async updateConsultation(
     id: number,
     data: UpdateConsultationDTO,
-    token: string
+    token?: string | null
   ): Promise<Consultation> {
-    const response = await fetch(`${API_URL}/consultas/${id}`, {
+    return apiFetch<Consultation>(`/consultas/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       body: JSON.stringify(data),
+      token,
     });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || result.message || "Error al registrar la enmienda de la consulta");
-    }
-
-    return result;
   },
 
   async getConsultationsByPet(
     mascotaId: number,
-    token: string
+    token?: string | null
   ): Promise<Consultation[]> {
-    const response = await fetch(`${API_URL}/consultas/mascota/${mascotaId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const result = await response.json();
-      throw new Error(result.error || result.message || "Error al obtener consultas");
-    }
-
-    return response.json();
+    return apiFetch<Consultation[]>(`/consultas/mascota/${mascotaId}`, { token });
   },
 
   async getConsultationById(
     id: number,
-    token: string
+    token?: string | null
   ): Promise<Consultation> {
-    const response = await fetch(`${API_URL}/consultas/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const result = await response.json();
-      throw new Error(result.error || result.message || "Error al obtener la consulta");
-    }
-
-    return response.json();
+    return apiFetch<Consultation>(`/consultas/${id}`, { token });
   },
 
   async getConsultationVersions(
     id: number,
-    token: string
+    token?: string | null
   ): Promise<ConsultationVersion[]> {
-    const response = await fetch(`${API_URL}/consultas/${id}/versiones`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const result = await response.json();
-      throw new Error(result.error || result.message || "Error al obtener el historial de versiones");
-    }
-
-    return response.json();
+    return apiFetch<ConsultationVersion[]>(`/consultas/${id}/versiones`, { token });
   },
 
   async anularConsultation(
     id: number,
     motivoAnulacion: string,
-    token: string
+    token?: string | null
   ): Promise<{ message: string; consultaId: number; versionAnulacion: number }> {
-    const response = await fetch(`${API_URL}/consultas/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ motivoAnulacion }),
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || result.message || "Error al anular la consulta médica");
-    }
-
-    return result;
-  }
+    return apiFetch<{ message: string; consultaId: number; versionAnulacion: number }>(
+      `/consultas/${id}`,
+      {
+        method: "DELETE",
+        body: JSON.stringify({ motivoAnulacion }),
+        token,
+      }
+    );
+  },
 };
