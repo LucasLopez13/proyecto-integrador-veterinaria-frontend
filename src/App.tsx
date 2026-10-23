@@ -7,6 +7,7 @@ import NewAppointment from "./pages/NewAppointment";
 import ProfessionalAppointments from "./pages/ProfessionalAppointments";
 import PetDetails from "./pages/PetDetails";
 import MedicalAttention from "./pages/MedicalAttention";
+import TriageBoard from "./pages/TriageBoard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import MyAppointments from "./pages/MyAppointments";
@@ -36,15 +37,6 @@ function App() {
           element={
             <ProtectedRoute>
               <PetDetails />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/mascotas/nueva"
-          element={
-            <ProtectedRoute>
-              <NewPet />
             </ProtectedRoute>
           }
         />
@@ -99,6 +91,24 @@ function App() {
           element={
             <ProtectedRoute>
               <PetDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profesional/triage"
+          element={
+            <ProtectedRoute>
+              <TriageBoard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/triage"
+          element={
+            <ProtectedRoute>
+              <TriageBoard />
             </ProtectedRoute>
           }
         />

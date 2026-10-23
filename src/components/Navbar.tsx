@@ -44,10 +44,15 @@ function Navbar() {
             </>
           )}
 
-          {user.role === "profesional" && (
-            <Link className="nav-link" to="/profesional/turnos">
-              Turnos
-            </Link>
+          {(user.role === "profesional" || user.rol === "profesional" || user.role === "admin" || user.rol === "admin") && (
+            <>
+              <Link className="nav-link" to="/profesional/turnos">
+                📅 Turnos
+              </Link>
+              <Link className="nav-link text-warning fw-semibold" to="/profesional/triage">
+                🚨 Triage y Guardia
+              </Link>
+            </>
           )}
 
           <button

@@ -1,3 +1,11 @@
+export interface PetOwner {
+  id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono?: string | null;
+}
+
 export interface Pet {
   id: number;
   nombre: string;
@@ -7,11 +15,6 @@ export interface Pet {
   sexo: string;
   peso?: number | null;
   usuarioId: number;
-  usuario?: {
-    id: number;
-    nombre: string;
-    apellido: string;
-    email: string;
-    telefono?: string | null;
-  };
+  usuario?: PetOwner;
+  dueno?: PetOwner;
 }
