@@ -5,6 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import type { Pet } from "../types/Pet";
 import { apiFetch } from "../services/apiClient";
 import { BUSINESS_HOURS_SLOTS } from "../constants";
+import { ErrorModal } from "../components/common/ErrorModal";
+import { BackButton } from "../components/common/BackButton";
 
 function NewAppointment() {
   const { user } = useAuth();
@@ -48,6 +50,21 @@ function NewAppointment() {
     (p) => String(p.id) === String(selectedPetId)
   );
 
+  const isSlotInPast = (slotStr: string) => {
+    if (fecha !== hoyStr) return false;
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const [slotH, slotM] = slotStr.split(":").map(Number);
+    return slotH < currentHour || (slotH === currentHour && slotM <= currentMinute);
+  };
+
+  useEffect(() => {
+    if (hora && isSlotInPast(hora)) {
+      setHora("");
+    }
+  }, [fecha]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -64,6 +81,11 @@ function NewAppointment() {
 
     if (fecha < hoyStr) {
       setError("No podés seleccionar una fecha anterior al día de hoy");
+      return;
+    }
+
+    if (fecha === hoyStr && isSlotInPast(hora)) {
+      setError("El horario seleccionado ya ha transcurrido. Por favor seleccioná un horario posterior.");
       return;
     }
 
@@ -89,9 +111,19 @@ function NewAppointment() {
     }
   };
 
+  const availableSlots = BUSINESS_HOURS_SLOTS.filter((h) => !isSlotInPast(h));
+
   return (
     <main className="new-appointment-page">
       <div className="new-appointment-card">
+        {/* Back Link */}
+        <div className="mb-3">
+          <BackButton
+            to={mascotaIdParam ? `/mascotas/${mascotaIdParam}` : "/turnos"}
+            text={mascotaIdParam ? "Volver a la Mascota" : "Volver a Mis Turnos"}
+          />
+        </div>
+
         <div className="new-appointment-header">
           <div className="new-appointment-icon">
             <i className="bi bi-calendar-check text-primary fs-3"></i>
@@ -171,11 +203,15 @@ function NewAppointment() {
                 required
               >
                 <option value="">Seleccionar horario</option>
-                {BUSINESS_HOURS_SLOTS.map((h) => (
-                  <option key={h} value={h}>
-                    {h} hs
-                  </option>
-                ))}
+                {availableSlots.length === 0 ? (
+                  <option disabled value="">No hay más horarios disponibles hoy</option>
+                ) : (
+                  availableSlots.map((h) => (
+                    <option key={h} value={h}>
+                      {h} hs
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           </div>
@@ -185,7 +221,7 @@ function NewAppointment() {
             <textarea
               id="reason"
               className="form-control rounded-2"
-              placeholder="Contanos brevemente el motivo o síntomas de la consulta..."
+              placeholder="Motivo de la consulta"
               maxLength={150}
               rows={3}
               value={motivo}
@@ -212,6 +248,12 @@ function NewAppointment() {
           </div>
         </form>
       </div>
+
+      <ErrorModal
+        error={error}
+        title="Error al Solicitar Turno"
+        onClose={() => setError(null)}
+      />
     </main>
   );
 }

@@ -47,3 +47,30 @@ export function formatStopwatch(totalSeconds: number): string {
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
+
+/**
+ * Compara si una fecha coincide con el día calendario de hoy (o una fecha objetivo dada),
+ * evitando discrepancias de huso horario UTC.
+ */
+export function isSameCalendarDay(
+  dateInput: string | Date | null | undefined,
+  targetDate: Date = new Date()
+): boolean {
+  if (!dateInput) return false;
+  if (typeof dateInput === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    const [y, m, d] = dateInput.split("-").map(Number);
+    return (
+      targetDate.getFullYear() === y &&
+      targetDate.getMonth() + 1 === m &&
+      targetDate.getDate() === d
+    );
+  }
+  const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  if (isNaN(d.getTime())) return false;
+  return (
+    d.getFullYear() === targetDate.getFullYear() &&
+    d.getMonth() === targetDate.getMonth() &&
+    d.getDate() === targetDate.getDate()
+  );
+}
+

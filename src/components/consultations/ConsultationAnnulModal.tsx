@@ -68,7 +68,7 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
             <textarea
               className="form-control"
               rows={3}
-              placeholder="Ej. Registro duplicado accidentalmente, paciente atendido en otra sede..."
+              placeholder="Motivo de la anulación"
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
             />

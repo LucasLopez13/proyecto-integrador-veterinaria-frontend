@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import type { TriageItem, TriageColumn, CreateTriageDTO } from "../types/Triage";
+import type { Appointment } from "../types/Appointment";
 import { triageService } from "../services/triageService";
+import { apiFetch } from "../services/apiClient";
+import { isSameCalendarDay } from "../utils/dateUtils";
 import { TriageCard } from "../components/triage/TriageCard";
 import { NewTriageModal } from "../components/triage/NewTriageModal";
 import { ReceptionQueue } from "../components/triage/ReceptionQueue";
+import { ErrorModal } from "../components/common/ErrorModal";
 import { TIMERS } from "../constants";
 import "../styles/TriageBoard.css";
 
@@ -43,6 +47,7 @@ const COLUMNAS: ColumnConfig[] = [
 
 export const TriageBoard: React.FC = () => {
   const [items, setItems] = useState<TriageItem[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -52,6 +57,15 @@ export const TriageBoard: React.FC = () => {
   const [isReceptionOpen, setIsReceptionOpen] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [targetColumnForNew, setTargetColumnForNew] = useState<TriageColumn>("URGENCIA_MODERADA");
+
+  const cargarTurnos = async () => {
+    try {
+      const data = await apiFetch<Appointment[]>("/turnos");
+      setAppointments(data);
+    } catch {
+      // Silencioso
+    }
+  };
 
   const cargarTablero = async () => {
     try {
@@ -68,12 +82,14 @@ export const TriageBoard: React.FC = () => {
 
   useEffect(() => {
     cargarTablero();
+    cargarTurnos();
 
     const timerId = setInterval(() => {
       triageService
         .getKanban()
         .then((data) => setItems(data))
         .catch(() => {});
+      cargarTurnos();
     }, TIMERS.TRIAGE_POLLING_INTERVAL_MS);
 
     return () => clearInterval(timerId);
@@ -141,6 +157,7 @@ export const TriageBoard: React.FC = () => {
   const handleAdmitPatient = async (dto: CreateTriageDTO) => {
     const nuevo = await triageService.createTriage(dto);
     setItems((prev) => [nuevo, ...prev]);
+    cargarTurnos();
   };
 
   const handleOpenModal = (col: TriageColumn = "URGENCIA_MODERADA") => {
@@ -160,6 +177,15 @@ export const TriageBoard: React.FC = () => {
   });
 
   const activeTriagePetIds = items.map((i) => i.mascotaId).filter(Boolean);
+
+  const pendingReceptionAppointments = appointments.filter((appt) => {
+    if (!isSameCalendarDay(appt.fecha)) return false;
+    if (appt.estado === "atendido" || appt.estado === "cancelado") return false;
+    if (activeTriagePetIds.includes(appt.mascotaId)) return false;
+    return true;
+  });
+
+  const receptionCount = pendingReceptionAppointments.length;
 
   return (
     <main className="triage-canvas">
@@ -188,7 +214,7 @@ export const TriageBoard: React.FC = () => {
             <input
               type="text"
               className="form-control rounded-2"
-              placeholder="Buscar por paciente, tutor o chip..."
+              placeholder="Buscar por paciente o tutor"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
@@ -215,7 +241,7 @@ export const TriageBoard: React.FC = () => {
                   border: "1px solid var(--vet-border-tint, #EDE9FE)",
                 }}
               >
-                {items.filter((it) => it.columna === "CONSULTA_PROGRAMADA").length}
+                {receptionCount}
               </span>
             </button>
 
@@ -338,6 +364,12 @@ export const TriageBoard: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleAdmitPatient}
         initialColumn={targetColumnForNew}
+      />
+
+      <ErrorModal
+        error={error}
+        title="Error en Tablero de Triage"
+        onClose={() => setError(null)}
       />
     </main>
   );

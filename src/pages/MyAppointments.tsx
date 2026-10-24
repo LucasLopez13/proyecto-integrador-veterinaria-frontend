@@ -53,9 +53,18 @@ function MyAppointments() {
     }
   };
 
+  const nowForInput = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+
   const handleReprogramarTurno = async (id: number) => {
     if (!nuevaFecha) {
       setError("Seleccioná una nueva fecha y hora para reprogramar");
+      return;
+    }
+
+    if (new Date(nuevaFecha).getTime() <= Date.now()) {
+      setError("No podés reprogramar un turno para una fecha u horario que ya ha transcurrido");
       return;
     }
 
@@ -274,6 +283,7 @@ function MyAppointments() {
                       <input
                         id={`reschedule-date-${appointment.id}`}
                         type="datetime-local"
+                        min={nowForInput}
                         value={nuevaFecha}
                         onChange={(e) => setNuevaFecha(e.target.value)}
                         className="form-control form-control-sm rounded-2"

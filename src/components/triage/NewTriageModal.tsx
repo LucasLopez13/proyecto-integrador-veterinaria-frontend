@@ -248,7 +248,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                     id="nombrePaciente"
                     type="text"
                     className="form-control form-control-sm rounded-2"
-                    placeholder="Ej. Milo, Luna..."
+                    placeholder="Nombre del paciente"
                     value={nombrePaciente}
                     onChange={(e) => setNombrePaciente(e.target.value)}
                     required={!isExistingPet}
@@ -278,7 +278,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                     id="nombreTutor"
                     type="text"
                     className="form-control form-control-sm rounded-2"
-                    placeholder="Nombre y apellido"
+                    placeholder="Nombre y apellido del tutor"
                     value={nombreTutor}
                     onChange={(e) => setNombreTutor(e.target.value)}
                   />
@@ -291,7 +291,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                     id="telefonoTutor"
                     type="tel"
                     className="form-control form-control-sm rounded-2"
-                    placeholder="11-4567-8901"
+                    placeholder="Teléfono del tutor"
                     value={telefonoTutor}
                     onChange={(e) => setTelefonoTutor(e.target.value)}
                   />
@@ -345,7 +345,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                 id="motivoIngreso"
                 type="text"
                 className="form-control rounded-2"
-                placeholder="Ej. Dificultad respiratoria aguda tras paseo, vómitos reiterados..."
+                placeholder="Motivo de ingreso o síntoma principal"
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
                 required
@@ -361,7 +361,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                 id="notasTriage"
                 rows={2}
                 className="form-control rounded-2"
-                placeholder="Temperatura, estado de mucosas, frecuencia estimada, convulsiones..."
+                placeholder="Observaciones iniciales o signos vitales rápidos"
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
               />

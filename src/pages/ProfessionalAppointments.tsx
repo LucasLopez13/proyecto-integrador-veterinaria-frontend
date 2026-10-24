@@ -10,6 +10,15 @@ function ProfessionalAppointments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination state (10 items per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  const totalPages = Math.ceil(appointments.length / pageSize) || 1;
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, appointments.length);
+  const paginatedAppointments = appointments.slice(startIndex, endIndex);
+
   const cargarTurnos = async () => {
     try {
       setLoading(true);
@@ -192,7 +201,7 @@ function ProfessionalAppointments() {
                 </thead>
 
                 <tbody>
-                  {appointments.map((appointment) => {
+                  {paginatedAppointments.map((appointment) => {
                     const timeStr = formatTime(appointment.fecha);
                     const dateStr = formatDate(appointment.fecha);
 
@@ -309,6 +318,62 @@ function ProfessionalAppointments() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div
+                className="p-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2"
+                style={{ backgroundColor: "#FFFFFF", borderColor: "#F1F5F9" }}
+              >
+                <span className="small text-muted">
+                  Mostrando <strong>{appointments.length > 0 ? startIndex + 1 : 0}</strong> a{" "}
+                  <strong>{endIndex}</strong> de <strong>{appointments.length}</strong> turnos
+                </span>
+
+                <nav aria-label="Paginación de turnos">
+                  <ul className="pagination pagination-sm mb-0 gap-1">
+                    <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                      <button
+                        type="button"
+                        className="page-link rounded-2 px-2 py-1 text-decoration-none"
+                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <i className="bi bi-chevron-left"></i> Anterior
+                      </button>
+                    </li>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <li key={page} className={`page-item ${currentPage === page ? "active" : ""}`}>
+                        <button
+                          type="button"
+                          className="page-link rounded-2 px-3 py-1"
+                          style={{
+                            backgroundColor: currentPage === page ? "var(--vet-primary, #6D28D9)" : "transparent",
+                            borderColor: currentPage === page ? "var(--vet-primary, #6D28D9)" : "#E2E8F0",
+                            color: currentPage === page ? "#FFFFFF" : "var(--vet-text-main, #1E1B4B)",
+                          }}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </button>
+                      </li>
+                    ))}
+
+                    <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                      <button
+                        type="button"
+                        className="page-link rounded-2 px-2 py-1 text-decoration-none"
+                        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Siguiente <i className="bi bi-chevron-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            )}
           </div>
         )}
 

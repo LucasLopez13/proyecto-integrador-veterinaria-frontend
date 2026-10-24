@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/apiClient";
 import { SPECIES_OPTIONS } from "../constants";
+import { ErrorModal } from "../components/common/ErrorModal";
+import { BackButton } from "../components/common/BackButton";
 
 function NewPet() {
   const [nombre, setNombre] = useState("");
@@ -44,6 +46,11 @@ function NewPet() {
   return (
     <main className="py-5" style={{ backgroundColor: "#FAF9FC", minHeight: "calc(100vh - 65px)" }}>
       <div className="container" style={{ maxWidth: "720px" }}>
+        {/* Back Link */}
+        <div className="mb-3">
+          <BackButton to="/mascotas" text="Volver a Mis Mascotas" />
+        </div>
+
         <div className="card rounded-3 p-4 p-md-5 bg-white shadow-sm border" style={{ borderColor: "#EDE9FE" }}>
           {/* Header */}
           <div className="mb-4 pb-2 border-bottom border-light-subtle">
@@ -65,7 +72,7 @@ function NewPet() {
                   type="text"
                   id="name"
                   className="form-control rounded-2"
-                  placeholder="Ej: Milo, Luna..."
+                  placeholder="Nombre de la mascota"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   required
@@ -101,7 +108,7 @@ function NewPet() {
                   type="text"
                   id="breed"
                   className="form-control rounded-2"
-                  placeholder="Ej: Golden Retriever, Siamés..."
+                  placeholder="Raza de la mascota"
                   value={raza}
                   onChange={(e) => setRaza(e.target.value)}
                 />
@@ -118,7 +125,7 @@ function NewPet() {
                   className="form-control rounded-2"
                   min="0"
                   max="40"
-                  placeholder="Ej: 3"
+                  placeholder="Edad en años"
                   value={edad}
                   onChange={(e) => setEdad(e.target.value)}
                 />
@@ -134,7 +141,7 @@ function NewPet() {
                   step="0.1"
                   id="peso"
                   className="form-control rounded-2"
-                  placeholder="Ej: 28.5"
+                  placeholder="Peso en kilogramos"
                   value={peso}
                   onChange={(e) => setPeso(e.target.value)}
                 />
@@ -195,6 +202,12 @@ function NewPet() {
           </form>
         </div>
       </div>
+
+      <ErrorModal
+        error={error}
+        title="Error al Registrar Mascota"
+        onClose={() => setError(null)}
+      />
     </main>
   );
 }

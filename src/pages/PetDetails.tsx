@@ -13,11 +13,13 @@ import { ConsultationCard } from "../components/consultations/ConsultationCard";
 import { ConsultationAuditModal } from "../components/consultations/ConsultationAuditModal";
 import { ConsultationAmendmentModal } from "../components/consultations/ConsultationAmendmentModal";
 import { ConsultationAnnulModal } from "../components/consultations/ConsultationAnnulModal";
+import { FeedbackModal, type FeedbackType, type FeedbackModalState } from "../components/common/FeedbackModal";
+import { BackButton } from "../components/common/BackButton";
 import "../styles/PetDetails.css";
 
 function PetDetails() {
   const { id } = useParams();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [pet, setPet] = useState<Pet | null>(null);
   const [consultas, setConsultas] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +33,12 @@ function PetDetails() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  // Feedback modal
+  const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
+    isOpen: false,
+    message: "",
+  });
 
   const userRole = String(user?.role || user?.rol || "").toLowerCase();
   const isProfessional = userRole === "profesional" || userRole === "admin";
@@ -156,7 +164,12 @@ function PetDetails() {
 
       await cargarArchivosMedicos();
     } catch (err: any) {
-      setError(err.message || "Error al adjuntar el archivo");
+      setFeedbackModal({
+        isOpen: true,
+        type: "error",
+        title: "Error al adjuntar archivo",
+        message: err.message || "Error al adjuntar el archivo médico",
+      });
     } finally {
       setUploading(false);
     }
@@ -176,24 +189,33 @@ function PetDetails() {
     }
   };
 
-  const handleDeleteFile = async (fileId: number) => {
-    const confirmar = window.confirm(
-      "¿Estás seguro de que querés eliminar este archivo médico?"
-    );
+  const handleDeleteFile = (fileId: number) => {
+    setFeedbackModal({
+      isOpen: true,
+      type: "confirm",
+      title: "¿Eliminar archivo médico?",
+      message: "¿Estás seguro de que querés eliminar este archivo médico adjunto?",
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+      onConfirm: async () => {
+        try {
+          await apiFetch(`/archivos-medicos/${fileId}`, {
+            method: "DELETE",
+          });
 
-    if (!confirmar) return;
-
-    try {
-      await apiFetch(`/archivos-medicos/${fileId}`, {
-        method: "DELETE",
-      });
-
-      setMedicalFiles((archivos) =>
-        archivos.filter((archivo) => archivo.id !== fileId)
-      );
-    } catch (err: any) {
-      setError(err.message || "No se pudo eliminar el archivo");
-    }
+          setMedicalFiles((archivos) =>
+            archivos.filter((archivo) => archivo.id !== fileId)
+          );
+        } catch (err: any) {
+          setFeedbackModal({
+            isOpen: true,
+            type: "error",
+            title: "Error al eliminar archivo",
+            message: err.message || "No se pudo eliminar el archivo",
+          });
+        }
+      },
+    });
   };
 
   const handleOpenAudit = async (c: Consultation) => {
@@ -233,8 +255,19 @@ function PetDetails() {
       }
 
       setEditingConsulta(null);
+      setFeedbackModal({
+        isOpen: true,
+        type: "success",
+        title: "Enmienda Registrada",
+        message: `La consulta fue enmendada correctamente (Versión v${updated.version}) con respaldo inmutable en auditoría.`,
+      });
     } catch (err: any) {
-      setError(err.message || "Error al registrar la enmienda");
+      setFeedbackModal({
+        isOpen: true,
+        type: "error",
+        title: "Error al enmendar consulta",
+        message: err.message || "Error al registrar la enmienda",
+      });
     } finally {
       setSavingAmendment(false);
     }
@@ -254,18 +287,23 @@ function PetDetails() {
         motivo
       );
 
-      setConsultas((prev) =>
-        prev.map((c) =>
-          c.id === anulandoConsulta.id
-            ? { ...c, estado: "ANULADA", motivoAnulacion: motivo }
-            : c
-        )
-      );
-
+      // Eliminar inmediatamente de la lista para no requerir actualizar la pantalla
+      setConsultas((prev) => prev.filter((c) => c.id !== anulandoConsulta.id));
       setAnulandoConsulta(null);
-      alert("Consulta médica anulada. El registro permanece visible en auditoría con su motivo correspondiente.");
+
+      setFeedbackModal({
+        isOpen: true,
+        type: "success",
+        title: "Consulta médica anulada",
+        message: "La consulta médica fue anulada y archivada. El registro inalterable permanece visible en la auditoría legal con su motivo correspondiente.",
+      });
     } catch (err: any) {
-      setError(err.message || "Error al anular la consulta médica");
+      setFeedbackModal({
+        isOpen: true,
+        type: "error",
+        title: "Error al anular consulta",
+        message: err.message || "Error al anular la consulta médica",
+      });
     } finally {
       setSavingAnulacion(false);
     }
@@ -291,12 +329,12 @@ function PetDetails() {
           <div className="alert alert-danger rounded-2 shadow-sm">
             {error || "No hay datos de la mascota disponibles."}
           </div>
-          <Link
+          <BackButton
             to={isProfessional ? "/profesional/turnos" : "/mascotas"}
-            className="btn btn-outline-secondary rounded-2 mt-3"
-          >
-            {isProfessional ? "Volver a turnos" : "Volver a mis mascotas"}
-          </Link>
+            text={isProfessional ? "Volver a turnos" : "Volver a mis mascotas"}
+            variant="outline"
+            className="mt-3"
+          />
         </div>
       </main>
     );
@@ -310,12 +348,10 @@ function PetDetails() {
 
         {/* Breadcrumb / Back button */}
         <div className="mb-3">
-          <Link
+          <BackButton
             to={isProfessional ? "/profesional/turnos" : "/mascotas"}
-            className="text-decoration-none text-muted small fw-medium d-inline-flex align-items-center gap-1"
-          >
-            ← {isProfessional ? "Volver a la Agenda" : "Volver a Mis Mascotas"}
-          </Link>
+            text={isProfessional ? "Volver a la Agenda" : "Volver a Mis Mascotas"}
+          />
         </div>
 
         {/* Profile Header Card */}
@@ -480,7 +516,7 @@ function PetDetails() {
                     id="medical-file-name"
                     type="text"
                     className="form-control rounded-2"
-                    placeholder="Ej. Análisis de sangre, Ecografía abdominal..."
+                    placeholder="Nombre del archivo"
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
                   />
@@ -552,14 +588,16 @@ function PetDetails() {
                         >
                           <i className="bi bi-eye"></i> Ver
                         </button>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-danger rounded-2 d-inline-flex align-items-center gap-1"
-                          onClick={() => handleDeleteFile(file.id)}
-                          title="Eliminar archivo"
-                        >
-                          <i className="bi bi-trash3"></i>
-                        </button>
+                        {isProfessional && (
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger rounded-2 d-inline-flex align-items-center gap-1"
+                            onClick={() => handleDeleteFile(file.id)}
+                            title="Eliminar archivo"
+                          >
+                            <i className="bi bi-trash3"></i>
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -667,6 +705,17 @@ function PetDetails() {
           saving={savingAnulacion}
           onClose={() => setAnulandoConsulta(null)}
           onConfirm={handleConfirmAnulacion}
+        />
+
+        <FeedbackModal
+          isOpen={feedbackModal.isOpen}
+          type={feedbackModal.type}
+          title={feedbackModal.title}
+          message={feedbackModal.message}
+          confirmText={feedbackModal.confirmText}
+          cancelText={feedbackModal.cancelText}
+          onConfirm={feedbackModal.onConfirm}
+          onClose={() => setFeedbackModal({ isOpen: false, message: "" })}
         />
 
       </div>

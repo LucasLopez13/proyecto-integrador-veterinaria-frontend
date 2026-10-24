@@ -258,3 +258,86 @@ i.bi {
   line-height: 1;
   -webkit-font-smoothing: antialiased;
 }
+
+/* --------------------------------------------------------------------------
+   BACK BUTTONS & ARROWS: MINIMALIST DEEP VIOLET WITH SMOOTH MICRO-INTERACTIONS
+   -------------------------------------------------------------------------- */
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 0.3rem 0.65rem 0.3rem 0.3rem;
+  border-radius: var(--radius-btn);
+  border: 1px solid transparent;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  cursor: pointer;
+}
+
+.btn-back-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-btn);
+  background-color: #FFFFFF;
+  border: 1px solid var(--lavender-border);
+  color: var(--primary-violet);
+  font-size: 0.95rem;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.btn-back:hover {
+  color: var(--primary-violet);
+  background-color: var(--lavender-tint);
+  border-color: var(--lavender-border);
+}
+
+.btn-back:hover .btn-back-icon {
+  background-color: var(--primary-violet);
+  border-color: var(--primary-violet);
+  color: #FFFFFF;
+  transform: translateX(-3px);
+  box-shadow: 0 2px 5px rgba(109, 40, 217, 0.22);
+}
+
+/* Variant: Outline button (e.g. headers & standalone actions) */
+.btn-back-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background-color: #FFFFFF;
+  border: 1px solid var(--lavender-border) !important;
+  color: var(--text-heading) !important;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-btn) !important;
+  text-decoration: none;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+}
+
+.btn-back-outline i {
+  color: var(--primary-violet);
+  font-size: 0.95rem;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-back-outline:hover {
+  background-color: var(--lavender-tint) !important;
+  border-color: var(--lavender-border-hover) !important;
+  color: var(--primary-violet) !important;
+  box-shadow: 0 2px 4px rgba(109, 40, 217, 0.1) !important;
+}
+
+.btn-back-outline:hover i {
+  transform: translateX(-3px);
+}

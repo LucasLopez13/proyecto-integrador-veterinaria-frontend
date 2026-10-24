@@ -90,7 +90,7 @@ function Register() {
                 type="text"
                 id="nombre"
                 className="form-control rounded-2"
-                placeholder="Juan"
+                placeholder="Nombre"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 required
@@ -105,7 +105,7 @@ function Register() {
                 type="text"
                 id="apellido"
                 className="form-control rounded-2"
-                placeholder="Pérez"
+                placeholder="Apellido"
                 value={apellido}
                 onChange={(e) => setApellido(e.target.value)}
                 required
@@ -122,7 +122,7 @@ function Register() {
               type="email"
               id="email"
               className="form-control rounded-2"
-              placeholder="nombre@correo.com"
+              placeholder="Correo Electrónico"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -140,7 +140,7 @@ function Register() {
                 type="tel"
                 id="telefono"
                 className="form-control phone-number-field rounded-end-2"
-                placeholder="11 4455 6677"
+                placeholder="Teléfono"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
               />
@@ -157,7 +157,7 @@ function Register() {
                 type="password"
                 id="password"
                 className="form-control rounded-2"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -172,7 +172,7 @@ function Register() {
                 type="password"
                 id="confirmPassword"
                 className="form-control rounded-2"
-                placeholder="Repita la contraseña"
+                placeholder="Confirmar Contraseña"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required

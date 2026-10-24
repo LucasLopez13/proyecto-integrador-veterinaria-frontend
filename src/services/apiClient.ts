@@ -25,13 +25,28 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
-    const message =
-      errorBody.error ||
-      errorBody.message ||
-      (Array.isArray(errorBody.errors)
-        ? errorBody.errors.map((e: any) => e.message || e).join(". ")
-        : null) ||
-      `Error de red: ${response.status} ${response.statusText}`;
+    let message = errorBody.error || errorBody.message;
+
+    if (Array.isArray(errorBody.errors) && errorBody.errors.length > 0) {
+      const detailedErrors = errorBody.errors
+        .map((e: any) => (typeof e === "string" ? e : e.message || `${e.field}: inválido`))
+        .join(". ");
+
+      if (message) {
+        if (!message.includes(detailedErrors)) {
+          message = message.toLowerCase().includes("validaci") && !message.includes(":")
+            ? `${message}: ${detailedErrors}`
+            : `${message}. ${detailedErrors}`;
+        }
+      } else {
+        message = detailedErrors;
+      }
+    }
+
+    if (!message) {
+      message = `Error de red: ${response.status} ${response.statusText}`;
+    }
+
     throw new Error(message);
   }
 

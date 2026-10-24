@@ -62,7 +62,7 @@ function Login() {
               type="email"
               id="email"
               className="form-control rounded-2"
-              placeholder="doctor@vetcare.com"
+              placeholder="Correo Electrónico"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -79,7 +79,7 @@ function Login() {
               type="password"
               id="password"
               className="form-control rounded-2"
-              placeholder="••••••••"
+              placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

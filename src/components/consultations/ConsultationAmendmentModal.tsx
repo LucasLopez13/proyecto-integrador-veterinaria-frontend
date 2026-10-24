@@ -116,7 +116,7 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
                 className="form-control"
                 rows={2}
                 required
-                placeholder="Ej. Rectificación de temperatura y posología tras evaluación de análisis complementarios..."
+                placeholder="Motivo de la enmienda médica"
                 value={form.motivoEdicion}
                 onChange={(e) => setForm({ ...form, motivoEdicion: e.target.value })}
               />
@@ -157,7 +157,7 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
                 <input
                   type="number"
                   className="form-control"
-                  placeholder="lpm"
+                  placeholder="Frecuencia cardíaca (lpm)"
                   value={form.frecuenciaCardiaca}
                   onChange={(e) => setForm({ ...form, frecuenciaCardiaca: e.target.value })}
                 />
@@ -169,7 +169,7 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
                 <input
                   type="number"
                   className="form-control"
-                  placeholder="rpm"
+                  placeholder="Frecuencia respiratoria (rpm)"
                   value={form.frecuenciaRespiratoria}
                   onChange={(e) => setForm({ ...form, frecuenciaRespiratoria: e.target.value })}
                 />
