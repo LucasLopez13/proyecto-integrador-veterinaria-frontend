@@ -10,6 +10,8 @@ import MedicalAttention from "./pages/MedicalAttention";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import MyAppointments from "./pages/MyAppointments";
+import AlertasStock from "./pages/AlertasStock";
+import ProfessionalRoute from "./components/ProfessionalRoute";
 
 function App() {
   return (
@@ -28,6 +30,15 @@ function App() {
             <ProtectedRoute>
               <Pets />
             </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profesional/alertas-stock"
+          element={
+            <ProfessionalRoute>
+              <AlertasStock />
+            </ProfessionalRoute>
           }
         />
 

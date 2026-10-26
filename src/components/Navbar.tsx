@@ -44,11 +44,19 @@ function Navbar() {
             </>
           )}
 
-          {user.role === "profesional" && (
-            <Link className="nav-link" to="/profesional/turnos">
-              Turnos
-            </Link>
+
+          {(user.role === "profesional" || user.rol === "profesional") && (
+            <>
+              <Link className="nav-link" to="/profesional/turnos">
+                Turnos
+              </Link>
+
+              <Link className="nav-link" to="/profesional/alertas-stock">
+                Alertas de stock
+              </Link>
+            </>
           )}
+
 
           <button
             type="button"
