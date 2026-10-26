@@ -40,10 +40,8 @@ export const TriageCard: React.FC<TriageCardProps> = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      {/* Header */}
       <div className="d-flex align-items-center justify-content-between mb-2">
         <div className="d-flex align-items-center gap-2">
-          {/* Squircle avatar 36x36px */}
           <div className="triage-squircle-avatar">
             {getSpeciesIcon(item.especie)}
           </div>
@@ -57,7 +55,6 @@ export const TriageCard: React.FC<TriageCardProps> = ({
           </div>
         </div>
 
-        {/* Origin tag with rounded-1 */}
         {item.mascotaId ? (
           <span
             className="badge rounded-1 fw-medium"
@@ -85,7 +82,6 @@ export const TriageCard: React.FC<TriageCardProps> = ({
         )}
       </div>
 
-      {/* Reason & Symptoms */}
       <div className="my-2">
         <span className="small fw-bold text-dark d-block" style={{ fontSize: "0.8rem" }}>
           Motivo:
@@ -95,12 +91,10 @@ export const TriageCard: React.FC<TriageCardProps> = ({
         </p>
       </div>
 
-      {/* Real-time Timer Chip */}
       <div className="my-2">
         <TriageTimer fechaLlegada={item.fechaLlegada} columna={item.columna} />
       </div>
 
-      {/* Clinical & Tutor Metadata */}
       <div className="d-flex flex-column gap-1 my-2" style={{ fontSize: "0.78rem" }}>
         {item.nombreTutor && (
           <div className="d-flex align-items-center gap-1 text-secondary">
@@ -118,7 +112,6 @@ export const TriageCard: React.FC<TriageCardProps> = ({
           </div>
         )}
 
-        {/* Assigned Veterinarian / Guard Indicator */}
         <div className="d-flex align-items-center gap-1 text-muted">
           <span
             style={{
@@ -133,10 +126,8 @@ export const TriageCard: React.FC<TriageCardProps> = ({
         </div>
       </div>
 
-      {/* Footer Quick Actions */}
       <div className="border-top border-light-subtle pt-2 mt-2">
         <div className="d-flex align-items-center justify-content-between gap-2">
-          {/* Left: Dropdown select with 6px radius */}
           <select
             className="form-select form-select-sm rounded-2 py-1 px-2"
             style={{ fontSize: "0.78rem", maxWidth: "145px", borderColor: "var(--vet-border-tint, #EDE9FE)" }}
@@ -152,7 +143,6 @@ export const TriageCard: React.FC<TriageCardProps> = ({
             ))}
           </select>
 
-          {/* Right: Iniciar Atención or Egresar */}
           <div className="d-flex align-items-center gap-1">
             {item.mascotaId && (
               <Link
@@ -171,10 +161,9 @@ export const TriageCard: React.FC<TriageCardProps> = ({
 
             <button
               type="button"
-              className="btn btn-light rounded-2 btn-sm text-muted p-1"
-              style={{ fontSize: "0.75rem", lineHeight: 1 }}
+              className="triage-card-close-btn"
               onClick={() => onFinalizar(item.id, item.nombrePaciente)}
-              title="Egresar de sala"
+              title="Egresar paciente de guardia"
             >
               <i className="bi bi-x-lg"></i>
             </button>

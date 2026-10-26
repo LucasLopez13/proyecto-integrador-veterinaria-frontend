@@ -3,9 +3,6 @@ export const MONTH_NAMES = [
   "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
 ] as const;
 
-/**
- * Formatea una fecha a representación local es-AR (DD/MM/AAAA)
- */
 export function formatDate(dateInput: string | Date | null | undefined): string {
   if (!dateInput) return "Fecha no disponible";
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
@@ -13,9 +10,6 @@ export function formatDate(dateInput: string | Date | null | undefined): string 
   return date.toLocaleDateString("es-AR");
 }
 
-/**
- * Formatea una hora a representación local es-AR (HH:MM)
- */
 export function formatTime(dateInput: string | Date | null | undefined): string {
   if (!dateInput) return "--:--";
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
@@ -23,9 +17,6 @@ export function formatTime(dateInput: string | Date | null | undefined): string 
   return date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 }
 
-/**
- * Formatea fecha y hora combinadas
- */
 export function formatDateTime(dateInput: string | Date | null | undefined): string {
   if (!dateInput) return "No registrada";
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
@@ -36,9 +27,6 @@ export function formatDateTime(dateInput: string | Date | null | undefined): str
   })}`;
 }
 
-/**
- * Convierte un total de segundos al formato cronómetro HH:MM:SS
- */
 export function formatStopwatch(totalSeconds: number): string {
   const sec = Math.max(0, totalSeconds);
   const hours = Math.floor(sec / 3600);
@@ -48,10 +36,6 @@ export function formatStopwatch(totalSeconds: number): string {
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
-/**
- * Compara si una fecha coincide con el día calendario de hoy (o una fecha objetivo dada),
- * evitando discrepancias de huso horario UTC.
- */
 export function isSameCalendarDay(
   dateInput: string | Date | null | undefined,
   targetDate: Date = new Date()
@@ -73,4 +57,3 @@ export function isSameCalendarDay(
     d.getDate() === targetDate.getDate()
   );
 }
-

@@ -33,7 +33,6 @@ export const TriageTimer: React.FC<TriageTimerProps> = ({
   const formattedArrivalHour = formatTime(fechaLlegada);
   const formattedArrivalDate = formatDate(fechaLlegada);
 
-  // 1. Internación / Quirófano: muestra fecha fija de registro
   if (columna === "INTERNACION_QUIROFANO") {
     return (
       <span
@@ -50,7 +49,6 @@ export const TriageTimer: React.FC<TriageTimerProps> = ({
     );
   }
 
-  // 2. Turno a futuro
   if (diffSeconds < 0) {
     const secondsUntil = Math.abs(diffSeconds);
     return (
@@ -68,7 +66,6 @@ export const TriageTimer: React.FC<TriageTimerProps> = ({
     );
   }
 
-  // 3. Tiempo de espera transcurrido
   const elapsedMinutes = Math.floor(diffSeconds / 60);
   const isSevere = columna === "EMERGENCIA_CRITICA" || elapsedMinutes >= 30;
 

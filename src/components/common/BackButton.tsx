@@ -9,13 +9,6 @@ export interface BackButtonProps {
   className?: string;
 }
 
-/**
- * Botón o enlace de retorno estilizado según las pautas de diseño:
- * - Icono vectorial bi-arrow-left de Bootstrap Icons
- * - Radio estricto de 6px (Bootstrap rounded-2)
- * - Micro-interacción al hacer hover: desplazamiento suave hacia la izquierda
- * - Paleta Deep Violet (#6D28D9) con sutil tinte lavanda (#F5F3FF) y borde (#EDE9FE)
- */
 export const BackButton: React.FC<BackButtonProps> = ({
   to,
   onClick,

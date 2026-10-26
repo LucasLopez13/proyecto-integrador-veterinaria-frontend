@@ -4,13 +4,16 @@ import type { Appointment } from "../types/Appointment";
 import { apiFetch } from "../services/apiClient";
 import { formatDate, formatTime } from "../utils/dateUtils";
 import { getSpeciesIcon } from "../utils/speciesIcon";
+import { MetricCard } from "../components/common/MetricCard";
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { EmptyState } from "../components/common/EmptyState";
+import { AppointmentStatusBadge } from "../components/common/AppointmentStatusBadge";
 
 function ProfessionalAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination state (10 items per page)
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const totalPages = Math.ceil(appointments.length / pageSize) || 1;
@@ -58,7 +61,6 @@ function ProfessionalAppointments() {
     }
   };
 
-  // Metrics calculation
   const totalCount = appointments.length;
   const pendingCount = appointments.filter((a) => a.estado === "pendiente" || a.estado === "confirmado").length;
   const completedCount = appointments.filter((a) => a.estado === "atendido" || a.estado === "completado").length;
@@ -66,8 +68,6 @@ function ProfessionalAppointments() {
   return (
     <main style={{ minHeight: "calc(100vh - 72px)", backgroundColor: "var(--vet-bg-canvas, #FAF9FC)", paddingBottom: "60px" }}>
       <div className="container py-4">
-
-        {/* Header */}
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
             <h1 className="h3 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
@@ -90,89 +90,46 @@ function ProfessionalAppointments() {
 
         {error && <div className="alert alert-danger rounded-2 shadow-sm mb-4">{error}</div>}
 
-        {/* Top Metric Cards with Lavender Highlight */}
         <div className="row g-3 mb-4">
           <div className="col-12 col-md-4">
-            <div
-              className="p-3 bg-white rounded-3 border shadow-sm d-flex align-items-center justify-content-between"
-              style={{ borderColor: "var(--vet-border-tint, #EDE9FE)" }}
-            >
-              <div>
-                <span className="small text-uppercase fw-semibold" style={{ color: "#64748B", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
-                  Turnos Registrados
-                </span>
-                <h2 className="h3 fw-bold mb-0 mt-1" style={{ color: "#1E1B4B" }}>
-                  {totalCount}
-                </h2>
-              </div>
-              <div
-                className="rounded-2 d-flex align-items-center justify-content-center"
-                style={{ width: "48px", height: "48px", backgroundColor: "#F5F3FF", color: "#6D28D9", fontSize: "1.4rem" }}
-              >
-                <i className="bi bi-calendar-check"></i>
-              </div>
-            </div>
+            <MetricCard
+              label="Turnos Registrados"
+              value={totalCount}
+              icon="bi-calendar-check"
+              iconBg="#F5F3FF"
+              iconColor="#6D28D9"
+            />
           </div>
 
           <div className="col-12 col-md-4">
-            <div
-              className="p-3 bg-white rounded-3 border shadow-sm d-flex align-items-center justify-content-between"
-              style={{ borderColor: "var(--vet-border-tint, #EDE9FE)" }}
-            >
-              <div>
-                <span className="small text-uppercase fw-semibold" style={{ color: "#64748B", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
-                  Pendientes / Confirmados
-                </span>
-                <h2 className="h3 fw-bold mb-0 mt-1" style={{ color: "#D97706" }}>
-                  {pendingCount}
-                </h2>
-              </div>
-              <div
-                className="rounded-2 d-flex align-items-center justify-content-center"
-                style={{ width: "48px", height: "48px", backgroundColor: "#FEF3C7", color: "#D97706", fontSize: "1.4rem" }}
-              >
-                <i className="bi bi-clock-history"></i>
-              </div>
-            </div>
+            <MetricCard
+              label="Pendientes / Confirmados"
+              value={pendingCount}
+              icon="bi-clock-history"
+              iconBg="#FEF3C7"
+              iconColor="#D97706"
+            />
           </div>
 
           <div className="col-12 col-md-4">
-            <div
-              className="p-3 bg-white rounded-3 border shadow-sm d-flex align-items-center justify-content-between"
-              style={{ borderColor: "var(--vet-border-tint, #EDE9FE)" }}
-            >
-              <div>
-                <span className="small text-uppercase fw-semibold" style={{ color: "#64748B", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
-                  Atendidos / Completados
-                </span>
-                <h2 className="h3 fw-bold mb-0 mt-1" style={{ color: "#059669" }}>
-                  {completedCount}
-                </h2>
-              </div>
-              <div
-                className="rounded-2 d-flex align-items-center justify-content-center"
-                style={{ width: "48px", height: "48px", backgroundColor: "#D1FAE5", color: "#059669", fontSize: "1.4rem" }}
-              >
-                <i className="bi bi-check-circle"></i>
-              </div>
-            </div>
+            <MetricCard
+              label="Atendidos / Completados"
+              value={completedCount}
+              icon="bi-check-circle"
+              iconBg="#D1FAE5"
+              iconColor="#059669"
+            />
           </div>
         </div>
 
-        {/* Content */}
         {loading ? (
-          <div className="bg-white rounded-3 border border-light-subtle p-5 text-center shadow-sm">
-            <div className="spinner-border text-primary spinner-border-sm" role="status"></div>
-            <p className="text-muted small mt-2 mb-0">Cargando agenda de turnos...</p>
-          </div>
+          <LoadingSpinner message="Cargando agenda de turnos..." />
         ) : appointments.length === 0 ? (
-          <div className="bg-white rounded-3 border border-light-subtle p-5 text-center shadow-sm">
-            <i className="bi bi-calendar-check fs-1 text-muted d-block mb-2"></i>
-            <h2 className="h5 fw-bold" style={{ color: "#1E1B4B" }}>No hay turnos registrados</h2>
-            <p className="text-muted small mb-0">
-              Los turnos solicitados por los tutores aparecerán listados aquí.
-            </p>
-          </div>
+          <EmptyState
+            icon="bi-calendar-check"
+            title="No hay turnos registrados"
+            description="Los turnos solicitados por los tutores aparecerán listados aquí."
+          />
         ) : (
           <div className="bg-white rounded-3 border border-light-subtle shadow-sm overflow-hidden" style={{ borderColor: "#EDE9FE" }}>
             <div className="table-responsive mb-0">
@@ -216,7 +173,6 @@ function ProfessionalAppointments() {
 
                     return (
                       <tr key={appointment.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
-                        {/* Time */}
                         <td className="py-3 px-3">
                           <span className="fw-bold d-block" style={{ color: "#1E1B4B", fontSize: "0.95rem" }}>
                             {timeStr} hs
@@ -226,7 +182,6 @@ function ProfessionalAppointments() {
                           </span>
                         </td>
 
-                        {/* Pet */}
                         <td className="py-3 px-3">
                           <div className="d-flex align-items-center gap-2">
                             <div
@@ -245,7 +200,6 @@ function ProfessionalAppointments() {
                           </div>
                         </td>
 
-                        {/* Tutor */}
                         <td className="py-3 px-3">
                           <span className="d-block fw-medium text-dark">{tutorNombre}</span>
                           {tutorPhone && (
@@ -255,23 +209,15 @@ function ProfessionalAppointments() {
                           )}
                         </td>
 
-                        {/* Motivo */}
                         <td className="py-3 px-3">
                           <span className="small text-secondary" style={{ maxWidth: "220px", display: "inline-block" }}>
                             {appointment.motivo || "Consulta de rutina"}
                           </span>
                         </td>
 
-                        {/* Estado */}
                         <td className="py-3 px-3">
-                          {isAtendido ? (
-                            <span className="badge bg-purple-subtle text-purple-emphasis border border-purple-subtle rounded-2 px-2 py-1 d-inline-flex align-items-center gap-1">
-                              <i className="bi bi-check2-circle"></i> Atendido
-                            </span>
-                          ) : isCancelado ? (
-                            <span className="badge bg-danger-subtle text-danger border border-danger-subtle rounded-2 px-2 py-1 d-inline-flex align-items-center gap-1">
-                              <i className="bi bi-x-circle"></i> Cancelado
-                            </span>
+                          {isAtendido || isCancelado ? (
+                            <AppointmentStatusBadge status={appointment.estado} />
                           ) : (
                             <select
                               value={appointment.estado}
@@ -291,7 +237,6 @@ function ProfessionalAppointments() {
                           )}
                         </td>
 
-                        {/* Actions */}
                         <td className="py-3 px-3 text-end">
                           <div className="d-inline-flex align-items-center gap-2">
                             {!isCancelado && !isAtendido && (
@@ -319,7 +264,6 @@ function ProfessionalAppointments() {
               </table>
             </div>
 
-            {/* Pagination Controls */}
             {totalPages > 1 && (
               <div
                 className="p-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2"
@@ -376,7 +320,6 @@ function ProfessionalAppointments() {
             )}
           </div>
         )}
-
       </div>
     </main>
   );

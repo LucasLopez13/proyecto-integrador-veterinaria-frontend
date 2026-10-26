@@ -3,6 +3,7 @@ import type { CreateTriageDTO, TriageColumn } from "../../types/Triage";
 import type { Pet } from "../../types/Pet";
 import { apiFetch } from "../../services/apiClient";
 import { TRIAGE_COLUMNS_CONFIG, TRIAGE_COLUMNS_ORDER, SPECIES_OPTIONS } from "../../constants";
+import { FormFieldError } from "../common/FormFieldError";
 
 interface NewTriageModalProps {
   isOpen: boolean;
@@ -40,6 +41,16 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
   const [notas, setNotas] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -54,13 +65,13 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
       const data = await apiFetch<Pet[]>("/mascotas");
       setPets(data);
     } catch {
-      // Manejo silencioso en modal
     } finally {
       setLoadingPets(false);
     }
   };
 
   const handleSelectPet = (petIdStr: string) => {
+    clearFieldError("selectedPetId");
     if (!petIdStr) {
       setSelectedPetId("");
       return;
@@ -84,13 +95,32 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!nombrePaciente.trim()) {
-      setError("El nombre del paciente es obligatorio.");
-      return;
+    const newErrors: Record<string, string> = {};
+
+    if (isExistingPet && !selectedPetId) {
+      newErrors.selectedPetId = "Seleccioná la mascota registrada en el sistema";
+    }
+
+    if (!isExistingPet && !nombrePaciente.trim()) {
+      newErrors.nombrePaciente = "Completá este campo con el nombre del paciente";
     }
 
     if (!motivo.trim()) {
-      setError("El motivo de ingreso o síntoma principal es obligatorio.");
+      newErrors.motivo = "Completá este campo con el motivo de ingreso o síntoma";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      const firstInvalidId = newErrors.selectedPetId
+        ? "triage-pet-select"
+        : newErrors.nombrePaciente
+        ? "nombrePaciente"
+        : "motivoIngreso";
+      const el = document.getElementById(firstInvalidId);
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
 
@@ -108,7 +138,6 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
         mascotaId: isExistingPet && selectedPetId ? Number(selectedPetId) : null,
       });
 
-      // Limpiar y cerrar
       setSelectedPetId("");
       setNombrePaciente("");
       setRaza("");
@@ -144,7 +173,6 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
           className="modal-content rounded-3 border shadow-lg p-4 bg-white"
           style={{ borderColor: "var(--vet-border-tint, #EDE9FE)" }}
         >
-          {/* Header */}
           <div className="modal-header border-0 pb-0 pt-0 px-0 d-flex justify-content-between align-items-center mb-3">
             <div className="d-flex align-items-center gap-2">
               <h2 className="h4 fw-bold mb-0" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
@@ -174,8 +202,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
 
           {error && <div className="alert alert-danger rounded-2 small p-2 mb-3">{error}</div>}
 
-          <form onSubmit={handleSubmit}>
-            {/* Switch Segment: Radio Group with 6px radius */}
+          <form onSubmit={handleSubmit} noValidate>
             <div
               className="d-flex p-1 mb-3 rounded-2"
               style={{ backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)" }}
@@ -188,7 +215,10 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                   color: isExistingPet ? "#FFFFFF" : "var(--vet-text-muted, #64748B)",
                   border: "none",
                 }}
-                onClick={() => setIsExistingPet(true)}
+                onClick={() => {
+                  setIsExistingPet(true);
+                  clearFieldError("nombrePaciente");
+                }}
               >
                 Mascota ya registrada en el sistema
               </button>
@@ -202,6 +232,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                 }}
                 onClick={() => {
                   setIsExistingPet(false);
+                  clearFieldError("selectedPetId");
                   setSelectedPetId("");
                   setNombrePaciente("");
                   setNombreTutor("");
@@ -212,19 +243,17 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
               </button>
             </div>
 
-            {/* Option A: Pet Select dropdown */}
             {isExistingPet ? (
               <div className="mb-3">
                 <label htmlFor="triage-pet-select" className="form-label small fw-semibold text-muted">
-                  Seleccionar Mascota Registrada
+                  Seleccionar Mascota Registrada <span className="text-danger">*</span>
                 </label>
                 <select
                   id="triage-pet-select"
-                  className="form-select rounded-2"
+                  className={`form-select rounded-2 ${fieldErrors.selectedPetId ? "is-invalid" : ""}`}
                   value={selectedPetId}
                   onChange={(e) => handleSelectPet(e.target.value)}
                   disabled={loadingPets}
-                  required={isExistingPet}
                 >
                   <option value="">-- Buscar por nombre de paciente o tutor --</option>
                   {pets.map((p) => {
@@ -236,9 +265,9 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                     );
                   })}
                 </select>
+                <FormFieldError error={fieldErrors.selectedPetId} />
               </div>
             ) : (
-              /* Option B: Quick Fields */
               <div className="row g-2 mb-3">
                 <div className="col-sm-6">
                   <label htmlFor="nombrePaciente" className="form-label small fw-semibold text-muted">
@@ -247,12 +276,15 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                   <input
                     id="nombrePaciente"
                     type="text"
-                    className="form-control form-control-sm rounded-2"
+                    className={`form-control form-control-sm rounded-2 ${fieldErrors.nombrePaciente ? "is-invalid" : ""}`}
                     placeholder="Nombre del paciente"
                     value={nombrePaciente}
-                    onChange={(e) => setNombrePaciente(e.target.value)}
-                    required={!isExistingPet}
+                    onChange={(e) => {
+                      setNombrePaciente(e.target.value);
+                      clearFieldError("nombrePaciente");
+                    }}
                   />
+                  <FormFieldError error={fieldErrors.nombrePaciente} />
                 </div>
                 <div className="col-sm-6">
                   <label htmlFor="especie" className="form-label small fw-semibold text-muted">
@@ -299,7 +331,6 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
               </div>
             )}
 
-            {/* Initial Triage Level Selector: 2x2 grid */}
             <div className="mb-3">
               <label className="form-label small fw-bold text-dark mb-2">
                 Nivel de Triage Inicial (Clasificación de Guardia)
@@ -336,7 +367,6 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
               </div>
             </div>
 
-            {/* Motivo de ingreso */}
             <div className="mb-3">
               <label htmlFor="motivoIngreso" className="form-label small fw-semibold text-muted">
                 Motivo de ingreso o síntoma principal <span className="text-danger">*</span>
@@ -344,15 +374,17 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
               <input
                 id="motivoIngreso"
                 type="text"
-                className="form-control rounded-2"
+                className={`form-control rounded-2 ${fieldErrors.motivo ? "is-invalid" : ""}`}
                 placeholder="Motivo de ingreso o síntoma principal"
                 value={motivo}
-                onChange={(e) => setMotivo(e.target.value)}
-                required
+                onChange={(e) => {
+                  setMotivo(e.target.value);
+                  clearFieldError("motivo");
+                }}
               />
+              <FormFieldError error={fieldErrors.motivo} />
             </div>
 
-            {/* Observaciones iniciales / signos vitales rápidos */}
             <div className="mb-3">
               <label htmlFor="notasTriage" className="form-label small fw-semibold text-muted">
                 Observaciones iniciales / Signos vitales rápidos
@@ -367,7 +399,6 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
               />
             </div>
 
-            {/* Modal Footer */}
             <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top border-light-subtle">
               <button
                 type="button"
@@ -387,7 +418,6 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
               </button>
             </div>
           </form>
-
         </div>
       </div>
     </div>

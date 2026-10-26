@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authService } from "../services/authService";
+import { FormFieldError } from "../components/common/FormFieldError";
 import "../styles/Auth.css";
 
 function Login() {
@@ -9,6 +10,16 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -16,6 +27,30 @@ function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const newErrors: Record<string, string> = {};
+
+    if (!email.trim()) {
+      newErrors.email = "Completá este campo con tu correo electrónico";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = "Ingresá un formato de correo electrónico válido";
+    }
+
+    if (!password) {
+      newErrors.password = "Completá este campo con tu contraseña";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      const firstInvalidId = newErrors.email ? "email" : "password";
+      const el = document.getElementById(firstInvalidId);
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -38,7 +73,6 @@ function Login() {
   return (
     <main className="auth-page">
       <div className="auth-card p-4 p-md-5 shadow-sm">
-        {/* Geometric Veterinary Logo in Deep Violet */}
         <div className="text-center mb-4">
           <div className="auth-logo-squircle">
             <i className="bi bi-shield-plus fs-2"></i>
@@ -53,7 +87,7 @@ function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <div className="mb-3">
             <label htmlFor="email" className="form-label">
               Correo electrónico
@@ -61,12 +95,15 @@ function Login() {
             <input
               type="email"
               id="email"
-              className="form-control rounded-2"
+              className={`form-control rounded-2 ${fieldErrors.email ? "is-invalid" : ""}`}
               placeholder="Correo Electrónico"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              onChange={(e) => {
+                setEmail(e.target.value);
+                clearFieldError("email");
+              }}
             />
+            <FormFieldError error={fieldErrors.email} />
           </div>
 
           <div className="mb-4">
@@ -78,15 +115,17 @@ function Login() {
             <input
               type="password"
               id="password"
-              className="form-control rounded-2"
+              className={`form-control rounded-2 ${fieldErrors.password ? "is-invalid" : ""}`}
               placeholder="Contraseña"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clearFieldError("password");
+              }}
             />
+            <FormFieldError error={fieldErrors.password} />
           </div>
 
-          {/* Full-width button with strict rounded-2 (6px radius) */}
           <button
             type="submit"
             className="btn btn-primary w-100 rounded-2 py-2 fw-medium shadow-sm"

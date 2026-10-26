@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { consultationService } from "../services/consultationService";
@@ -6,9 +6,13 @@ import { apiFetch } from "../services/apiClient";
 import { TIMERS } from "../constants";
 import type { Pet } from "../types/Pet";
 import type { Appointment } from "../types/Appointment";
-import { FeedbackModal, type FeedbackType, type FeedbackModalState } from "../components/common/FeedbackModal";
+import { FeedbackModal, type FeedbackModalState } from "../components/common/FeedbackModal";
 import { ErrorModal } from "../components/common/ErrorModal";
 import { BackButton } from "../components/common/BackButton";
+import { FormFieldError } from "../components/common/FormFieldError";
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { FileUploadZone } from "../components/common/FileUploadZone";
+import { ConsultationPatientSidebar } from "../components/consultations/ConsultationPatientSidebar";
 import "../styles/MedicalAttention.css";
 
 export default function MedicalAttention() {
@@ -26,17 +30,12 @@ export default function MedicalAttention() {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Feedback modal
   const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
     isOpen: false,
     message: "",
   });
 
-  // Archivos adjuntos
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const [subjetivo, setSubjetivo] = useState("");
   const [peso, setPeso] = useState<string>("");
   const [temperatura, setTemperatura] = useState<string>("");
@@ -46,6 +45,16 @@ export default function MedicalAttention() {
   const [analisis, setAnalisis] = useState("");
   const [plan, setPlan] = useState("");
   const [observaciones, setObservaciones] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const handleError = (msg: string) => {
     setError(msg);
@@ -76,12 +85,9 @@ export default function MedicalAttention() {
             if (appData.motivo && !subjetivo) {
               setSubjetivo(`Motivo de consulta declarado: ${appData.motivo}\n\n`);
             }
-          } catch {
-            // No bloqueante
-          }
+          } catch {}
         }
 
-        // Cargar borrador previo si existe en esta estación
         const savedDraftStr = localStorage.getItem(`soap_draft_${mascotaIdParam}`);
         if (savedDraftStr) {
           try {
@@ -107,31 +113,6 @@ export default function MedicalAttention() {
     fetchData();
   }, [mascotaIdParam, turnoIdParam]);
 
-  const handleFilesAdded = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const allowed = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
-    const validFiles: File[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      if (!allowed.includes(f.type)) {
-        handleError(`El archivo "${f.name}" no es válido. Solo se admiten archivos PDF, JPG y PNG.`);
-        return;
-      }
-      if (f.size > 5 * 1024 * 1024) {
-        handleError(`El archivo "${f.name}" supera el límite permitido de 5 MB.`);
-        return;
-      }
-      validFiles.push(f);
-    }
-
-    setAttachedFiles((prev) => [...prev, ...validFiles]);
-  };
-
-  const handleRemoveFile = (index: number) => {
-    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
@@ -145,35 +126,73 @@ export default function MedicalAttention() {
       return;
     }
 
-    if (!subjetivo.trim()) {
-      handleError("Por favor complete el campo Subjetivo (anamnesis / motivo de consulta).");
-      return;
-    }
+    setFieldErrors({});
 
-    if (!objetivo.trim()) {
-      handleError("Por favor complete el campo Objetivo (examen físico y hallazgos clínicos).");
-      return;
-    }
-
+    const newErrors: Record<string, string> = {};
     const parsedPeso = parseFloat(peso);
-    if (isNaN(parsedPeso) || parsedPeso <= 0) {
-      handleError("Por favor ingrese un peso válido en kg (mayor a 0).");
-      return;
+    if (!peso.trim()) {
+      newErrors.peso = "Completá este campo con el peso en consulta";
+    } else if (isNaN(parsedPeso) || parsedPeso <= 0) {
+      newErrors.peso = "Ingresá un peso válido mayor a 0 kg";
+    }
+
+    if (!subjetivo.trim()) {
+      newErrors.subjetivo = "Completá este campo con la anamnesis o motivo de consulta";
     }
 
     const parsedTemp = parseFloat(temperatura);
-    if (isNaN(parsedTemp) || parsedTemp <= 0) {
-      handleError("Por favor ingrese una temperatura válida en °C.");
-      return;
+    if (!temperatura.trim()) {
+      newErrors.temperatura = "Completá este campo con la temperatura en °C";
+    } else if (isNaN(parsedTemp) || parsedTemp < 30 || parsedTemp > 45) {
+      newErrors.temperatura = "Ingresá una temperatura válida (entre 30 y 45 °C)";
+    }
+
+    if (frecuenciaCardiaca.trim()) {
+      const fcNum = parseInt(frecuenciaCardiaca, 10);
+      if (isNaN(fcNum) || fcNum < 20 || fcNum > 300) {
+        newErrors.frecuenciaCardiaca = "La frecuencia cardíaca debe estar entre 20 y 300 lpm";
+      }
+    }
+
+    if (frecuenciaRespiratoria.trim()) {
+      const frNum = parseInt(frecuenciaRespiratoria, 10);
+      if (isNaN(frNum) || frNum < 5 || frNum > 150) {
+        newErrors.frecuenciaRespiratoria = "La frecuencia respiratoria debe estar entre 5 y 150 rpm";
+      }
+    }
+
+    if (!objetivo.trim()) {
+      newErrors.objetivo = "Completá este campo con el examen físico y hallazgos";
     }
 
     if (!analisis.trim()) {
-      handleError("Por favor complete el campo Análisis (diagnóstico presuntivo o definitivo).");
-      return;
+      newErrors.analisis = "Completá este campo con el diagnóstico o juicio clínico";
     }
 
     if (!plan.trim()) {
-      handleError("Por favor complete el campo Plan (indicaciones terapéuticas y tratamiento).");
+      newErrors.plan = "Completá este campo con el plan terapéutico o indicaciones";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      const fieldOrder = [
+        { key: "peso", id: "patient-weigh-in" },
+        { key: "subjetivo", id: "subjetivo" },
+        { key: "temperatura", id: "temperatura" },
+        { key: "frecuenciaCardiaca", id: "fc" },
+        { key: "frecuenciaRespiratoria", id: "fr" },
+        { key: "objetivo", id: "objetivo" },
+        { key: "analisis", id: "analisis" },
+        { key: "plan", id: "plan" },
+      ];
+      const firstInvalid = fieldOrder.find((f) => newErrors[f.key]);
+      if (firstInvalid) {
+        const el = document.getElementById(firstInvalid.id);
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
       return;
     }
 
@@ -198,7 +217,6 @@ export default function MedicalAttention() {
         token
       );
 
-      // Subir archivos complementarios si fueron adjuntados
       for (const file of attachedFiles) {
         try {
           const formData = new FormData();
@@ -210,12 +228,9 @@ export default function MedicalAttention() {
             method: "POST",
             body: formData,
           });
-        } catch {
-          // No bloqueante para el cierre de la consulta
-        }
+        } catch {}
       }
 
-      // Limpiar borrador local tras registro exitoso
       if (mascotaIdParam) {
         localStorage.removeItem(`soap_draft_${mascotaIdParam}`);
       }
@@ -258,10 +273,7 @@ export default function MedicalAttention() {
   if (loading) {
     return (
       <main className="medical-attention-page">
-        <div className="container py-5 text-center">
-          <div className="spinner-border text-primary spinner-border-sm" role="status"></div>
-          <p className="mt-3 text-muted small">Cargando estación de consulta...</p>
-        </div>
+        <LoadingSpinner message="Cargando estación de consulta..." />
       </main>
     );
   }
@@ -282,13 +294,9 @@ export default function MedicalAttention() {
     );
   }
 
-  const tutorInfo = pet?.usuario || pet?.dueno;
-
   return (
     <main className="medical-attention-page">
       <div className="container-fluid px-lg-5">
-
-        {/* Top Header */}
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div className="d-flex align-items-center gap-3">
             <div
@@ -309,7 +317,8 @@ export default function MedicalAttention() {
                 Estación de Consulta Clínica (SOAP)
               </h1>
               <p className="text-muted small mb-0">
-                Atención en curso para <strong>{pet?.nombre}</strong> · Registro inmutable
+                Atención en curso para <strong>{pet?.nombre}</strong>
+                {appointment && ` · Turno #${appointment.id}`} · Registro inmutable
               </p>
             </div>
           </div>
@@ -324,115 +333,18 @@ export default function MedicalAttention() {
         {error && <div className="alert alert-danger rounded-2 shadow-sm mb-4">{error}</div>}
         {successMsg && <div className="alert alert-success rounded-2 shadow-sm mb-4">{successMsg}</div>}
 
-        {/* 2-Column Split: col-lg-4 (Patient Card) & col-lg-8 (Active Form) */}
         <div className="row g-4">
+          <ConsultationPatientSidebar
+            pet={pet}
+            appointment={appointment}
+            peso={peso}
+            onPesoChange={setPeso}
+            onClearPesoError={() => clearFieldError("peso")}
+            pesoError={fieldErrors.peso}
+          />
 
-          {/* Left Column: Sticky Patient Card */}
-          <div className="col-12 col-lg-4">
-            <div className="sticky-patient-sidebar">
-
-              {/* Patient Data Card */}
-              <div
-                className="bg-white rounded-3 border p-4 shadow-sm mb-3"
-                style={{ borderColor: "var(--vet-border-tint, #EDE9FE)" }}
-              >
-                <div className="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom border-light-subtle">
-                  <div
-                    className="rounded-2 d-flex align-items-center justify-content-center"
-                    style={{
-                      width: "60px",
-                      height: "60px",
-                      backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
-                      border: "1px solid var(--vet-border-tint, #EDE9FE)",
-                    }}
-                  >
-                    <i className="bi bi-shield-plus text-primary fs-3"></i>
-                  </div>
-                  <div>
-                    <h2 className="h5 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
-                      {pet?.nombre}
-                    </h2>
-                    <span className="badge bg-purple-subtle text-purple-emphasis border border-purple-subtle rounded-2 px-2 py-1">
-                      {pet?.especie}
-                    </span>
-                    {pet?.raza && <small className="text-muted ms-2">{pet.raza}</small>}
-                  </div>
-                </div>
-
-                {/* Patient Attributes */}
-                <div className="d-flex flex-column gap-2 mb-3">
-                  <div className="d-flex justify-content-between small">
-                    <span className="text-muted">Edad:</span>
-                    <strong className="text-dark">{pet?.edad ? `${pet.edad} años` : "No especificada"}</strong>
-                  </div>
-                  <div className="d-flex justify-content-between small">
-                    <span className="text-muted">Sexo:</span>
-                    <strong className="text-dark">{pet?.sexo || "No especificado"}</strong>
-                  </div>
-                  <div className="d-flex justify-content-between small">
-                    <span className="text-muted">Peso anterior:</span>
-                    <strong className="text-dark">{pet?.peso ? `${pet.peso} kg` : "Sin registro"}</strong>
-                  </div>
-                </div>
-
-                {/* Weigh-in input right here */}
-                <div className="mb-3 p-3 rounded-2" style={{ backgroundColor: "#F8FAFC", border: "1px solid #E2E8F0" }}>
-                  <label htmlFor="patient-weigh-in" className="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1">
-                    <i className="bi bi-speedometer2 text-primary"></i> Pesaje en Consulta (kg) <span className="text-danger">*</span>
-                  </label>
-                  <div className="input-group input-group-sm">
-                    <input
-                      id="patient-weigh-in"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      className="form-control rounded-2"
-                      placeholder="Peso en kilogramos"
-                      value={peso}
-                      onChange={(e) => setPeso(e.target.value)}
-                      required
-                    />
-                    <span className="input-group-text rounded-2 ms-1">kg</span>
-                  </div>
-                  <small className="text-muted" style={{ fontSize: "0.72rem" }}>
-                    Actualizará el peso registrado en la ficha oficial.
-                  </small>
-                </div>
-
-                {/* Emergency Contact / Tutor */}
-                {tutorInfo && (
-                  <div className="p-3 rounded-2" style={{ backgroundColor: "#FAF9FC", border: "1px solid #EDE9FE" }}>
-                    <div className="small fw-bold text-uppercase text-muted mb-1" style={{ fontSize: "0.72rem" }}>
-                      Tutor y Contacto de Urgencia
-                    </div>
-                    <strong className="d-block text-dark" style={{ fontSize: "0.95rem" }}>
-                      {tutorInfo.nombre} {tutorInfo.apellido}
-                    </strong>
-                    {tutorInfo.telefono ? (
-                      <span className="small text-secondary d-block mt-1">
-                        <i className="bi bi-telephone text-primary me-1"></i>
-                        <a href={`tel:${tutorInfo.telefono}`} className="text-decoration-none fw-medium text-dark">{tutorInfo.telefono}</a>
-                      </span>
-                    ) : (
-                      <span className="small text-muted d-block mt-1">Sin teléfono asentado</span>
-                    )}
-                    {tutorInfo.email && (
-                      <small className="text-muted d-block mt-1" style={{ fontSize: "0.75rem" }}>
-                        <i className="bi bi-envelope me-1"></i> {tutorInfo.email}
-                      </small>
-                    )}
-                  </div>
-                )}
-              </div>
-
-            </div>
-          </div>
-
-          {/* Right Column: Active Consultation Form */}
           <div className="col-12 col-lg-8">
-            <form onSubmit={handleSubmit}>
-
-              {/* [S] Subjetivo */}
+            <form onSubmit={handleSubmit} noValidate>
               <div className="soap-section-card">
                 <div className="soap-section-header">
                   <div className="soap-badge-letter badge-s">S</div>
@@ -449,16 +361,18 @@ export default function MedicalAttention() {
                   <textarea
                     id="subjetivo"
                     rows={3}
-                    className="form-control rounded-2"
+                    className={`form-control rounded-2 ${fieldErrors.subjetivo ? "is-invalid" : ""}`}
                     placeholder="Subjetivo (Anamnesis y motivo de consulta)"
                     value={subjetivo}
-                    onChange={(e) => setSubjetivo(e.target.value)}
-                    required
+                    onChange={(e) => {
+                      setSubjetivo(e.target.value);
+                      clearFieldError("subjetivo");
+                    }}
                   />
+                  <FormFieldError error={fieldErrors.subjetivo} />
                 </div>
               </div>
 
-              {/* [O] Objetivo */}
               <div className="soap-section-card">
                 <div className="soap-section-header">
                   <div className="soap-badge-letter badge-o">O</div>
@@ -481,13 +395,16 @@ export default function MedicalAttention() {
                         min="30"
                         max="45"
                         placeholder="Temperatura en °C"
-                        className="form-control rounded-2"
+                        className={`form-control rounded-2 ${fieldErrors.temperatura ? "is-invalid" : ""}`}
                         value={temperatura}
-                        onChange={(e) => setTemperatura(e.target.value)}
-                        required
+                        onChange={(e) => {
+                          setTemperatura(e.target.value);
+                          clearFieldError("temperatura");
+                        }}
                       />
                       <span className="input-group-text rounded-2 ms-1">°C</span>
                     </div>
+                    <FormFieldError error={fieldErrors.temperatura} />
                   </div>
 
                   <div className="col-sm-4">
@@ -501,12 +418,16 @@ export default function MedicalAttention() {
                         min="20"
                         max="300"
                         placeholder="Frecuencia cardíaca (lpm)"
-                        className="form-control rounded-2"
+                        className={`form-control rounded-2 ${fieldErrors.frecuenciaCardiaca ? "is-invalid" : ""}`}
                         value={frecuenciaCardiaca}
-                        onChange={(e) => setFrecuenciaCardiaca(e.target.value)}
+                        onChange={(e) => {
+                          setFrecuenciaCardiaca(e.target.value);
+                          clearFieldError("frecuenciaCardiaca");
+                        }}
                       />
                       <span className="input-group-text rounded-2 ms-1">lpm</span>
                     </div>
+                    <FormFieldError error={fieldErrors.frecuenciaCardiaca} />
                   </div>
 
                   <div className="col-sm-4">
@@ -520,12 +441,16 @@ export default function MedicalAttention() {
                         min="5"
                         max="150"
                         placeholder="Frecuencia respiratoria (rpm)"
-                        className="form-control rounded-2"
+                        className={`form-control rounded-2 ${fieldErrors.frecuenciaRespiratoria ? "is-invalid" : ""}`}
                         value={frecuenciaRespiratoria}
-                        onChange={(e) => setFrecuenciaRespiratoria(e.target.value)}
+                        onChange={(e) => {
+                          setFrecuenciaRespiratoria(e.target.value);
+                          clearFieldError("frecuenciaRespiratoria");
+                        }}
                       />
                       <span className="input-group-text rounded-2 ms-1">rpm</span>
                     </div>
+                    <FormFieldError error={fieldErrors.frecuenciaRespiratoria} />
                   </div>
                 </div>
 
@@ -536,16 +461,18 @@ export default function MedicalAttention() {
                   <textarea
                     id="objetivo"
                     rows={3}
-                    className="form-control rounded-2"
+                    className={`form-control rounded-2 ${fieldErrors.objetivo ? "is-invalid" : ""}`}
                     placeholder="Objetivo (Examen físico y hallazgos)"
                     value={objetivo}
-                    onChange={(e) => setObjetivo(e.target.value)}
-                    required
+                    onChange={(e) => {
+                      setObjetivo(e.target.value);
+                      clearFieldError("objetivo");
+                    }}
                   />
+                  <FormFieldError error={fieldErrors.objetivo} />
                 </div>
               </div>
 
-              {/* [A] Análisis */}
               <div className="soap-section-card">
                 <div className="soap-section-header">
                   <div className="soap-badge-letter badge-a">A</div>
@@ -562,16 +489,18 @@ export default function MedicalAttention() {
                   <textarea
                     id="analisis"
                     rows={2}
-                    className="form-control rounded-2"
+                    className={`form-control rounded-2 ${fieldErrors.analisis ? "is-invalid" : ""}`}
                     placeholder="Análisis (Diagnóstico clínico)"
                     value={analisis}
-                    onChange={(e) => setAnalisis(e.target.value)}
-                    required
+                    onChange={(e) => {
+                      setAnalisis(e.target.value);
+                      clearFieldError("analisis");
+                    }}
                   />
+                  <FormFieldError error={fieldErrors.analisis} />
                 </div>
               </div>
 
-              {/* [P] Plan & Prescripciones */}
               <div className="soap-section-card">
                 <div className="soap-section-header">
                   <div className="soap-badge-letter badge-p">P</div>
@@ -588,12 +517,15 @@ export default function MedicalAttention() {
                   <textarea
                     id="plan"
                     rows={3}
-                    className="form-control rounded-2"
+                    className={`form-control rounded-2 ${fieldErrors.plan ? "is-invalid" : ""}`}
                     placeholder="Plan (Tratamiento y prescripción)"
                     value={plan}
-                    onChange={(e) => setPlan(e.target.value)}
-                    required
+                    onChange={(e) => {
+                      setPlan(e.target.value);
+                      clearFieldError("plan");
+                    }}
                   />
+                  <FormFieldError error={fieldErrors.plan} />
                 </div>
 
                 <div>
@@ -611,88 +543,17 @@ export default function MedicalAttention() {
                 </div>
               </div>
 
-              {/* Upload Zone for Medical Files */}
               <div className="soap-section-card">
                 <h3 className="h6 fw-bold mb-2 text-dark">Estudios Complementarios & Archivos</h3>
                 <p className="text-muted small mb-3">Adjuntar análisis de laboratorio, RX o ecografías a esta consulta</p>
-
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={(e) => handleFilesAdded(e.target.files)}
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  style={{ display: "none" }}
+                <FileUploadZone
+                  files={attachedFiles}
+                  onFilesAdded={(newFiles) => setAttachedFiles((prev) => [...prev, ...newFiles])}
+                  onRemoveFile={(index) => setAttachedFiles((prev) => prev.filter((_, i) => i !== index))}
+                  onError={handleError}
                 />
-
-                <div
-                  className={`consultation-upload-zone ${isDragging ? "dragging" : ""}`}
-                  style={{
-                    cursor: "pointer",
-                    border: isDragging ? "2px dashed var(--vet-primary, #6D28D9)" : "2px dashed #CBD5E1",
-                    backgroundColor: isDragging ? "var(--vet-subtle-lavender, #F5F3FF)" : "#FAF9FC",
-                    borderRadius: "8px",
-                    padding: "24px",
-                    textAlign: "center",
-                    transition: "all 0.2s ease",
-                  }}
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                    handleFilesAdded(e.dataTransfer.files);
-                  }}
-                >
-                  <div className="fs-2 mb-2" style={{ color: "var(--vet-primary, #6D28D9)" }}>
-                    <i className="bi bi-cloud-arrow-up"></i>
-                  </div>
-                  <strong className="d-block small text-dark">Arrastrá archivos aquí o hacé clic para explorar</strong>
-                  <span className="text-muted" style={{ fontSize: "0.78rem" }}>
-                    Formatos admitidos: PDF, JPG, PNG (hasta 5 MB por archivo)
-                  </span>
-                </div>
-
-                {attachedFiles.length > 0 && (
-                  <div className="d-flex flex-column gap-2 mt-3">
-                    {attachedFiles.map((f, idx) => (
-                      <div
-                        key={idx}
-                        className="p-2 rounded-2 border d-flex justify-content-between align-items-center"
-                        style={{ backgroundColor: "#F8FAFC", borderColor: "#E2E8F0" }}
-                      >
-                        <div className="d-flex align-items-center gap-2">
-                          <i
-                            className={`bi ${
-                              f.type === "application/pdf"
-                                ? "bi-file-earmark-pdf text-danger"
-                                : "bi-file-earmark-image text-primary"
-                            } fs-5`}
-                          ></i>
-                          <span className="small fw-medium text-dark">{f.name}</span>
-                          <span className="text-muted small">
-                            ({(f.size / 1024 / 1024).toFixed(2)} MB)
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-danger rounded-2 py-0 px-2"
-                          onClick={() => handleRemoveFile(idx)}
-                          title="Quitar archivo"
-                        >
-                          <i className="bi bi-x-lg"></i>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
-              {/* Bottom Action Bar */}
               <div className="soap-actions-bar">
                 <Link
                   to={turnoIdParam ? "/profesional/turnos" : `/profesional/mascotas/${pet?.id}`}
@@ -725,10 +586,8 @@ export default function MedicalAttention() {
                   )}
                 </button>
               </div>
-
             </form>
           </div>
-
         </div>
 
         <FeedbackModal
@@ -747,7 +606,6 @@ export default function MedicalAttention() {
           title="Error en Consulta SOAP"
           onClose={() => setError(null)}
         />
-
       </div>
     </main>
   );

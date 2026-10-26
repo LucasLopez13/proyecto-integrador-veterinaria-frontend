@@ -8,11 +8,6 @@ export interface ErrorModalProps {
   actionText?: string;
 }
 
-/**
- * Componente modal de error que salta directamente en el centro de la pantalla
- * para evitar que el usuario deba desplazarse hacia arriba para ver el mensaje.
- * Cumple con el sistema de diseño: Deep Violet, bordes 6px, Bootstrap Icons.
- */
 export const ErrorModal: React.FC<ErrorModalProps> = ({
   isOpen,
   error,
@@ -34,7 +29,6 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
 
   if (!show || !error) return null;
 
-  // Si el mensaje contiene varios detalles concatenados por dos puntos y puntos, separarlos para legibilidad
   const hasMultipleItems =
     error.includes(":") && (error.includes(". ") || error.includes(";"));
   let prefix = "";

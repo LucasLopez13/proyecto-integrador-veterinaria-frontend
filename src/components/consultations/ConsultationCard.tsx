@@ -25,7 +25,6 @@ export const ConsultationCard: React.FC<ConsultationCardProps> = ({
     >
       <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-light-subtle flex-wrap gap-2">
         <div className="d-flex align-items-center gap-2 flex-wrap">
-          {/* Date badge in bg-purple-subtle with rounded-2 */}
           <span className="badge bg-purple-subtle rounded-2 px-2 py-1 fs-6">
             <i className="bi bi-calendar-event me-1"></i>
             {c.fecha ? new Date(c.fecha).toLocaleDateString("es-AR") : "Fecha no disponible"}
@@ -99,7 +98,6 @@ export const ConsultationCard: React.FC<ConsultationCardProps> = ({
         </div>
       )}
 
-      {/* Expandable Prescriptions if available */}
       {c.prescripciones && c.prescripciones.length > 0 && (
         <div className="mt-3 pt-2 border-top border-light-subtle">
           <small className="text-muted fw-bold d-block mb-2">

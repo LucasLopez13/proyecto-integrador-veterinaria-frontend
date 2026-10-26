@@ -1,14 +1,9 @@
-/* ==========================================================================
-   TriageBoard.css - Ultra-Minimalist Deep Violet Emergency Triage Board
-   ========================================================================== */
-
 .triage-canvas {
   background-color: var(--vet-bg-canvas, #FAF9FC);
   min-height: calc(100vh - 72px);
   padding: 1.5rem;
 }
 
-/* Live Pulse Dot */
 .live-pulse-dot {
   width: 8px;
   height: 8px;
@@ -34,7 +29,6 @@
   }
 }
 
-/* Kanban Columns */
 .kanban-board-scroll {
   display: flex;
   gap: 1rem;
@@ -78,10 +72,9 @@
   min-height: 200px;
 }
 
-/* Triage Card Component */
 .triage-kanban-card {
   background-color: #FFFFFF;
-  border-radius: 6px; /* strictly 6px */
+  border-radius: 6px;
   border: 1px solid var(--vet-border-tint, #EDE9FE);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   padding: 0.875rem;
@@ -99,7 +92,6 @@
   transform: scale(0.98);
 }
 
-/* Squircle Avatar inside Card */
 .triage-squircle-avatar {
   width: 36px;
   height: 36px;
@@ -113,7 +105,6 @@
   flex-shrink: 0;
 }
 
-/* Timer Chip */
 .triage-timer-chip {
   border-radius: 4px;
   padding: 2px 6px;
@@ -140,7 +131,6 @@
   border-color: #FDE68A;
 }
 
-/* Offcanvas Reception Drawer */
 .reception-offcanvas-backdrop {
   position: fixed;
   top: 0;
@@ -179,7 +169,6 @@
   }
 }
 
-/* Admission Item Card */
 .admission-feed-card {
   background-color: #FFFFFF;
   border: 1px solid var(--vet-border-tint, #EDE9FE);
@@ -189,7 +178,6 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-/* Level Selection Cards in Modal */
 .level-selection-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -215,3 +203,25 @@
   background-color: var(--vet-subtle-lavender, #F5F3FF);
   box-shadow: 0 0 0 1px var(--vet-primary, #6D28D9);
 }
+
+.triage-card-close-btn {
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: #94A3B8;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.triage-card-close-btn:hover {
+  background-color: #FEF2F2;
+  border-color: #FEE2E2;
+  color: #DC2626;
+}
+

@@ -1,9 +1,4 @@
-/* ==========================================================================
-   VETCARE DESIGN SYSTEM - DEEP VIOLET MINIMALIST THEME
-   ========================================================================== */
-
 :root {
-  /* Color Palette */
   --primary-violet: #6D28D9;
   --primary-hover: #7C3AED;
   --primary-active: #5B21B6;
@@ -12,20 +7,17 @@
   --lavender-border-hover: #DDD6FE;
   --app-canvas: #FAF9FC;
 
-  /* High Contrast Typography */
   --text-heading: #1E1B4B;
   --text-body: #334155;
   --text-muted: #64748B;
 
-  /* Surfaces & Geometry */
   --surface-card: #FFFFFF;
   --radius-sm: 4px;
-  --radius-btn: 6px;       /* Strict 6px architectural radius (Bootstrap rounded-2) */
-  --radius-card: 12px;     /* Rounded-3 */
+  --radius-btn: 6px;
+  --radius-card: 12px;
   --border-subtle: 1px solid #EDE9FE;
   --border-input: 1px solid #D1D5DB;
 
-  /* Semantic Highlights */
   --color-success: #059669;
   --color-success-bg: #ECFDF5;
   --color-warning: #D97706;
@@ -34,7 +26,6 @@
   --color-danger-bg: #FEF2F2;
 }
 
-/* Global Reset & Base Typography */
 * {
   box-sizing: border-box;
 }
@@ -53,12 +44,9 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
-/* --------------------------------------------------------------------------
-   CRITICAL BUTTONS STYLING: STRICT 6PX ARCHITECTURAL RADIUS, NO PILLS
-   -------------------------------------------------------------------------- */
-.btn {
-  border-radius: var(--radius-btn) !important;
-  font-weight: 500 !important;
+html body .btn {
+  border-radius: var(--radius-btn);
+  font-weight: 500;
   font-size: 0.925rem;
   letter-spacing: -0.01em;
   padding: 0.5rem 1rem;
@@ -66,72 +54,69 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.btn-primary {
-  background-color: var(--primary-violet) !important;
-  border-color: var(--primary-violet) !important;
-  color: #FFFFFF !important;
+html body .btn-primary {
+  background-color: var(--primary-violet);
+  border-color: var(--primary-violet);
+  color: #FFFFFF;
 }
 
-.btn-primary:hover,
-.btn-primary:focus {
-  background-color: var(--primary-hover) !important;
-  border-color: var(--primary-hover) !important;
-  box-shadow: 0 2px 4px rgba(109, 40, 217, 0.25) !important;
+html body .btn-primary:hover,
+html body .btn-primary:focus {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  box-shadow: 0 2px 4px rgba(109, 40, 217, 0.25);
 }
 
-.btn-primary:active {
-  background-color: var(--primary-active) !important;
-  border-color: var(--primary-active) !important;
+html body .btn-primary:active {
+  background-color: var(--primary-active);
+  border-color: var(--primary-active);
 }
 
-.btn-outline-primary {
-  background-color: transparent !important;
-  border-color: var(--primary-violet) !important;
-  color: var(--primary-violet) !important;
+html body .btn-outline-primary {
+  background-color: transparent;
+  border-color: var(--primary-violet);
+  color: var(--primary-violet);
 }
 
-.btn-outline-primary:hover,
-.btn-outline-primary:focus {
-  background-color: var(--lavender-tint) !important;
-  border-color: var(--primary-hover) !important;
-  color: var(--primary-hover) !important;
+html body .btn-outline-primary:hover,
+html body .btn-outline-primary:focus {
+  background-color: var(--lavender-tint);
+  border-color: var(--primary-hover);
+  color: var(--primary-hover);
 }
 
-.btn-light {
-  background-color: #FFFFFF !important;
-  border-color: var(--lavender-border) !important;
-  color: var(--text-body) !important;
+html body .btn-light {
+  background-color: #FFFFFF;
+  border-color: var(--lavender-border);
+  color: var(--text-body);
 }
 
-.btn-light:hover {
-  background-color: var(--lavender-tint) !important;
-  border-color: var(--lavender-border-hover) !important;
-  color: var(--text-heading) !important;
+html body .btn-light:hover {
+  background-color: var(--lavender-tint);
+  border-color: var(--lavender-border-hover);
+  color: var(--text-heading);
 }
 
-.btn-outline-secondary {
-  border-color: var(--lavender-border-hover) !important;
-  color: var(--text-muted) !important;
+html body .btn-outline-secondary {
+  border-color: var(--lavender-border-hover);
+  color: var(--text-muted);
 }
 
-.btn-outline-secondary:hover {
-  background-color: var(--lavender-tint) !important;
-  border-color: var(--primary-violet) !important;
-  color: var(--primary-violet) !important;
+html body .btn-outline-secondary:hover {
+  background-color: var(--lavender-tint);
+  border-color: var(--primary-violet);
+  color: var(--primary-violet);
 }
 
-.btn-sm {
+html body .btn-sm {
   padding: 0.35rem 0.75rem;
   font-size: 0.825rem;
-  border-radius: var(--radius-btn) !important;
+  border-radius: var(--radius-btn);
 }
 
-/* --------------------------------------------------------------------------
-   FORM CONTROLS & INPUTS: 6PX RADIUS WITH VIOLET FOCUS RING
-   -------------------------------------------------------------------------- */
-.form-control,
-.form-select {
-  border-radius: var(--radius-btn) !important;
+html body .form-control,
+html body .form-select {
+  border-radius: var(--radius-btn);
   border: var(--border-input);
   font-size: 0.925rem;
   padding: 0.55rem 0.85rem;
@@ -140,10 +125,10 @@ h1, h2, h3, h4, h5, h6 {
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-.form-control:focus,
-.form-select:focus {
-  border-color: var(--primary-hover) !important;
-  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.15) !important;
+html body .form-control:focus,
+html body .form-select:focus {
+  border-color: var(--primary-hover);
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.15);
   outline: none;
 }
 
@@ -154,65 +139,103 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 0.35rem;
 }
 
-/* --------------------------------------------------------------------------
-   CARDS & SURFACES: 12PX RADIUS (rounded-3), #EDE9FE BORDERS, ZERO HEAVY SHADOWS
-   -------------------------------------------------------------------------- */
-.card {
+html body .form-control.is-invalid,
+html body .form-select.is-invalid {
+  border-color: var(--color-danger, #DC2626);
+  background-color: #FEF2F2;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+html body .form-control.is-invalid:focus,
+html body .form-select.is-invalid:focus {
+  border-color: var(--color-danger, #DC2626);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+html body .input-group > .form-control.is-invalid,
+html body .input-group > .form-select.is-invalid {
+  z-index: 3;
+}
+
+.form-field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-danger, #DC2626);
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 0.35rem;
+  animation: fieldErrorAppear 0.2s ease-out;
+}
+
+.form-field-error i {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+@keyframes fieldErrorAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html body .card {
   background-color: var(--surface-card);
-  border: var(--border-subtle) !important;
-  border-radius: var(--radius-card) !important;
+  border: var(--border-subtle);
+  border-radius: var(--radius-card);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.card-header {
+html body .card-header {
   background-color: transparent;
   border-bottom: var(--border-subtle);
   padding: 1rem 1.25rem;
 }
 
-.card-footer {
+html body .card-footer {
   background-color: transparent;
   border-top: var(--border-subtle);
   padding: 1rem 1.25rem;
 }
 
-/* --------------------------------------------------------------------------
-   BADGES & TAGS: FLAT RECTANGULAR WITH 6PX RADIUS & SOFT LAVENDER
-   -------------------------------------------------------------------------- */
-.badge {
-  border-radius: var(--radius-btn) !important;
+html body .badge {
+  border-radius: var(--radius-btn);
   font-weight: 600;
   padding: 0.35rem 0.65rem;
   font-size: 0.775rem;
   letter-spacing: 0.01em;
 }
 
-.bg-purple-subtle,
-.badge-violet {
-  background-color: var(--lavender-tint) !important;
-  color: var(--primary-violet) !important;
-  border: 1px solid var(--lavender-border-hover) !important;
+html body .bg-purple-subtle,
+html body .badge-violet {
+  background-color: var(--lavender-tint);
+  color: var(--primary-violet);
+  border: 1px solid var(--lavender-border-hover);
 }
 
-.badge-success-subtle {
-  background-color: var(--color-success-bg) !important;
-  color: var(--color-success) !important;
-  border: 1px solid #A7F3D0 !important;
+html body .badge-success-subtle {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid #A7F3D0;
 }
 
-.badge-warning-subtle {
-  background-color: var(--color-warning-bg) !important;
-  color: var(--color-warning) !important;
-  border: 1px solid #FDE68A !important;
+html body .badge-warning-subtle {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+  border: 1px solid #FDE68A;
 }
 
-.badge-danger-subtle {
-  background-color: var(--color-danger-bg) !important;
-  color: var(--color-danger) !important;
-  border: 1px solid #FECACA !important;
+html body .badge-danger-subtle {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid #FECACA;
 }
 
-/* Squircles & Avatars */
 .squircle-avatar {
   display: flex;
   align-items: center;
@@ -223,7 +246,6 @@ h1, h2, h3, h4, h5, h6 {
   flex-shrink: 0;
 }
 
-/* Nav Pills & Underline Tabs */
 .nav-underline .nav-link {
   color: var(--text-muted);
   font-weight: 500;
@@ -236,20 +258,18 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--primary-violet);
 }
 
-.nav-underline .nav-link.active {
-  color: var(--primary-violet) !important;
-  border-bottom-color: var(--primary-violet) !important;
+html body .nav-underline .nav-link.active {
+  color: var(--primary-violet);
+  border-bottom-color: var(--primary-violet);
   font-weight: 600;
 }
 
-/* Modals */
-.modal-content {
-  border-radius: var(--radius-card) !important;
-  border: var(--border-subtle) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+html body .modal-content {
+  border-radius: var(--radius-card);
+  border: var(--border-subtle);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
-/* Vector Line Icon Styling (Subtle Stroke & Alignment) */
 i.bi {
   display: inline-flex;
   align-items: center;
@@ -259,9 +279,6 @@ i.bi {
   -webkit-font-smoothing: antialiased;
 }
 
-/* --------------------------------------------------------------------------
-   BACK BUTTONS & ARROWS: MINIMALIST DEEP VIOLET WITH SMOOTH MICRO-INTERACTIONS
-   -------------------------------------------------------------------------- */
 .btn-back {
   display: inline-flex;
   align-items: center;
@@ -307,18 +324,17 @@ i.bi {
   box-shadow: 0 2px 5px rgba(109, 40, 217, 0.22);
 }
 
-/* Variant: Outline button (e.g. headers & standalone actions) */
-.btn-back-outline {
+html body .btn-back-outline {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   background-color: #FFFFFF;
-  border: 1px solid var(--lavender-border) !important;
-  color: var(--text-heading) !important;
+  border: 1px solid var(--lavender-border);
+  color: var(--text-heading);
   font-size: 0.85rem;
   font-weight: 500;
   padding: 0.4rem 0.85rem;
-  border-radius: var(--radius-btn) !important;
+  border-radius: var(--radius-btn);
   text-decoration: none;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
@@ -331,13 +347,13 @@ i.bi {
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.btn-back-outline:hover {
-  background-color: var(--lavender-tint) !important;
-  border-color: var(--lavender-border-hover) !important;
-  color: var(--primary-violet) !important;
-  box-shadow: 0 2px 4px rgba(109, 40, 217, 0.1) !important;
+html body .btn-back-outline:hover {
+  background-color: var(--lavender-tint);
+  border-color: var(--lavender-border-hover);
+  color: var(--primary-violet);
+  box-shadow: 0 2px 4px rgba(109, 40, 217, 0.1);
 }
 
 .btn-back-outline:hover i {
   transform: translateX(-3px);
-}
+}

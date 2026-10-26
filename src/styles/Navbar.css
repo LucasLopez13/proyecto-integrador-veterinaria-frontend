@@ -1,15 +1,13 @@
-/* Navbar Minimalist Deep Violet Styling */
-
-.border-violet-subtle {
-  border-color: #EDE9FE !important;
+html body .border-violet-subtle {
+  border-color: #EDE9FE;
 }
 
-.text-violet {
-  color: #6D28D9 !important;
+html body .text-violet {
+  color: #6D28D9;
 }
 
-.navbar {
-  background-color: #FFFFFF !important;
+html body .navbar {
+  background-color: #FFFFFF;
   padding: 10px 0;
   border-bottom: 1px solid #EDE9FE;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
@@ -29,32 +27,31 @@
   font-weight: 700;
 }
 
-.navbar .nav-link {
-  color: #64748B !important;
+html body .navbar .nav-link {
+  color: #64748B;
   font-size: 0.9rem;
   font-weight: 500;
-  padding: 6px 12px !important;
+  padding: 6px 12px;
   border-radius: 6px;
   transition: all 0.15s ease-in-out;
 }
 
-.navbar .nav-link:hover {
-  color: #6D28D9 !important;
+html body .navbar .nav-link:hover {
+  color: #6D28D9;
   background-color: #F5F3FF;
 }
 
-.navbar .nav-link-triage {
-  color: #6D28D9 !important;
+html body .navbar .nav-link-triage {
+  color: #6D28D9;
   background-color: #F5F3FF;
   border: 1px solid #EDE9FE;
   font-weight: 600;
 }
 
-.navbar .nav-link-triage:hover {
+html body .navbar .nav-link-triage:hover {
   background-color: #EDE9FE;
 }
 
-/* User Profile Chip: 6px rounded corners */
 .user-profile-chip {
   background-color: #F8FAFC;
   border: 1px solid #EDE9FE;

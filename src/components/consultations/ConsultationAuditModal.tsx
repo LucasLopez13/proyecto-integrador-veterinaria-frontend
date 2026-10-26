@@ -1,5 +1,6 @@
 import React from "react";
 import type { Consultation, ConsultationVersion } from "../../types/Consultation";
+import { ClinicalDiffTable } from "./ClinicalDiffTable";
 import "../../styles/ConsultationModals.css";
 
 interface ConsultationAuditModalProps {
@@ -132,44 +133,10 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                       </div>
 
                       {ver.valoresModificados && Object.keys(ver.valoresModificados).length > 0 && (
-                        <div>
-                          <small className="fw-bold text-muted d-block mb-1">
-                            Valores modificados en esta enmienda:
-                          </small>
-                          <table className="version-diff-table">
-                            <thead>
-                              <tr>
-                                <th>Campo Clínico</th>
-                                <th>Valor Anterior</th>
-                                <th>Nuevo Valor</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Object.entries(ver.valoresModificados).map(([campo, valorNuevo]) => {
-                                const valorAnterior = ver.valoresAnteriores?.[campo];
-                                return (
-                                  <tr key={campo}>
-                                    <td style={{ textTransform: "capitalize", fontWeight: 600 }}>{campo}</td>
-                                    <td>
-                                      <span className="diff-old">
-                                        {valorAnterior !== null && valorAnterior !== undefined
-                                          ? String(valorAnterior)
-                                          : "Sin valor"}
-                                      </span>
-                                    </td>
-                                    <td>
-                                      <span className="diff-new">
-                                        {valorNuevo !== null && valorNuevo !== undefined
-                                          ? String(valorNuevo)
-                                          : "Sin valor"}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
+                        <ClinicalDiffTable
+                          modifiedValues={ver.valoresModificados}
+                          previousValues={ver.valoresAnteriores}
+                        />
                       )}
 
                       <div className="version-sha-box mt-2">

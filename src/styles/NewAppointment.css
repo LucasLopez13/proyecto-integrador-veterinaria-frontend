@@ -1,7 +1,3 @@
-/* ==========================================================================
-   NewAppointment.css - Deep Violet Minimalist Theme
-   ========================================================================== */
-
 .new-appointment-page {
   min-height: calc(100vh - 72px);
   background-color: var(--vet-bg-canvas, #FAF9FC);

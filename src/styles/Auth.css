@@ -1,5 +1,3 @@
-/* Minimalist Deep Violet Authentication Styling */
-
 .auth-page {
   min-height: calc(100vh - 65px);
   background-color: #FAF9FC;
@@ -59,9 +57,9 @@
   padding: 0.55rem 0.75rem;
 }
 
-.phone-number-field {
-  border-top-left-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
+html body .phone-number-field {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .auth-footer-text {

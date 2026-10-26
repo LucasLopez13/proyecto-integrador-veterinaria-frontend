@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Consultation } from "../../types/Consultation";
+import { FormFieldError } from "../common/FormFieldError";
 import "../../styles/ConsultationModals.css";
 
 interface ConsultationAnnulModalProps {
@@ -18,14 +19,16 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
   onConfirm,
 }) => {
   const [motivo, setMotivo] = useState("");
+  const [motivoError, setMotivoError] = useState<string | null>(null);
 
   if (!consulta) return null;
 
   const handleConfirm = async () => {
     if (!motivo.trim() || motivo.trim().length < 5) {
-      alert("El motivo de anulación es obligatorio (mínimo 5 caracteres).");
+      setMotivoError("El motivo de anulación es obligatorio (mínimo 5 caracteres).");
       return;
     }
+    setMotivoError(null);
     await onConfirm(motivo.trim());
   };
 
@@ -66,12 +69,16 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
               * Motivo de la anulación (obligatorio):
             </label>
             <textarea
-              className="form-control"
+              className={`form-control ${motivoError ? "is-invalid" : ""}`}
               rows={3}
               placeholder="Motivo de la anulación"
               value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
+              onChange={(e) => {
+                setMotivo(e.target.value);
+                if (motivoError) setMotivoError(null);
+              }}
             />
+            <FormFieldError error={motivoError || undefined} />
           </div>
         </div>
 

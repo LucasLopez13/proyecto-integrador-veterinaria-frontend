@@ -8,6 +8,8 @@ import { TriageCard } from "../components/triage/TriageCard";
 import { NewTriageModal } from "../components/triage/NewTriageModal";
 import { ReceptionQueue } from "../components/triage/ReceptionQueue";
 import { ErrorModal } from "../components/common/ErrorModal";
+import { FeedbackModal, type FeedbackModalState } from "../components/common/FeedbackModal";
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { TIMERS } from "../constants";
 import "../styles/TriageBoard.css";
 
@@ -53,17 +55,19 @@ export const TriageBoard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [dragOverCol, setDragOverCol] = useState<TriageColumn | null>(null);
 
-  // Reception Drawer Offcanvas & New Entry Modal
   const [isReceptionOpen, setIsReceptionOpen] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [targetColumnForNew, setTargetColumnForNew] = useState<TriageColumn>("URGENCIA_MODERADA");
+  const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
+    isOpen: false,
+    message: "",
+  });
 
   const cargarTurnos = async () => {
     try {
       const data = await apiFetch<Appointment[]>("/turnos");
       setAppointments(data);
     } catch {
-      // Silencioso
     }
   };
 
@@ -140,18 +144,24 @@ export const TriageBoard: React.FC = () => {
     }
   };
 
-  const handleFinalizar = async (id: number, nombrePaciente: string) => {
-    const confirm = window.confirm(
-      `¿Desea egresar a "${nombrePaciente}" del tablero de guardia?\n\nEsto finalizará su permanencia en la sala de triage.`
-    );
-    if (!confirm) return;
-
-    try {
-      await triageService.finalizarTriage(id);
-      setItems((prev) => prev.filter((it) => it.id !== id));
-    } catch (err: any) {
-      setError(`Error al egresar paciente: ${err.message || "Error desconocido"}`);
-    }
+  const handleFinalizar = (id: number, nombrePaciente: string) => {
+    setFeedbackModal({
+      isOpen: true,
+      type: "confirm",
+      confirmVariant: "danger",
+      title: "¿Egresar paciente de guardia?",
+      message: `¿Deseas finalizar la atención y egresar a "${nombrePaciente}" del tablero de triage?\n\nEsta acción registrará la salida del paciente de la sala de espera de guardia.`,
+      confirmText: "Egresar paciente",
+      cancelText: "Mantener en guardia",
+      onConfirm: async () => {
+        try {
+          await triageService.finalizarTriage(id);
+          setItems((prev) => prev.filter((it) => it.id !== id));
+        } catch (err: any) {
+          setError(`Error al egresar paciente: ${err.message || "Error desconocido"}`);
+        }
+      },
+    });
   };
 
   const handleAdmitPatient = async (dto: CreateTriageDTO) => {
@@ -187,14 +197,18 @@ export const TriageBoard: React.FC = () => {
 
   const receptionCount = pendingReceptionAppointments.length;
 
+  if (loading && items.length === 0) {
+    return (
+      <main className="triage-canvas">
+        <LoadingSpinner message="Cargando tablero de guardia y triage..." />
+      </main>
+    );
+  }
+
   return (
     <main className="triage-canvas">
       <div className="container-fluid px-0">
-
-        {/* Top Action Bar */}
         <div className="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
-          
-          {/* Left: Title & Live pulse indicator */}
           <div>
             <div className="d-flex align-items-center gap-2">
               <h1 className="h4 fw-bold mb-0" style={{ color: "#1E1B4B" }}>
@@ -209,7 +223,6 @@ export const TriageBoard: React.FC = () => {
             </div>
           </div>
 
-          {/* Center: Search input */}
           <div className="flex-grow-1" style={{ maxWidth: "340px" }}>
             <input
               type="text"
@@ -224,7 +237,6 @@ export const TriageBoard: React.FC = () => {
             />
           </div>
 
-          {/* Right: Button group with strict 6px radius (rounded-2, NO pills) */}
           <div className="d-flex gap-2">
             <button
               type="button"
@@ -268,7 +280,6 @@ export const TriageBoard: React.FC = () => {
           </div>
         )}
 
-        {/* Kanban Columns Layout (4 columns flex-nowrap) */}
         <div className="kanban-board-scroll">
           {COLUMNAS.map((col) => {
             const colItems = filteredItems.filter((it) => it.columna === col.key);
@@ -282,7 +293,6 @@ export const TriageBoard: React.FC = () => {
                 onDragLeave={(e) => handleDragLeave(e, col.key)}
                 onDrop={(e) => handleDrop(e, col.key)}
               >
-                {/* Column Header Card */}
                 <div className="kanban-column-header-card">
                   <div className="d-flex align-items-center justify-content-between mb-1">
                     <div className="d-flex align-items-center gap-2">
@@ -318,7 +328,6 @@ export const TriageBoard: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Cards Feed */}
                 <div className="kanban-cards-feed">
                   {colItems.length === 0 ? (
                     <div
@@ -347,10 +356,8 @@ export const TriageBoard: React.FC = () => {
             );
           })}
         </div>
-
       </div>
 
-      {/* Reception Queue Offcanvas */}
       <ReceptionQueue
         activeTriagePetIds={activeTriagePetIds}
         onAdmitPatient={handleAdmitPatient}
@@ -358,7 +365,6 @@ export const TriageBoard: React.FC = () => {
         onToggleOpen={() => setIsReceptionOpen(!isReceptionOpen)}
       />
 
-      {/* New Triage Walk-in Modal */}
       <NewTriageModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -370,6 +376,18 @@ export const TriageBoard: React.FC = () => {
         error={error}
         title="Error en Tablero de Triage"
         onClose={() => setError(null)}
+      />
+
+      <FeedbackModal
+        isOpen={feedbackModal.isOpen}
+        type={feedbackModal.type}
+        title={feedbackModal.title}
+        message={feedbackModal.message}
+        confirmText={feedbackModal.confirmText}
+        cancelText={feedbackModal.cancelText}
+        confirmVariant={feedbackModal.confirmVariant}
+        onConfirm={feedbackModal.onConfirm}
+        onClose={() => setFeedbackModal({ isOpen: false, message: "" })}
       />
     </main>
   );

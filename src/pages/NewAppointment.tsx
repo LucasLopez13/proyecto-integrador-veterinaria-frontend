@@ -7,6 +7,7 @@ import { apiFetch } from "../services/apiClient";
 import { BUSINESS_HOURS_SLOTS } from "../constants";
 import { ErrorModal } from "../components/common/ErrorModal";
 import { BackButton } from "../components/common/BackButton";
+import { FormFieldError } from "../components/common/FormFieldError";
 
 function NewAppointment() {
   const { user } = useAuth();
@@ -22,6 +23,16 @@ function NewAppointment() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingPets, setLoadingPets] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const hoyStr = new Date().toISOString().split("T")[0];
 
@@ -69,23 +80,44 @@ function NewAppointment() {
     e.preventDefault();
     setError(null);
 
+    const newErrors: Record<string, string> = {};
+
     if (!selectedPetId) {
-      setError("Por favor seleccioná una mascota");
-      return;
+      newErrors.selectedPetId = "Seleccioná la mascota para la consulta";
     }
 
-    if (!fecha || !hora) {
-      setError("Por favor seleccioná fecha y horario para la consulta");
-      return;
+    if (!fecha) {
+      newErrors.fecha = "Completá este campo con la fecha de atención";
+    } else if (fecha < hoyStr) {
+      newErrors.fecha = "No podés seleccionar una fecha anterior al día de hoy";
     }
 
-    if (fecha < hoyStr) {
-      setError("No podés seleccionar una fecha anterior al día de hoy");
-      return;
+    if (!hora) {
+      newErrors.hora = "Seleccioná el horario de atención";
+    } else if (fecha === hoyStr && isSlotInPast(hora)) {
+      newErrors.hora = "El horario ya transcurrió. Elegí un horario posterior";
     }
 
-    if (fecha === hoyStr && isSlotInPast(hora)) {
-      setError("El horario seleccionado ya ha transcurrido. Por favor seleccioná un horario posterior.");
+    if (!motivo.trim()) {
+      newErrors.motivo = "Completá este campo con el motivo de la consulta";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFieldErrors(newErrors);
+      const fieldOrder = [
+        { key: "selectedPetId", id: "pet-select" },
+        { key: "fecha", id: "date" },
+        { key: "hora", id: "time" },
+        { key: "motivo", id: "reason" },
+      ];
+      const firstInvalid = fieldOrder.find((f) => newErrors[f.key]);
+      if (firstInvalid) {
+        const el = document.getElementById(firstInvalid.id);
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
       return;
     }
 
@@ -116,10 +148,9 @@ function NewAppointment() {
   return (
     <main className="new-appointment-page">
       <div className="new-appointment-card">
-        {/* Back Link */}
         <div className="mb-3">
           <BackButton
-            to={mascotaIdParam ? `/mascotas/${mascotaIdParam}` : "/turnos"}
+            to={mascotaIdParam ? `/mascotas/${mascotaIdParam}` : "/mis-turnos"}
             text={mascotaIdParam ? "Volver a la Mascota" : "Volver a Mis Turnos"}
           />
         </div>
@@ -155,17 +186,25 @@ function NewAppointment() {
                 {mascotaSeleccionada.nombre} ({mascotaSeleccionada.especie})
               </strong>
             ) : pets.length > 0 ? (
-              <select
-                className="form-select form-select-sm rounded-2 mt-1"
-                value={selectedPetId}
-                onChange={(e) => setSelectedPetId(e.target.value)}
-              >
-                {pets.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre} ({p.especie})
-                  </option>
-                ))}
-              </select>
+              <>
+                <select
+                  id="pet-select"
+                  className={`form-select form-select-sm rounded-2 mt-1 ${fieldErrors.selectedPetId ? "is-invalid" : ""}`}
+                  value={selectedPetId}
+                  onChange={(e) => {
+                    setSelectedPetId(e.target.value);
+                    clearFieldError("selectedPetId");
+                  }}
+                >
+                  <option value="">Seleccionar mascota</option>
+                  {pets.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nombre} ({p.especie})
+                    </option>
+                  ))}
+                </select>
+                <FormFieldError error={fieldErrors.selectedPetId} />
+              </>
             ) : (
               <div className="text-danger small mt-1">
                 No tenés mascotas registradas.{" "}
@@ -177,30 +216,35 @@ function NewAppointment() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <div className="appointment-form-grid">
             <div className="appointment-field">
               <label htmlFor="date">Fecha de Atención</label>
               <input
                 type="date"
                 id="date"
-                className="form-control rounded-2"
+                className={`form-control rounded-2 ${fieldErrors.fecha ? "is-invalid" : ""}`}
                 min={hoyStr}
                 value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
+                onChange={(e) => {
+                  setFecha(e.target.value);
+                  clearFieldError("fecha");
+                }}
                 onClick={(e) => e.currentTarget.showPicker?.()}
-                required
               />
+              <FormFieldError error={fieldErrors.fecha} />
             </div>
 
             <div className="appointment-field">
               <label htmlFor="time">Horario Disponible (8:00 a 20:00)</label>
               <select
                 id="time"
-                className="form-select rounded-2"
+                className={`form-select rounded-2 ${fieldErrors.hora ? "is-invalid" : ""}`}
                 value={hora}
-                onChange={(e) => setHora(e.target.value)}
-                required
+                onChange={(e) => {
+                  setHora(e.target.value);
+                  clearFieldError("hora");
+                }}
               >
                 <option value="">Seleccionar horario</option>
                 {availableSlots.length === 0 ? (
@@ -213,6 +257,7 @@ function NewAppointment() {
                   ))
                 )}
               </select>
+              <FormFieldError error={fieldErrors.hora} />
             </div>
           </div>
 
@@ -220,14 +265,17 @@ function NewAppointment() {
             <label htmlFor="reason">Motivo de la Consulta</label>
             <textarea
               id="reason"
-              className="form-control rounded-2"
+              className={`form-control rounded-2 ${fieldErrors.motivo ? "is-invalid" : ""}`}
               placeholder="Motivo de la consulta"
               maxLength={150}
               rows={3}
               value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              required
+              onChange={(e) => {
+                setMotivo(e.target.value);
+                clearFieldError("motivo");
+              }}
             />
+            <FormFieldError error={fieldErrors.motivo} />
             <span className="appointment-char-counter">
               {motivo.length} / 150 caracteres
             </span>

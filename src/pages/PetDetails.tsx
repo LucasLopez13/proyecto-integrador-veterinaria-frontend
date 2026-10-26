@@ -13,8 +13,11 @@ import { ConsultationCard } from "../components/consultations/ConsultationCard";
 import { ConsultationAuditModal } from "../components/consultations/ConsultationAuditModal";
 import { ConsultationAmendmentModal } from "../components/consultations/ConsultationAmendmentModal";
 import { ConsultationAnnulModal } from "../components/consultations/ConsultationAnnulModal";
-import { FeedbackModal, type FeedbackType, type FeedbackModalState } from "../components/common/FeedbackModal";
+import { FeedbackModal, type FeedbackModalState } from "../components/common/FeedbackModal";
 import { BackButton } from "../components/common/BackButton";
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { EmptyState } from "../components/common/EmptyState";
+import { FormFieldError } from "../components/common/FormFieldError";
 import "../styles/PetDetails.css";
 
 function PetDetails() {
@@ -33,8 +36,8 @@ function PetDetails() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [fileFormErrors, setFileFormErrors] = useState<Record<string, string>>({});
 
-  // Feedback modal
   const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>({
     isOpen: false,
     message: "",
@@ -43,12 +46,10 @@ function PetDetails() {
   const userRole = String(user?.role || user?.rol || "").toLowerCase();
   const isProfessional = userRole === "profesional" || userRole === "admin";
 
-  // Estados para Auditoría e Inmutabilidad de Consultas
   const [auditModalConsulta, setAuditModalConsulta] = useState<Consultation | null>(null);
   const [versionsList, setVersionsList] = useState<ConsultationVersion[]>([]);
   const [loadingVersions, setLoadingVersions] = useState<boolean>(false);
 
-  // Estados para Enmienda y Anulación
   const [editingConsulta, setEditingConsulta] = useState<Consultation | null>(null);
   const [savingAmendment, setSavingAmendment] = useState<boolean>(false);
 
@@ -70,7 +71,6 @@ function PetDetails() {
             const list = await consultationService.getConsultationsByPet(data.id);
             setConsultas(list);
           } catch {
-            // No bloqueante
           } finally {
             setLoadingConsultas(false);
           }
@@ -96,7 +96,6 @@ function PetDetails() {
       const data = await apiFetch<MedicalFile[]>(`/archivos-medicos/mascota/${id}`);
       setMedicalFiles(data);
     } catch {
-      // No bloqueante
     } finally {
       setLoadingFiles(false);
     }
@@ -111,36 +110,59 @@ function PetDetails() {
       const file = e.target.files[0];
 
       if (file.size > FILE_UPLOAD_LIMITS.MAX_SIZE_BYTES) {
-        setError(`El archivo no puede superar los ${FILE_UPLOAD_LIMITS.MAX_SIZE_MB} MB`);
+        setFileFormErrors((prev) => ({
+          ...prev,
+          file: `El archivo no puede superar los ${FILE_UPLOAD_LIMITS.MAX_SIZE_MB} MB`,
+        }));
         e.target.value = "";
+        setSelectedFile(null);
         return;
       }
 
       if (!FILE_UPLOAD_LIMITS.ALLOWED_MIME_TYPES.includes(file.type as any)) {
-        setError("Solo se permiten archivos PDF, JPG o PNG");
+        setFileFormErrors((prev) => ({
+          ...prev,
+          file: "Solo se permiten archivos PDF, JPG o PNG",
+        }));
         e.target.value = "";
+        setSelectedFile(null);
         return;
       }
 
-      setError(null);
+      setFileFormErrors((prev) => {
+        const next = { ...prev };
+        delete next.file;
+        return next;
+      });
       setSelectedFile(file);
     }
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) {
-      setError("Seleccioná un archivo");
-      return;
-    }
+    const newErrors: Record<string, string> = {};
 
     if (!fileName.trim()) {
-      setError("Ingresá un nombre para el archivo");
+      newErrors.fileName = "Completá este campo con el título o descripción del documento";
+    }
+
+    if (!selectedFile) {
+      newErrors.file = "Seleccioná un archivo para adjuntar";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFileFormErrors(newErrors);
+      const firstInvalidId = newErrors.fileName ? "medical-file-name" : "medical-file-input";
+      const el = document.getElementById(firstInvalidId);
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
 
     try {
       setUploading(true);
-      setError(null);
+      setFileFormErrors({});
 
       const formData = new FormData();
       formData.append("archivo", selectedFile);
@@ -163,6 +185,12 @@ function PetDetails() {
       }
 
       await cargarArchivosMedicos();
+      setFeedbackModal({
+        isOpen: true,
+        type: "success",
+        title: "Estudio adjuntado",
+        message: "El archivo médico se adjuntó correctamente a la ficha del paciente.",
+      });
     } catch (err: any) {
       setFeedbackModal({
         isOpen: true,
@@ -185,7 +213,12 @@ function PetDetails() {
         URL.revokeObjectURL(url);
       }, FILE_UPLOAD_LIMITS.BLOB_REVOKE_TIMEOUT_MS);
     } catch (err: any) {
-      setError(err.message || "No se pudo abrir el archivo médico");
+      setFeedbackModal({
+        isOpen: true,
+        type: "error",
+        title: "Error al visualizar archivo",
+        message: err.message || "No se pudo abrir el archivo médico",
+      });
     }
   };
 
@@ -226,7 +259,12 @@ function PetDetails() {
       const versions = await consultationService.getConsultationVersions(c.id);
       setVersionsList(versions);
     } catch (err: any) {
-      setError(err.message || "Error al cargar el historial de versiones");
+      setFeedbackModal({
+        isOpen: true,
+        type: "error",
+        title: "Error de Auditoría",
+        message: err.message || "Error al cargar el historial de versiones",
+      });
     } finally {
       setLoadingVersions(false);
     }
@@ -287,7 +325,6 @@ function PetDetails() {
         motivo
       );
 
-      // Eliminar inmediatamente de la lista para no requerir actualizar la pantalla
       setConsultas((prev) => prev.filter((c) => c.id !== anulandoConsulta.id));
       setAnulandoConsulta(null);
 
@@ -312,17 +349,12 @@ function PetDetails() {
   if (loading) {
     return (
       <main className="pet-details-page">
-        <div className="container py-5 text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Cargando...</span>
-          </div>
-          <p className="text-muted mt-3">Cargando perfil de la mascota...</p>
-        </div>
+        <LoadingSpinner message="Cargando perfil de la mascota..." />
       </main>
     );
   }
 
-  if (error || !pet) {
+  if (!pet) {
     return (
       <main className="pet-details-page">
         <div className="container py-5">
@@ -345,8 +377,6 @@ function PetDetails() {
   return (
     <main className="pet-details-page">
       <div className="container py-4">
-
-        {/* Breadcrumb / Back button */}
         <div className="mb-3">
           <BackButton
             to={isProfessional ? "/profesional/turnos" : "/mascotas"}
@@ -354,7 +384,8 @@ function PetDetails() {
           />
         </div>
 
-        {/* Profile Header Card */}
+        {error && <div className="alert alert-danger rounded-2 shadow-sm mb-4">{error}</div>}
+
         <div className="bg-white rounded-3 border border-light-subtle p-4 mb-4 shadow-sm">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div className="d-flex align-items-center gap-3">
@@ -393,7 +424,6 @@ function PetDetails() {
               </div>
             </div>
 
-            {/* Quick action buttons */}
             <div className="d-flex gap-2">
               {isProfessional ? (
                 <Link
@@ -414,7 +444,6 @@ function PetDetails() {
           </div>
         </div>
 
-        {/* Minimalist Underline Tabs */}
         <nav className="pet-tabs-nav d-flex mb-4">
           <button
             type="button"
@@ -439,7 +468,6 @@ function PetDetails() {
           </button>
         </nav>
 
-        {/* Tab 1: Historial Clínico */}
         {activeTab === "historial" && (
           <div className="tab-pane-content">
             <div className="d-flex justify-content-between align-items-center mb-3">
@@ -462,26 +490,16 @@ function PetDetails() {
             </div>
 
             {loadingConsultas ? (
-              <div className="bg-white rounded-3 border border-light-subtle p-5 text-center">
-                <div className="spinner-border text-primary spinner-border-sm" role="status"></div>
-                <p className="text-muted small mt-2 mb-0">Cargando historial...</p>
-              </div>
+              <LoadingSpinner message="Cargando historial..." />
             ) : consultas.length === 0 ? (
-              <div className="bg-white rounded-3 border border-light-subtle p-5 text-center">
-                <i className="bi bi-clipboard2-pulse fs-1 text-muted d-block mb-2"></i>
-                <h3 className="h6 fw-semibold text-dark">Sin registros de consulta aún</h3>
-                <p className="text-muted small mb-3">
-                  No hay atenciones médicas registradas formalmente para este paciente.
-                </p>
-                {isProfessional && (
-                  <Link
-                    to={`/profesional/atencion?mascotaId=${pet.id}`}
-                    className="btn btn-primary rounded-2 btn-sm d-inline-flex align-items-center gap-2"
-                  >
-                    <i className="bi bi-plus-lg"></i> Registrar Primera Consulta
-                  </Link>
-                )}
-              </div>
+              <EmptyState
+                icon="bi-clipboard2-pulse"
+                title="Sin registros de consulta aún"
+                description="No hay atenciones médicas registradas formalmente para este paciente."
+                actionText={isProfessional ? "Registrar Primera Consulta" : undefined}
+                actionTo={isProfessional ? `/profesional/atencion?mascotaId=${pet.id}` : undefined}
+                actionIcon="bi-plus-lg"
+              />
             ) : (
               <div className="d-flex flex-column gap-3">
                 {consultas.map((c) => (
@@ -499,66 +517,78 @@ function PetDetails() {
           </div>
         )}
 
-        {/* Tab 2: Archivos y Estudios */}
         {activeTab === "archivos" && (
           <div className="tab-pane-content">
-            <div className="bg-white rounded-3 border border-light-subtle p-4 mb-4 shadow-sm">
-              <h2 className="h6 fw-bold mb-3" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
-                Adjuntar Nuevo Estudio o Análisis
-              </h2>
+            {isProfessional && (
+              <div className="bg-white rounded-3 border border-light-subtle p-4 mb-4 shadow-sm">
+                <h2 className="h6 fw-bold mb-3" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                  Adjuntar Nuevo Estudio o Análisis
+                </h2>
 
-              <div className="row g-3 align-items-end">
-                <div className="col-md-5">
-                  <label htmlFor="medical-file-name" className="form-label small fw-medium text-muted">
-                    Título o Descripción del Documento
-                  </label>
-                  <input
-                    id="medical-file-name"
-                    type="text"
-                    className="form-control rounded-2"
-                    placeholder="Nombre del archivo"
-                    value={fileName}
-                    onChange={(e) => setFileName(e.target.value)}
-                  />
-                </div>
-                <div className="col-md-4">
-                  <label htmlFor="medical-file-input" className="form-label small fw-medium text-muted">
-                    Archivo (PDF, JPG, PNG · Máx 5MB)
-                  </label>
-                  <input
-                    id="medical-file-input"
-                    type="file"
-                    className="form-control rounded-2"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileChange}
-                  />
-                </div>
-                <div className="col-md-3">
-                  <button
-                    type="button"
-                    className="btn btn-primary rounded-2 w-100 fw-medium"
-                    onClick={handleUpload}
-                    disabled={uploading}
-                  >
-                    {uploading ? "Subiendo..." : "Adjuntar Documento"}
-                  </button>
+                <div className="row g-3 align-items-start">
+                  <div className="col-md-5">
+                    <label htmlFor="medical-file-name" className="form-label small fw-medium text-muted">
+                      Título o Descripción del Documento <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      id="medical-file-name"
+                      type="text"
+                      className={`form-control rounded-2 ${fileFormErrors.fileName ? "is-invalid" : ""}`}
+                      placeholder="Nombre del archivo"
+                      value={fileName}
+                      onChange={(e) => {
+                        setFileName(e.target.value);
+                        if (fileFormErrors.fileName) {
+                          setFileFormErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.fileName;
+                            return next;
+                          });
+                        }
+                      }}
+                    />
+                    <FormFieldError error={fileFormErrors.fileName} />
+                  </div>
+                  <div className="col-md-4">
+                    <label htmlFor="medical-file-input" className="form-label small fw-medium text-muted">
+                      Archivo (PDF, JPG, PNG · Máx 5MB) <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      id="medical-file-input"
+                      type="file"
+                      className={`form-control rounded-2 ${fileFormErrors.file ? "is-invalid" : ""}`}
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={handleFileChange}
+                    />
+                    <FormFieldError error={fileFormErrors.file} />
+                  </div>
+                  <div className="col-md-3 align-self-start" style={{ paddingTop: "28px" }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary rounded-2 w-100 fw-medium"
+                      onClick={handleUpload}
+                      disabled={uploading}
+                    >
+                      {uploading ? "Subiendo..." : "Adjuntar Documento"}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* List of files */}
             <div className="bg-white rounded-3 border border-light-subtle p-4 shadow-sm">
               <h2 className="h6 fw-bold mb-3" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
                 Estudios Adjuntos ({medicalFiles.length})
               </h2>
 
               {loadingFiles ? (
-                <p className="text-muted small text-center py-3">Cargando archivos...</p>
+                <LoadingSpinner message="Cargando archivos..." />
               ) : medicalFiles.length === 0 ? (
-                <div className="text-center py-4 text-muted">
-                  <i className="bi bi-folder2-open fs-1 text-muted d-block mb-2"></i>
-                  <p className="small mt-2 mb-0">No hay archivos ni análisis complementarios adjuntos.</p>
-                </div>
+                <EmptyState
+                  icon="bi-folder2-open"
+                  title="Sin archivos adjuntos"
+                  description="No hay archivos ni análisis complementarios adjuntos."
+                />
               ) : (
                 <div className="d-flex flex-column gap-2">
                   {medicalFiles.map((file) => (
@@ -607,7 +637,6 @@ function PetDetails() {
           </div>
         )}
 
-        {/* Tab 3: Ficha Médica General */}
         {activeTab === "ficha" && (
           <div className="tab-pane-content">
             <div className="pet-info-grid">
@@ -682,7 +711,6 @@ function PetDetails() {
           </div>
         )}
 
-        {/* Modales delegados */}
         <ConsultationAuditModal
           consulta={auditModalConsulta}
           petName={pet.nombre}
@@ -717,7 +745,6 @@ function PetDetails() {
           onConfirm={feedbackModal.onConfirm}
           onClose={() => setFeedbackModal({ isOpen: false, message: "" })}
         />
-
       </div>
     </main>
   );

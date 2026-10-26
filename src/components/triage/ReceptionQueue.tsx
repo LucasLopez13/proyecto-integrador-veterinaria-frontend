@@ -3,6 +3,8 @@ import type { Appointment } from "../../types/Appointment";
 import type { CreateTriageDTO, TriageColumn } from "../../types/Triage";
 import { apiFetch } from "../../services/apiClient";
 import { formatTime, isSameCalendarDay } from "../../utils/dateUtils";
+import { getSpeciesIcon } from "../../utils/speciesIcon";
+import { LoadingSpinner } from "../common/LoadingSpinner";
 
 interface ReceptionQueueProps {
   activeTriagePetIds: (number | null | undefined)[];
@@ -26,7 +28,6 @@ export const ReceptionQueue: React.FC<ReceptionQueueProps> = ({
       const turnosData = await apiFetch<Appointment[]>("/turnos");
       setAppointments(turnosData);
     } catch {
-      // Manejo silencioso en drawer de fondo
     } finally {
       setLoading(false);
     }
@@ -38,7 +39,6 @@ export const ReceptionQueue: React.FC<ReceptionQueueProps> = ({
     }
   }, [isOpen]);
 
-  // Filtrar estrictamente solo turnos del día de hoy no atendidos/cancelados y que no estén ya en el tablero
   const availableAppointments = appointments.filter((appt) => {
     if (!isSameCalendarDay(appt.fecha)) return false;
     if (appt.estado === "atendido" || appt.estado === "cancelado") return false;
@@ -70,8 +70,6 @@ export const ReceptionQueue: React.FC<ReceptionQueueProps> = ({
     <>
       <div className="reception-offcanvas-backdrop" onClick={onToggleOpen} />
       <aside className="reception-offcanvas-panel" aria-label="Cola de Admisión y Recepción">
-        
-        {/* Header */}
         <div className="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom border-light-subtle">
           <div>
             <h3 className="h5 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
@@ -91,17 +89,15 @@ export const ReceptionQueue: React.FC<ReceptionQueueProps> = ({
           </button>
         </div>
 
-        {/* Counter Badge */}
         <div className="mb-3">
           <span className="badge bg-purple-subtle text-purple-emphasis border border-purple-subtle rounded-2 px-2 py-1 fw-medium">
             Turnos agendados para hoy ({availableAppointments.length})
           </span>
         </div>
 
-        {/* List Feed */}
         <div className="flex-grow-1 overflow-y-auto">
           {loading ? (
-            <div className="text-center py-4 text-muted small">Cargando cola de recepción...</div>
+            <LoadingSpinner message="Cargando cola de recepción..." />
           ) : availableAppointments.length === 0 ? (
             <div className="text-center py-5 text-muted small">
               <i className="bi bi-calendar3 fs-3 text-muted d-block mb-1"></i>
@@ -174,7 +170,6 @@ export const ReceptionQueue: React.FC<ReceptionQueueProps> = ({
             })
           )}
         </div>
-
       </aside>
     </>
   );

@@ -4,10 +4,6 @@ interface RequestOptions extends RequestInit {
   token?: string | null;
 }
 
-/**
- * Cliente HTTP unificado para el frontend de la veterinaria.
- * Inyecta automáticamente el token JWT desde localStorage y gestiona errores normalizados.
- */
 export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { token, headers = {}, ...rest } = options;
   const authToken = token !== undefined ? token : localStorage.getItem("token");
@@ -50,7 +46,6 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
     throw new Error(message);
   }
 
-  // Devolver Blob si es un archivo binario o descarga
   const contentType = response.headers.get("content-type");
   if (contentType && !contentType.includes("application/json")) {
     return (await response.blob()) as unknown as T;

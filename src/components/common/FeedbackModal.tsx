@@ -9,6 +9,7 @@ export interface FeedbackModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
+  confirmVariant?: "primary" | "danger";
   onConfirm?: () => void;
   onClose: () => void;
 }
@@ -22,6 +23,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   message,
   confirmText = "Aceptar",
   cancelText = "Cancelar",
+  confirmVariant = "primary",
   onConfirm,
   onClose,
 }) => {
@@ -57,10 +59,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         };
       case "confirm":
         return {
-          bg: "#F5F3FF",
-          border: "#EDE9FE",
-          color: "var(--vet-primary, #6D28D9)",
-          icon: "bi-question-circle",
+          bg: confirmVariant === "danger" ? "#FEF2F2" : "#F5F3FF",
+          border: confirmVariant === "danger" ? "#FEE2E2" : "#EDE9FE",
+          color: confirmVariant === "danger" ? "#DC2626" : "var(--vet-primary, #6D28D9)",
+          icon: confirmVariant === "danger" ? "bi-exclamation-triangle" : "bi-question-circle",
           defaultTitle: "Confirmar acción",
         };
       case "info":
@@ -162,10 +164,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               </button>
               <button
                 type="button"
-                className="btn btn-primary rounded-2 btn-sm fw-medium px-4 shadow-sm"
+                className={`btn ${confirmVariant === "danger" ? "btn-danger" : "btn-primary"} rounded-2 btn-sm fw-medium px-4 shadow-sm`}
                 style={{
-                  backgroundColor: "var(--vet-primary, #6D28D9)",
-                  borderColor: "var(--vet-primary, #6D28D9)",
+                  backgroundColor: confirmVariant === "danger" ? "#DC2626" : "var(--vet-primary, #6D28D9)",
+                  borderColor: confirmVariant === "danger" ? "#DC2626" : "var(--vet-primary, #6D28D9)",
                 }}
                 onClick={handleConfirm}
               >

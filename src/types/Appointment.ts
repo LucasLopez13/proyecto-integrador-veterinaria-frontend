@@ -23,3 +23,11 @@ export interface Appointment {
     telefono?: string;
   };
 }
+
+export interface PaginatedAppointments {
+  data: Appointment[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

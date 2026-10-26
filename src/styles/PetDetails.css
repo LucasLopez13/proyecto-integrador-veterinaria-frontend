@@ -1,14 +1,9 @@
-/* ==========================================================================
-   PetDetails.css - Minimalist Deep Violet Veterinary Theme
-   ========================================================================== */
-
 .pet-details-page {
   min-height: calc(100vh - 72px);
   background-color: var(--vet-bg-canvas, #FAF9FC);
   padding-bottom: 60px;
 }
 
-/* Header Squircle Avatar */
 .pet-profile-avatar {
   width: 80px;
   height: 80px;
@@ -22,7 +17,6 @@
   flex-shrink: 0;
 }
 
-/* Minimalist Underline Tabs */
 .pet-tabs-nav {
   border-bottom: 1px solid var(--vet-border-tint, #EDE9FE);
   gap: 1.5rem;
@@ -50,7 +44,6 @@
   font-weight: 600;
 }
 
-/* Info Grid */
 .pet-info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -94,7 +87,6 @@
   font-size: 0.95rem;
 }
 
-/* Upload zone */
 .medical-upload-dashed {
   border: 1.5px dashed #DDD6FE;
   background-color: #FAF9FC;
