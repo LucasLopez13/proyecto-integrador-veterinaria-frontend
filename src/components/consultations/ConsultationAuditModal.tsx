@@ -135,7 +135,7 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                       {ver.valoresModificados && Object.keys(ver.valoresModificados).length > 0 && (
                         <ClinicalDiffTable
                           modifiedValues={ver.valoresModificados}
-                          previousValues={ver.valoresAnteriores}
+                          previousValues={ver.valoresAnteriores ?? undefined}
                         />
                       )}
 
