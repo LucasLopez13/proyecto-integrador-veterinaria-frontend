@@ -21,6 +21,7 @@ import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { EmptyState } from "../components/common/EmptyState";
 import { FormFieldError } from "../components/common/FormFieldError";
 import "../styles/PetDetails.css";
+import { QRCodeSVG } from "qrcode.react";
 
 function PetDetails() {
   const { id } = useParams();
@@ -30,6 +31,9 @@ function PetDetails() {
   const [loading, setLoading] = useState(true);
   const [loadingConsultas, setLoadingConsultas] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [carnetToken, setCarnetToken] = useState<string | null>(null);
+  const [loadingCarnet, setLoadingCarnet] = useState(false);
+  const [errorCarnet, setErrorCarnet] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<"historial" | "archivos" | "ficha"| "sanitaria">("historial");
 
@@ -92,6 +96,31 @@ function PetDetails() {
 
     cargarDatos();
   }, [id]);
+
+
+  const handleGenerarCarnet = async () => {
+    if (!pet?.id) return;
+
+    try {
+      setLoadingCarnet(true);
+      setErrorCarnet(null);
+
+      const data = await apiFetch<{ mascotaId: number; token: string }>(
+        `/carnets-vacunacion/mascota/${pet.id}`
+      );
+
+      setCarnetToken(data.token);
+    } catch (err) {
+      setErrorCarnet(
+        err instanceof Error
+          ? err.message
+          : "No se pudo generar el carnet de vacunación."
+      );
+    } finally {
+      setLoadingCarnet(false);
+    }
+  };
+
 
   const cargarArchivosMedicos = async () => {
     if (!id) {
@@ -306,6 +335,13 @@ function PetDetails() {
       setFileFormErrors({});
 
       const formData = new FormData();
+      if (!selectedFile) {
+        throw new Error("Seleccioná un archivo para adjuntar.");
+      }
+
+      if (!selectedFile) {
+        throw new Error("Seleccioná un archivo para adjuntar.");
+      }
       formData.append("archivo", selectedFile);
       formData.append("nombre", fileName.trim());
       formData.append("mascotaId", String(id));
@@ -565,7 +601,8 @@ function PetDetails() {
               </div>
             </div>
 
-            <div className="d-flex gap-2">
+
+            <div className="d-flex gap-2 flex-wrap">
               {isProfessional ? (
                 <Link
                   to={`/profesional/atencion?mascotaId=${pet.id}`}
@@ -581,7 +618,63 @@ function PetDetails() {
                   <i className="bi bi-calendar-check"></i> Solicitar Turno
                 </Link>
               )}
+
+              <button
+                type="button"
+                className="btn btn-outline-success rounded-2 d-inline-flex align-items-center gap-2"
+                onClick={handleGenerarCarnet}
+                disabled={loadingCarnet}
+              >
+                <i className="bi bi-qr-code"></i>
+                {loadingCarnet ? "Generando..." : "Carnet de vacunación"}
+              </button>
             </div>
+
+            {errorCarnet && (
+              <div className="alert alert-danger mt-3 mb-0">
+                {errorCarnet}
+              </div>
+            )}
+
+            {carnetToken && (
+              <div className="card mt-3 shadow-sm">
+                <div className="card-body text-center">
+                  <h2 className="h5 fw-bold">Carnet de {pet.nombre}</h2>
+                  <p className="text-muted small">
+                    Escaneá el código QR para consultar las vacunas registradas.
+                  </p>
+
+                  <div className="d-flex justify-content-center my-3">
+                    <QRCodeSVG
+                      value={`${window.location.origin}/carnet/${carnetToken}`}
+                      size={220}
+                      level="M"
+                      includeMargin
+                    />
+                  </div>
+
+                  <a
+                    href={`${window.location.origin}/carnet/${carnetToken}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline-primary btn-sm"
+                  >
+                    Abrir carnet público
+                  </a>
+
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      className="btn btn-link btn-sm"
+                      onClick={() => setCarnetToken(null)}
+                    >
+                      Ocultar QR
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
 

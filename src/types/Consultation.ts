@@ -45,7 +45,13 @@ export interface Consultation {
     email: string;
   };
   versiones?: ConsultationVersion[];
+  prescripciones?: {
+    medicamento: string;
+    dosis: string;
+    frecuencia: string;
+  }[];
 }
+
 
 export interface CreateConsultationDTO {
   subjetivo: string;
