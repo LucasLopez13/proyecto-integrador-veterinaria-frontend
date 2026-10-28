@@ -71,13 +71,12 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                 return (
                   <div key={ver.id} className="version-item">
                     <div
-                      className={`version-indicator ${
-                        isCreation
+                      className={`version-indicator ${isCreation
                           ? "action-creacion"
                           : isAnnulment
-                          ? "action-anulacion"
-                          : "action-modificacion"
-                      }`}
+                            ? "action-anulacion"
+                            : "action-modificacion"
+                        }`}
                     />
 
                     <div className="version-card">
@@ -85,13 +84,12 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                         <div className="version-title">
                           <span>Versión #{ver.numeroVersion}</span>
                           <span
-                            className={`badge ${
-                              isCreation
+                            className={`badge ${isCreation
                                 ? "bg-success"
                                 : isAnnulment
-                                ? "bg-danger"
-                                : "bg-warning text-dark"
-                            }`}
+                                  ? "bg-danger"
+                                  : "bg-warning text-dark"
+                              }`}
                             style={{ fontSize: "0.74rem" }}
                           >
                             {isCreation && (
@@ -135,7 +133,7 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                       {ver.valoresModificados && Object.keys(ver.valoresModificados).length > 0 && (
                         <ClinicalDiffTable
                           modifiedValues={ver.valoresModificados}
-                          previousValues={ver.valoresAnteriores}
+                          previousValues={ver.valoresAnteriores ?? undefined}
                         />
                       )}
 

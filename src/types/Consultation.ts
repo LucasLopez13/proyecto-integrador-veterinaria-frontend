@@ -34,6 +34,11 @@ export interface Consultation {
   analisis: string;
   plan: string;
   observaciones?: string | null;
+  prescripciones?: {
+    medicamento: string;
+    dosis: string;
+    frecuencia: string;
+  }[];
   mascotaId: number;
   veterinarioId?: number;
   turnoId?: number | null;

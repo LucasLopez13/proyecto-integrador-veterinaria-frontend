@@ -39,10 +39,15 @@ function ProfessionalAppointments() {
     cargarTurnos();
   }, []);
 
-  const handleStatusChange = async (appointmentId: number, nuevoEstado: string) => {
+  const handleStatusChange = async (
+    appointmentId: number,
+    nuevoEstado: Appointment["estado"]
+  ) => {
     try {
-      await apiFetch(`/turnos/${appointmentId}`, {
-        method: "PUT",
+      setError(null);
+
+      await apiFetch(`/turnos/${appointmentId}/estado`, {
+        method: "PATCH",
         body: JSON.stringify({ estado: nuevoEstado }),
       });
 
@@ -50,9 +55,9 @@ function ProfessionalAppointments() {
         turnosActuales.map((turno) =>
           turno.id === appointmentId
             ? {
-                ...turno,
-                estado: nuevoEstado as Appointment["estado"],
-              }
+              ...turno,
+              estado: nuevoEstado as Appointment["estado"],
+            }
             : turno
         )
       );
@@ -221,7 +226,12 @@ function ProfessionalAppointments() {
                           ) : (
                             <select
                               value={appointment.estado}
-                              onChange={(e) => handleStatusChange(appointment.id, e.target.value)}
+                              onChange={(e) =>
+                                handleStatusChange(
+                                  appointment.id,
+                                  e.target.value as Appointment["estado"]
+                                )
+                              }
                               className="form-select form-select-sm rounded-2 py-1 px-2"
                               style={{
                                 width: "130px",
