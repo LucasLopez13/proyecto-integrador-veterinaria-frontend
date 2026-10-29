@@ -1,9 +1,7 @@
-
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Pets from "./pages/Pets";
-import NewPet from "./pages/NewPet";
 import NewAppointment from "./pages/NewAppointment";
 import ProfessionalAppointments from "./pages/ProfessionalAppointments";
 import PetDetails from "./pages/PetDetails";
@@ -17,6 +15,7 @@ import PaymentManagement from "./pages/PaymentManagement";
 import PublicVaccinationCard from "./pages/PublicVaccinationCard";
 import AlertasStock from "./pages/AlertasStock";
 import ProfessionalRoute from "./components/ProfessionalRoute";
+import MyRecipes from "./pages/MyRecipes";
 
 function App() {
   return (
@@ -62,15 +61,6 @@ function App() {
         />
 
         <Route
-          path="/mascotas/nueva"
-          element={
-            <ProtectedRoute>
-              <NewPet />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/turnos/nuevo"
           element={
             <ProtectedRoute>
@@ -84,6 +74,15 @@ function App() {
           element={
             <ProtectedRoute>
               <MyAppointments />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/recetas"
+          element={
+            <ProtectedRoute>
+              <MyRecipes />
             </ProtectedRoute>
           }
         />
@@ -149,3 +148,4 @@ function App() {
 }
 
 export default App;
+
