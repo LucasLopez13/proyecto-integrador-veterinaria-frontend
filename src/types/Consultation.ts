@@ -49,12 +49,7 @@ export interface Consultation {
     apellido: string;
     email: string;
   };
-  versiones?: ConsultationVersion[];
-  prescripciones?: {
-    medicamento: string;
-    dosis: string;
-    frecuencia: string;
-  }[];
+    versiones?: ConsultationVersion[];
 }
 
 
