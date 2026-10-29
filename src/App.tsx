@@ -1,3 +1,4 @@
+
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -14,6 +15,8 @@ import MyAppointments from "./pages/MyAppointments";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import PaymentManagement from "./pages/PaymentManagement";
 import PublicVaccinationCard from "./pages/PublicVaccinationCard";
+import AlertasStock from "./pages/AlertasStock";
+import ProfessionalRoute from "./components/ProfessionalRoute";
 
 function App() {
   return (
@@ -37,6 +40,15 @@ function App() {
             <ProtectedRoute>
               <Pets />
             </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profesional/alertas-stock"
+          element={
+            <ProfessionalRoute>
+              <AlertasStock />
+            </ProfessionalRoute>
           }
         />
 
@@ -124,7 +136,9 @@ function App() {
         <Route
           path="/profesional/pagos"
           element={
-            <RoleProtectedRoute allowedRoles={["profesional", "veterinario", "admin"]}>
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "veterinario", "admin"]}
+            >
               <PaymentManagement />
             </RoleProtectedRoute>
           }

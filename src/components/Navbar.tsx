@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
@@ -21,18 +22,25 @@ function Navbar() {
     role === "profesional" ||
     role === "veterinario" ||
     role === "admin";
+
   const homePath = isProfessional ? "/profesional/turnos" : "/mascotas";
 
   return (
     <nav className="navbar navbar-expand-lg bg-white border-bottom border-violet-subtle sticky-top">
       <div className="container">
-        <Link className="navbar-brand d-flex align-items-center gap-2 fw-bold text-violet" to={homePath}>
-          <i className="bi bi-shield-plus text-primary fs-5" style={{ color: "var(--vet-primary, #6D28D9)" }}></i>
+        <Link
+          className="navbar-brand d-flex align-items-center gap-2 fw-bold text-violet"
+          to={homePath}
+        >
+          <i
+            className="bi bi-shield-plus text-primary fs-5"
+            style={{ color: "var(--vet-primary, #6D28D9)" }}
+          ></i>
           <span className="brand-title">VetCare</span>
         </Link>
 
         <div className="navbar-nav ms-auto d-flex align-items-center gap-1">
-          {user.role === "cliente" && (
+          {role === "cliente" && (
             <>
               <Link className="nav-link" to="/mascotas">
                 Mis mascotas
@@ -45,7 +53,6 @@ function Navbar() {
               </Link>
             </>
           )}
-
 
           {isProfessional && (
             <>
@@ -60,7 +67,7 @@ function Navbar() {
                 className="nav-link nav-link-triage d-inline-flex align-items-center gap-1"
                 to="/profesional/triage"
               >
-                <i className="bi bi-heart-pulse text-danger"></i> Triage & Urgencias
+                <i className="bi bi-heart-pulse text-danger"></i> Triage &amp; Urgencias
               </Link>
 
               <Link
@@ -69,9 +76,15 @@ function Navbar() {
               >
                 <i className="bi bi-wallet2"></i> Pagos
               </Link>
+
+              <Link
+                className="nav-link d-inline-flex align-items-center gap-1"
+                to="/profesional/alertas-stock"
+              >
+                <i className="bi bi-exclamation-triangle"></i> Alertas de stock
+              </Link>
             </>
           )}
-
 
           <div className="user-profile-chip ms-lg-3 me-2 d-none d-sm-flex align-items-center gap-2">
             <span className="user-avatar-squircle">
@@ -80,7 +93,7 @@ function Navbar() {
             <div className="user-info-text text-start">
               <span className="user-name d-block">{user.nombre || "Usuario"}</span>
               <small className="user-role-label text-muted d-block">
-                {user.role || user.rol || "Tutor"}
+                {role || "Tutor"}
               </small>
             </div>
           </div>
