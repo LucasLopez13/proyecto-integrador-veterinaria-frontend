@@ -11,6 +11,8 @@ import TriageBoard from "./pages/TriageBoard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import MyAppointments from "./pages/MyAppointments";
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
+import PaymentManagement from "./pages/PaymentManagement";
 
 function App() {
   return (
@@ -110,6 +112,15 @@ function App() {
             <ProtectedRoute>
               <TriageBoard />
             </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profesional/pagos"
+          element={
+            <RoleProtectedRoute allowedRoles={["profesional", "veterinario", "admin"]}>
+              <PaymentManagement />
+            </RoleProtectedRoute>
           }
         />
       </Routes>

@@ -15,7 +15,12 @@ function Navbar() {
     navigate("/login");
   };
 
-  const isProfessional = user.role === "profesional" || user.rol === "profesional" || user.role === "admin" || user.rol === "admin";
+  const role = user.role || user.rol;
+
+  const isProfessional =
+    role === "profesional" ||
+    role === "veterinario" ||
+    role === "admin";
   const homePath = isProfessional ? "/profesional/turnos" : "/mascotas";
 
   return (
@@ -41,16 +46,32 @@ function Navbar() {
             </>
           )}
 
+
           {isProfessional && (
             <>
-              <Link className="nav-link d-inline-flex align-items-center gap-1" to="/profesional/turnos">
+              <Link
+                className="nav-link d-inline-flex align-items-center gap-1"
+                to="/profesional/turnos"
+              >
                 <i className="bi bi-calendar-check"></i> Turnos
               </Link>
-              <Link className="nav-link nav-link-triage d-inline-flex align-items-center gap-1" to="/profesional/triage">
+
+              <Link
+                className="nav-link nav-link-triage d-inline-flex align-items-center gap-1"
+                to="/profesional/triage"
+              >
                 <i className="bi bi-heart-pulse text-danger"></i> Triage & Urgencias
+              </Link>
+
+              <Link
+                className="nav-link d-inline-flex align-items-center gap-1"
+                to="/profesional/pagos"
+              >
+                <i className="bi bi-wallet2"></i> Pagos
               </Link>
             </>
           )}
+
 
           <div className="user-profile-chip ms-lg-3 me-2 d-none d-sm-flex align-items-center gap-2">
             <span className="user-avatar-squircle">

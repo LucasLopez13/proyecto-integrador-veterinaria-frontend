@@ -11,11 +11,23 @@ import { FeedbackModal, type FeedbackModalState } from "../components/common/Fee
 import { ErrorModal } from "../components/common/ErrorModal";
 import { FormFieldError } from "../components/common/FormFieldError";
 import { Pagination } from "../components/common/Pagination";
+import { paymentService } from "../services/paymentService";
+import type { Payment, PaymentMethod } from "../types/Payment";
+
 
 function MyAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentFormTurnoId, setPaymentFormTurnoId] = useState<number | null>(null);
+  const [paymentMonto, setPaymentMonto] = useState("");
+  const [paymentMetodo, setPaymentMetodo] = useState<PaymentMethod>("transferencia");
+  const [paymentObservaciones, setPaymentObservaciones] = useState("");
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paymentMessageTurnoId, setPaymentMessageTurnoId] = useState<number | null>(null);
 
   const [reprogramandoId, setReprogramandoId] = useState<number | null>(null);
   const [nuevaFecha, setNuevaFecha] = useState("");
@@ -58,7 +70,56 @@ function MyAppointments() {
 
   useEffect(() => {
     cargarTurnos(1);
+    cargarPagos();
   }, []);
+
+  const cargarPagos = async () => {
+    try {
+      const data = await paymentService.getPayments();
+      setPayments(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("No se pudieron cargar los pagos:", err);
+    }
+  };
+
+  const handleRegistrarPago = async (turnoId: number) => {
+    setPaymentError(null);
+    setPaymentMessage(null);
+
+    const monto = Number(paymentMonto);
+
+    if (!paymentMonto.trim() || !Number.isFinite(monto) || monto <= 0) {
+      setPaymentError("Ingresá un monto válido mayor que cero.");
+      return;
+    }
+
+    try {
+      setPaymentLoading(true);
+
+      await paymentService.createPayment({
+        monto,
+        concepto: `Pago de turno #${turnoId}`,
+        metodo: paymentMetodo,
+        turnoId,
+        observaciones: paymentObservaciones.trim() || undefined,
+      });
+
+      await cargarPagos();
+
+      setPaymentFormTurnoId(null);
+      setPaymentMonto("");
+      setPaymentMetodo("transferencia");
+      setPaymentObservaciones("");
+      setPaymentMessageTurnoId(turnoId);
+      setPaymentMessage(`El pago del turno #${turnoId} se registró como pendiente.`);
+    } catch (err) {
+      setPaymentError(
+        err instanceof Error ? err.message : "No se pudo registrar el pago."
+      );
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -273,9 +334,174 @@ function MyAppointments() {
                           </button>
                         </div>
                       )}
+
+                    </div>
+
+                    {/* Sección de pagos */}
+                    <div className="mt-3 pt-3 border-top border-light-subtle">
+                      <h4 className="small fw-bold mb-2">
+                        <i className="bi bi-credit-card me-2"></i>
+                        Pago del turno
+                      </h4>
+
+
+                      {(() => {
+                        const pagosTurno = payments.filter(
+                          (p) => p.turnoId === appointment.id
+                        );
+                        const pagoActivo = pagosTurno.find(
+                          (p) => p.estado === "pendiente" || p.estado === "aprobado"
+                        );
+                        const puedeRegistrar =
+                          !pagoActivo &&
+                          (!pagosTurno.length ||
+                            pagosTurno.every((p) => p.estado === "rechazado"));
+
+                        if (pagoActivo) {
+                          return (
+                            <div className="small mb-2">
+                              <span>
+                                Monto: ${Number(pagoActivo.monto).toLocaleString("es-AR")}
+                              </span>
+                              {" · "}
+                              <span className="fw-semibold">
+                                Estado: {pagoActivo.estado}
+                              </span>
+                              {" · "}
+                              <span>Método: {pagoActivo.metodo}</span>
+                            </div>
+                          );
+                        }
+
+                        if (puedeRegistrar && !isPastOrCancelled) {
+                          return (
+                            <button
+                              type="button"
+                              className="btn btn-outline-primary btn-sm rounded-2"
+                              onClick={() => {
+                                setPaymentFormTurnoId(appointment.id);
+                                setPaymentMonto("");
+                                setPaymentMetodo("transferencia");
+                                setPaymentObservaciones("");
+                                setPaymentError(null);
+                                setPaymentMessage(null);
+                              }}
+                            >
+                              <i className="bi bi-wallet2 me-1"></i>
+                              Registrar pago
+                            </button>
+                          );
+                        }
+
+                        return null;
+                      })()}
+
+
+                      {paymentFormTurnoId === appointment.id && (
+                        <form
+                          className="mt-3 p-3 rounded-2"
+                          style={{ backgroundColor: "#FAF9FC" }}
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            void handleRegistrarPago(appointment.id);
+                          }}
+                        >
+                          <div className="mb-3">
+                            <label
+                              htmlFor={`pago-monto-${appointment.id}`}
+                              className="form-label small fw-semibold"
+                            >
+                              Monto ($)
+                            </label>
+                            <input
+                              id={`pago-monto-${appointment.id}`}
+                              type="number"
+                              min="0.01"
+                              step="0.01"
+                              className="form-control form-control-sm"
+                              value={paymentMonto}
+                              onChange={(e) => setPaymentMonto(e.target.value)}
+                              required
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <label
+                              htmlFor={`pago-metodo-${appointment.id}`}
+                              className="form-label small fw-semibold"
+                            >
+                              Método de pago
+                            </label>
+                            <select
+                              id={`pago-metodo-${appointment.id}`}
+                              className="form-select form-select-sm"
+                              value={paymentMetodo}
+                              onChange={(e) =>
+                                setPaymentMetodo(e.target.value as PaymentMethod)
+                              }
+                            >
+                              <option value="transferencia">Transferencia</option>
+                              <option value="tarjeta">Tarjeta</option>
+                              <option value="efectivo">Efectivo</option>
+                            </select>
+                          </div>
+
+                          <div className="mb-3">
+                            <label
+                              htmlFor={`pago-observaciones-${appointment.id}`}
+                              className="form-label small fw-semibold"
+                            >
+                              Observaciones (opcional)
+                            </label>
+                            <textarea
+                              id={`pago-observaciones-${appointment.id}`}
+                              className="form-control form-control-sm"
+                              rows={2}
+                              value={paymentObservaciones}
+                              onChange={(e) =>
+                                setPaymentObservaciones(e.target.value)
+                              }
+                            />
+                          </div>
+
+                          {paymentError && (
+                            <div className="alert alert-danger py-2 small">
+                              {paymentError}
+                            </div>
+                          )}
+
+                          <div className="d-flex gap-2">
+                            <button
+                              type="submit"
+                              className="btn btn-primary btn-sm"
+                              disabled={paymentLoading}
+                            >
+                              {paymentLoading ? "Registrando..." : "Confirmar registro"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline-secondary btn-sm"
+                              disabled={paymentLoading}
+                              onClick={() => {
+                                setPaymentFormTurnoId(null);
+                                setPaymentError(null);
+                              }}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </form>
+                      )}
+
+                      {paymentMessage && paymentMessageTurnoId === appointment.id && (
+                        <div className="alert alert-success py-2 small mt-2 mb-0">
+                          {paymentMessage}
+                        </div>
+                      )}
                     </div>
 
                     {isReprogramando && (
+
                       <div
                         className="mt-3 pt-3 border-top border-light-subtle"
                         style={{ backgroundColor: "#FAF9FC", padding: "14px", borderRadius: "6px" }}
