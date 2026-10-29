@@ -13,6 +13,7 @@ import Navbar from "./components/Navbar";
 import MyAppointments from "./pages/MyAppointments";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import PaymentManagement from "./pages/PaymentManagement";
+import PublicVaccinationCard from "./pages/PublicVaccinationCard";
 
 function App() {
   return (
@@ -24,6 +25,11 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
+
+        <Route
+          path="/carnet/:token"
+          element={<PublicVaccinationCard />}
+        />
 
         <Route
           path="/mascotas"
