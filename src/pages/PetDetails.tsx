@@ -997,26 +997,7 @@ function PetDetails() {
                         }
                       />
                     </div>
-
-                    <div className="col-md-6">
-                      <label htmlFor="sanitary-lote" className="form-label">
-                        Lote <span className="text-muted">(opcional)</span>
-                      </label>
-                      <input
-                        id="sanitary-lote"
-                        type="text"
-                        className="form-control"
-                        placeholder="Número de lote"
-                        value={sanitaryForm.lote}
-                        onChange={(e) =>
-                          setSanitaryForm((prev) => ({
-                            ...prev,
-                            lote: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-
+                    
                     <div className="col-md-6">
                       <label htmlFor="sanitary-fecha" className="form-label">
                         Fecha de aplicación *
