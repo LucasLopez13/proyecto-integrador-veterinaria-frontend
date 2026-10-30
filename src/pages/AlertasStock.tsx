@@ -62,6 +62,7 @@ function AlertasStock() {
           onClick={() => void cargarAlertas()}
           disabled={cargando}
         >
+          <i className="bi bi-arrow-clockwise me-1"></i>
           {cargando ? "Actualizando..." : "Actualizar alertas"}
         </button>
       </header>
@@ -120,7 +121,9 @@ function AlertasStock() {
 
       {!cargando && !error && datos?.alertas.length === 0 && (
         <div className="alertas-vacio">
-          <span aria-hidden="true">✓</span>
+          <span aria-hidden="true">
+            <i className="bi bi-check2-circle"></i>
+          </span>
           <h2>No hay alertas pendientes</h2>
           <p>
             No se encontraron productos con stock crítico ni lotes que requieran
@@ -154,7 +157,7 @@ function AlertaCard({ alerta }: { alerta: AlertaStock }) {
       className={`alerta-card ${esCritica ? "alerta-card-critica" : "alerta-card-advertencia"}`}
     >
       <div className="alerta-card-icono" aria-hidden="true">
-        {esCritica ? "!" : "⚠"}
+        <i className={`bi ${esCritica ? "bi-exclamation-octagon-fill" : "bi-exclamation-triangle-fill"}`}></i>
       </div>
 
       <div className="alerta-card-contenido">

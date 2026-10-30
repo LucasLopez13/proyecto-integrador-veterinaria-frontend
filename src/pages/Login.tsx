@@ -57,8 +57,14 @@ function Login() {
       const data = await authService.login({ email, password });
       login(data.user, data.token);
 
-      const userRole = data.user.rol || data.user.role;
-      if (userRole === "profesional") {
+      const rawUser = data.user as any;
+      const userRole = (
+        typeof rawUser?.rol === "object" && rawUser?.rol?.nombre
+          ? rawUser.rol.nombre
+          : rawUser?.role || rawUser?.rol || ""
+      ).toLowerCase().trim();
+
+      if (userRole === "profesional" || userRole === "admin") {
         navigate("/profesional/turnos");
       } else {
         navigate("/mascotas");

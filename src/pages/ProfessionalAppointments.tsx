@@ -85,6 +85,12 @@ function ProfessionalAppointments() {
 
           <div className="d-flex gap-2">
             <Link
+              to="/profesional/pagos"
+              className="btn btn-outline-secondary rounded-2 shadow-sm d-inline-flex align-items-center gap-2 px-3 fw-medium"
+            >
+              <i className="bi bi-wallet2"></i> Gestión de Pagos
+            </Link>
+            <Link
               to="/profesional/triage"
               className="btn btn-outline-primary rounded-2 shadow-sm d-inline-flex align-items-center gap-2 px-3 fw-medium"
             >
@@ -154,6 +160,9 @@ function ProfessionalAppointments() {
                       Motivo de Consulta
                     </th>
                     <th className="small fw-bold text-uppercase py-3 px-3" style={{ color: "#64748B", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                      Pago
+                    </th>
+                    <th className="small fw-bold text-uppercase py-3 px-3" style={{ color: "#64748B", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
                       Estado
                     </th>
                     <th className="small fw-bold text-uppercase py-3 px-3 text-end" style={{ color: "#64748B", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
@@ -221,6 +230,55 @@ function ProfessionalAppointments() {
                         </td>
 
                         <td className="py-3 px-3">
+                          {(() => {
+                            const pagos = appointment.pagos || [];
+                            const ultimoPago = pagos[pagos.length - 1];
+
+                            if (!ultimoPago) {
+                              return (
+                                <span className="badge text-bg-light border text-muted">
+                                  Sin pago
+                                </span>
+                              );
+                            }
+
+                            if (ultimoPago.estado === "aprobado") {
+                              return (
+                                <Link
+                                  to="/profesional/pagos"
+                                  className="badge text-bg-success text-decoration-none"
+                                  title="Ver en Pagos"
+                                >
+                                  Aprobado
+                                </Link>
+                              );
+                            }
+
+                            if (ultimoPago.estado === "pendiente") {
+                              return (
+                                <Link
+                                  to="/profesional/pagos"
+                                  className="badge text-bg-warning text-decoration-none"
+                                  title="Pago pendiente - Gestionar"
+                                >
+                                  Pendiente
+                                </Link>
+                              );
+                            }
+
+                            return (
+                              <Link
+                                to="/profesional/pagos"
+                                className="badge text-bg-danger text-decoration-none"
+                                title="Pago rechazado"
+                              >
+                                Rechazado
+                              </Link>
+                            );
+                          })()}
+                        </td>
+
+                        <td className="py-3 px-3">
                           {isAtendido || isCancelado ? (
                             <AppointmentStatusBadge status={appointment.estado} />
                           ) : (
@@ -248,19 +306,21 @@ function ProfessionalAppointments() {
                         </td>
 
                         <td className="py-3 px-3 text-end">
-                          <div className="d-inline-flex align-items-center gap-2">
+                          <div className="d-inline-flex align-items-center gap-1">
                             {!isCancelado && !isAtendido && (
                               <Link
                                 to={`/profesional/atencion?mascotaId=${appointment.mascotaId}&turnoId=${appointment.id}`}
-                                className="btn btn-primary rounded-2 btn-sm fw-medium shadow-sm px-3"
-                                style={{ backgroundColor: "#6D28D9", borderColor: "#6D28D9" }}
+                                className="btn btn-primary rounded-2 btn-sm fw-medium shadow-sm py-1 px-2 d-inline-flex align-items-center gap-1"
+                                style={{ backgroundColor: "#6D28D9", borderColor: "#6D28D9", fontSize: "0.8rem" }}
                               >
-                                Iniciar Atención
+                                <i className="bi bi-play-circle"></i>
+                                Atender
                               </Link>
                             )}
                             <Link
                               to={`/profesional/mascotas/${appointment.mascotaId}`}
-                              className="btn btn-outline-secondary rounded-2 btn-sm fw-medium px-2"
+                              className="btn btn-outline-secondary rounded-2 btn-sm fw-medium py-1 px-2"
+                              style={{ fontSize: "0.8rem" }}
                               title="Ver ficha completa"
                             >
                               Ficha

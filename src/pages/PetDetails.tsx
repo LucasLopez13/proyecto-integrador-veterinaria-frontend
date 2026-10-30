@@ -619,15 +619,17 @@ function PetDetails() {
                 </Link>
               )}
 
-              <button
-                type="button"
-                className="btn btn-outline-success rounded-2 d-inline-flex align-items-center gap-2"
-                onClick={handleGenerarCarnet}
-                disabled={loadingCarnet}
-              >
-                <i className="bi bi-qr-code"></i>
-                {loadingCarnet ? "Generando..." : "Carnet de vacunación"}
-              </button>
+              {!carnetToken && (
+                <button
+                  type="button"
+                  className="btn btn-outline-primary rounded-2 d-inline-flex align-items-center gap-2"
+                  onClick={handleGenerarCarnet}
+                  disabled={loadingCarnet}
+                >
+                  <i className="bi bi-qr-code"></i>
+                  {loadingCarnet ? "Generando..." : "Carnet de vacunación"}
+                </button>
+              )}
             </div>
 
             {errorCarnet && (
@@ -637,38 +639,56 @@ function PetDetails() {
             )}
 
             {carnetToken && (
-              <div className="card mt-3 shadow-sm">
-                <div className="card-body text-center">
-                  <h2 className="h5 fw-bold">Carnet de {pet.nombre}</h2>
-                  <p className="text-muted small">
-                    Escaneá el código QR para consultar las vacunas registradas.
+              <div className="card mt-3 shadow-sm border-subtle rounded-3 overflow-hidden bg-white">
+                <div className="card-header bg-white border-subtle py-3 px-4 d-flex align-items-center justify-content-between">
+                  <div className="d-flex align-items-center gap-2">
+                    <div
+                      className="d-flex align-items-center justify-content-center rounded-circle"
+                      style={{ width: "36px", height: "36px", backgroundColor: "var(--lavender-tint)", color: "var(--primary-violet)" }}
+                    >
+                      <i className="bi bi-qr-code-scan"></i>
+                    </div>
+                    <div>
+                      <h2 className="h6 fw-bold mb-0 text-dark">Carnet de Vacunación Digital</h2>
+                      <span className="text-muted small">{pet.nombre}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    aria-label="Cerrar"
+                    onClick={() => setCarnetToken(null)}
+                  />
+                </div>
+                <div className="card-body text-center p-4">
+                  <p className="text-muted small mb-3">
+                    Escaneá el código QR desde cualquier dispositivo para consultar las vacunas registradas en tiempo real.
                   </p>
 
-                  <div className="d-flex justify-content-center my-3">
+                  <div className="d-inline-flex justify-content-center p-3 bg-light rounded-3 mx-auto border-subtle mb-3">
                     <QRCodeSVG
                       value={`${window.location.origin}/carnet/${carnetToken}`}
-                      size={220}
+                      size={200}
                       level="M"
                       includeMargin
                     />
                   </div>
 
-                  <a
-                    href={`${window.location.origin}/carnet/${carnetToken}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-outline-primary btn-sm"
-                  >
-                    Abrir carnet público
-                  </a>
-
-                  <div className="mt-3">
+                  <div className="d-flex justify-content-center gap-2">
+                    <a
+                      href={`${window.location.origin}/carnet/${carnetToken}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary btn-sm rounded-2 shadow-sm d-inline-flex align-items-center gap-2"
+                    >
+                      <i className="bi bi-box-arrow-up-right"></i> Abrir carnet público
+                    </a>
                     <button
                       type="button"
-                      className="btn btn-link btn-sm"
+                      className="btn btn-outline-secondary btn-sm rounded-2 d-inline-flex align-items-center gap-2"
                       onClick={() => setCarnetToken(null)}
                     >
-                      Ocultar QR
+                      <i className="bi bi-x-lg"></i> Ocultar QR
                     </button>
                   </div>
                 </div>

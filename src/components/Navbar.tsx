@@ -16,11 +16,15 @@ function Navbar() {
     navigate("/login");
   };
 
-  const role = user.role || user.rol;
+  const rawRole =
+    typeof user.rol === "object" && (user.rol as any)?.nombre
+      ? (user.rol as any).nombre
+      : user.role || user.rol || "";
+
+  const role = String(rawRole).toLowerCase().trim();
 
   const isProfessional =
     role === "profesional" ||
-    role === "veterinario" ||
     role === "admin";
 
   const homePath = isProfessional ? "/profesional/turnos" : "/mascotas";

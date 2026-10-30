@@ -39,7 +39,7 @@ export const PetCard: React.FC<PetCardProps> = ({ pet }) => {
 
         <div className="mt-3 pt-2 border-top border-light-subtle d-flex flex-column gap-2">
           <Link
-            to={`/profesional/mascotas/${pet.id}`}
+            to={`/mascotas/${pet.id}`}
             className="btn btn-outline-primary rounded-2 w-100 fw-medium d-inline-flex align-items-center justify-content-center gap-2"
           >
             <i className="bi bi-file-earmark-medical"></i> Ver Ficha Médica

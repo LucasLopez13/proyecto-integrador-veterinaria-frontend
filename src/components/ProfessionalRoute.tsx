@@ -14,11 +14,14 @@ function ProfessionalRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  const rol = String(user?.role || user?.rol || "")
-    .toLowerCase()
-    .trim();
+  const rawRole =
+    typeof user?.rol === "object" && (user?.rol as any)?.nombre
+      ? (user?.rol as any).nombre
+      : user?.role || user?.rol || "";
 
-  if (rol !== "profesional" && rol !== "veterinario") {
+  const rol = String(rawRole).toLowerCase().trim();
+
+  if (rol !== "profesional" && rol !== "admin") {
     return <Navigate to="/mascotas" replace />;
   }
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Recipe } from "../types/Recipe";
 import { recipeService } from "../services/recipeService";
+import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { EmptyState } from "../components/common/EmptyState";
 import "../styles/MyRecipes.css";
 
 function MyRecipes() {
@@ -17,7 +19,6 @@ function MyRecipes() {
         const data = await recipeService.getAll();
         setRecipes(data);
       } catch (err: any) {
-        console.error("Error al cargar recetas:", err);
         setError(err.message || "Error al conectar con el servidor");
       } finally {
         setLoading(false);
@@ -27,49 +28,49 @@ function MyRecipes() {
     cargarRecetas();
   }, []);
 
-  if (loading) {
-    return (
-      <main className="recipes-page">
-        <div className="recipes-container">
-          <div className="recipes-loading">
-            <p>Cargando tus recetas...</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="recipes-page">
       <div className="recipes-container">
 
         <div className="recipes-header">
-          <h1>Mis recetas</h1>
-          <p>
-            Consultá las recetas e indicaciones de tus mascotas.
-          </p>
+          <div className="recipes-header-info">
+            <div className="recipes-header-icon">
+              <i className="bi bi-capsule"></i>
+            </div>
+            <div>
+              <h1>Mis recetas</h1>
+              <p>
+                Consultá las recetas médicas e indicaciones para tus mascotas.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {error && (
+        {loading && (
+          <div className="recipes-loading-card">
+            <LoadingSpinner message="Cargando tus recetas..." />
+          </div>
+        )}
+
+        {!loading && error && (
           <div className="recipes-error">
-            {error}
+            <i className="bi bi-exclamation-triangle-fill"></i>
+            <div>
+              <h3>Error al cargar recetas</h3>
+              <p>{error}</p>
+            </div>
           </div>
         )}
 
-        {!error && recipes.length === 0 && (
-          <div className="recipes-empty">
-            <div className="recipes-empty-icon">💊</div>
-
-            <h3>No tenés recetas registradas</h3>
-
-            <p>
-              Cuando un profesional registre una receta, podrás verla
-              en esta sección.
-            </p>
-          </div>
+        {!loading && !error && recipes.length === 0 && (
+          <EmptyState
+            icon="bi-capsule"
+            title="No tenés recetas registradas"
+            description="Cuando un profesional veterinario registre una prescripción médica, podrás consultarla en esta sección."
+          />
         )}
 
-        {recipes.length > 0 && (
+        {!loading && !error && recipes.length > 0 && (
           <div className="recipes-grid">
             {recipes.map((recipe) => (
               <article className="recipe-card" key={recipe.id}>
@@ -77,10 +78,15 @@ function MyRecipes() {
                 <div className="recipe-card-header">
                   <div className="recipe-medicine">
                     <div className="recipe-medicine-icon">
-                      💊
+                      <i className="bi bi-capsule"></i>
                     </div>
 
-                    <h2>{recipe.medicamento}</h2>
+                    <div>
+                      <h2>{recipe.medicamento}</h2>
+                      <span className="recipe-medicine-subtitle">
+                        Prescripción médica
+                      </span>
+                    </div>
                   </div>
 
                   <span
@@ -92,6 +98,15 @@ function MyRecipes() {
                         : "recipe-status-cancelled"
                     }`}
                   >
+                    <i
+                      className={`bi ${
+                        recipe.estado === "activo"
+                          ? "bi-check-circle"
+                          : recipe.estado === "finalizado"
+                          ? "bi-check2-all"
+                          : "bi-x-circle"
+                      } me-1`}
+                    ></i>
                     {recipe.estado}
                   </span>
                 </div>
@@ -99,7 +114,9 @@ function MyRecipes() {
                 <div className="recipe-card-body">
 
                   <div className="recipe-info">
-                    <div className="recipe-info-icon">🐾</div>
+                    <div className="recipe-info-icon">
+                      <i className="bi bi-heart-pulse"></i>
+                    </div>
 
                     <div className="recipe-info-content">
                       <span className="recipe-info-label">
@@ -113,23 +130,25 @@ function MyRecipes() {
                   </div>
 
                   <div className="recipe-info">
-                    <div className="recipe-info-icon">📅</div>
+                    <div className="recipe-info-icon">
+                      <i className="bi bi-calendar3"></i>
+                    </div>
 
                     <div className="recipe-info-content">
                       <span className="recipe-info-label">
-                        Fecha
+                        Fecha de emisión
                       </span>
 
                       <span className="recipe-info-value">
-                        {new Date(recipe.fecha).toLocaleDateString(
-                          "es-AR"
-                        )}
+                        {new Date(recipe.fecha).toLocaleDateString("es-AR")}
                       </span>
                     </div>
                   </div>
 
                   <div className="recipe-info">
-                    <div className="recipe-info-icon">👨‍⚕️</div>
+                    <div className="recipe-info-icon">
+                      <i className="bi bi-person-badge"></i>
+                    </div>
 
                     <div className="recipe-info-content">
                       <span className="recipe-info-label">
@@ -146,7 +165,7 @@ function MyRecipes() {
 
                   <div className="recipe-instructions">
                     <div className="recipe-instructions-title">
-                      📋 Indicaciones
+                      <i className="bi bi-file-earmark-medical me-1"></i> Indicaciones
                     </div>
 
                     <p className="recipe-instructions-text">
