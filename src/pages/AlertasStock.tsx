@@ -24,7 +24,6 @@ function AlertasStock() {
   const [movimientos, setMovimientos] = useState<MovimientoStockItem[]>([]);
   const [cargandoMovs, setCargandoMovs] = useState(false);
 
-  // Estado del modal de consumo directo
   const [modalAbierto, setModalAbierto] = useState(false);
   const [productosInventario, setProductosInventario] = useState<ProductoConLotes[]>([]);
   const [prodIdSel, setProdIdSel] = useState("");
@@ -198,7 +197,6 @@ function AlertasStock() {
         </div>
       </header>
 
-      {/* Selector de pestanas */}
       <div className="d-flex gap-2 border-bottom mb-4 pb-2">
         <button
           type="button"
@@ -383,7 +381,6 @@ function AlertasStock() {
         </section>
       )}
 
-      {/* Modal de Consumo Directo */}
       {modalAbierto && (
         <div
           className="modal show d-block"

@@ -1,8 +1,5 @@
-
 import type { RespuestaAlertasStock } from "../types/AlertaStock";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import { apiFetch } from "./apiClient";
 
 export const alertaStockService = {
   async getAll(
@@ -13,25 +10,9 @@ export const alertaStockService = {
       diasVencimiento: String(diasVencimiento),
     });
 
-    const headers: HeadersInit = {};
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    const response = await fetch(
-      `${API_URL}/alertas-stock?${params.toString()}`,
-      { headers }
+    return await apiFetch<RespuestaAlertasStock>(
+      `/alertas-stock?${params.toString()}`,
+      { token }
     );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "No se pudieron cargar las alertas"
-      );
-    }
-
-    return data as RespuestaAlertasStock;
   },
 };

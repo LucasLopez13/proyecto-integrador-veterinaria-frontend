@@ -43,11 +43,11 @@ export const Pagination: React.FC<PaginationProps> = ({
         </span>
       ) : (
         <span className="small text-muted" style={{ fontSize: "0.82rem" }}>
-          Página <strong className="text-dark">{currentPage}</strong> de <strong className="text-dark">{totalPages}</strong>
+          Pagina <strong className="text-dark">{currentPage}</strong> de <strong className="text-dark">{totalPages}</strong>
         </span>
       )}
 
-      <nav aria-label="Navegación de páginas">
+      <nav aria-label="Navegacion de paginas">
         <ul className="pagination pagination-sm mb-0 gap-1">
           <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
             <button

@@ -14,8 +14,8 @@ import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import PaymentManagement from "./pages/PaymentManagement";
 import PublicVaccinationCard from "./pages/PublicVaccinationCard";
 import AlertasStock from "./pages/AlertasStock";
-import ProfessionalRoute from "./components/ProfessionalRoute";
 import MyRecipes from "./pages/MyRecipes";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -60,9 +60,12 @@ function App() {
         <Route
           path="/profesional/alertas-stock"
           element={
-            <ProfessionalRoute>
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin"]}
+              redirectTo="/mascotas"
+            >
               <AlertasStock />
-            </ProfessionalRoute>
+            </RoleProtectedRoute>
           }
         />
 
@@ -197,6 +200,8 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

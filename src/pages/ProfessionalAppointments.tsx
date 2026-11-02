@@ -8,6 +8,7 @@ import { MetricCard } from "../components/common/MetricCard";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { EmptyState } from "../components/common/EmptyState";
 import { AppointmentStatusBadge } from "../components/common/AppointmentStatusBadge";
+import { Pagination } from "../components/common/Pagination";
 
 function ProfessionalAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -334,60 +335,14 @@ function ProfessionalAppointments() {
               </table>
             </div>
 
-            {totalPages > 1 && (
-              <div
-                className="p-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2"
-                style={{ backgroundColor: "#FFFFFF", borderColor: "#F1F5F9" }}
-              >
-                <span className="small text-muted">
-                  Mostrando <strong>{appointments.length > 0 ? startIndex + 1 : 0}</strong> a{" "}
-                  <strong>{endIndex}</strong> de <strong>{appointments.length}</strong> turnos
-                </span>
-
-                <nav aria-label="Paginación de turnos">
-                  <ul className="pagination pagination-sm mb-0 gap-1">
-                    <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                      <button
-                        type="button"
-                        className="page-link rounded-2 px-2 py-1 text-decoration-none"
-                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                        disabled={currentPage === 1}
-                      >
-                        <i className="bi bi-chevron-left"></i> Anterior
-                      </button>
-                    </li>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <li key={page} className={`page-item ${currentPage === page ? "active" : ""}`}>
-                        <button
-                          type="button"
-                          className="page-link rounded-2 px-3 py-1"
-                          style={{
-                            backgroundColor: currentPage === page ? "var(--vet-primary, #6D28D9)" : "transparent",
-                            borderColor: currentPage === page ? "var(--vet-primary, #6D28D9)" : "#E2E8F0",
-                            color: currentPage === page ? "#FFFFFF" : "var(--vet-text-main, #1E1B4B)",
-                          }}
-                          onClick={() => setCurrentPage(page)}
-                        >
-                          {page}
-                        </button>
-                      </li>
-                    ))}
-
-                    <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-                      <button
-                        type="button"
-                        className="page-link rounded-2 px-2 py-1 text-decoration-none"
-                        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                      >
-                        Siguiente <i className="bi bi-chevron-right"></i>
-                      </button>
-                    </li>
-                  </ul>
-                </nav>
-              </div>
-            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={appointments.length}
+              itemsPerPage={pageSize}
+              className="p-3 border-top mt-0"
+            />
           </div>
         )}
       </div>

@@ -10,42 +10,10 @@ import { ReceptionQueue } from "../components/triage/ReceptionQueue";
 import { ErrorModal } from "../components/common/ErrorModal";
 import { FeedbackModal, type FeedbackModalState } from "../components/common/FeedbackModal";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { TIMERS } from "../constants";
+import { TIMERS, TRIAGE_COLUMNS_CONFIG } from "../constants";
 import "../styles/TriageBoard.css";
 
-interface ColumnConfig {
-  key: TriageColumn;
-  title: string;
-  subtitle: string;
-  indicatorColor: string;
-}
-
-const COLUMNAS: ColumnConfig[] = [
-  {
-    key: "CONSULTA_PROGRAMADA",
-    title: "Consulta Programada",
-    subtitle: "Turnos agendados y controles",
-    indicatorColor: "#059669",
-  },
-  {
-    key: "URGENCIA_MODERADA",
-    title: "Urgencia Moderada",
-    subtitle: "Atención prioritaria",
-    indicatorColor: "#D97706",
-  },
-  {
-    key: "EMERGENCIA_CRITICA",
-    title: "Emergencia Crítica",
-    subtitle: "Riesgo vital inmediato",
-    indicatorColor: "#DC2626",
-  },
-  {
-    key: "INTERNACION_QUIROFANO",
-    title: "Internación / Quirófano",
-    subtitle: "En cirugía o internación",
-    indicatorColor: "#6D28D9",
-  },
-];
+const COLUMNAS = Object.values(TRIAGE_COLUMNS_CONFIG);
 
 export const TriageBoard: React.FC = () => {
   const [items, setItems] = useState<TriageItem[]>([]);

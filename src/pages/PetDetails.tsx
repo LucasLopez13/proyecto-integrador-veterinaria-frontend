@@ -534,15 +534,14 @@ function PetDetails() {
   if (!pet) {
     return (
       <main className="pet-details-page">
-        <div className="container py-5">
-          <div className="alert alert-danger rounded-2 shadow-sm">
-            {error || "No hay datos de la mascota disponibles."}
-          </div>
-          <BackButton
-            to={isProfessional ? "/profesional/turnos" : "/mascotas"}
-            text={isProfessional ? "Volver a turnos" : "Volver a mis mascotas"}
-            variant="outline"
-            className="mt-3"
+        <div className="container py-5" style={{ maxWidth: "600px" }}>
+          <EmptyState
+            icon="bi-shield-exclamation"
+            title="Paciente o recurso no disponible"
+            description="La mascota a la que intentas acceder no existe, no esta disponible o no tienes permisos para consultarla."
+            actionText={isProfessional ? "Volver a la Agenda" : "Volver a Mis Mascotas"}
+            actionTo={isProfessional ? "/profesional/turnos" : "/mascotas"}
+            actionIcon="bi-arrow-left"
           />
         </div>
       </main>

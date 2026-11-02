@@ -11,6 +11,7 @@ import { ErrorModal } from "../components/common/ErrorModal";
 import { BackButton } from "../components/common/BackButton";
 import { FormFieldError } from "../components/common/FormFieldError";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { EmptyState } from "../components/common/EmptyState";
 import { FileUploadZone } from "../components/common/FileUploadZone";
 import { ConsultationPatientSidebar } from "../components/consultations/ConsultationPatientSidebar";
 import { inventarioService } from "../services/inventarioService";
@@ -387,13 +388,14 @@ export default function MedicalAttention() {
   if (error && !pet) {
     return (
       <main className="medical-attention-page">
-        <div className="container py-5">
-          <div className="alert alert-danger rounded-2 shadow-sm">{error}</div>
-          <BackButton
-            to="/profesional/turnos"
-            text="Volver a turnos"
-            variant="outline"
-            className="mt-3"
+        <div className="container py-5" style={{ maxWidth: "600px" }}>
+          <EmptyState
+            icon="bi-clipboard2-x"
+            title="Paciente o atencion no disponible"
+            description="La mascota indicada para esta consulta no existe o no se encontro en el sistema."
+            actionText="Volver a la Agenda"
+            actionTo="/profesional/turnos"
+            actionIcon="bi-arrow-left"
           />
         </div>
       </main>
