@@ -37,29 +37,29 @@ function Register() {
     const newErrors: Record<string, string> = {};
 
     if (!nombre.trim()) {
-      newErrors.nombre = "Completá este campo con tu nombre";
+      newErrors.nombre = "Completa este campo con tu nombre";
     }
 
     if (!apellido.trim()) {
-      newErrors.apellido = "Completá este campo con tu apellido";
+      newErrors.apellido = "Completa este campo con tu apellido";
     }
 
     if (!email.trim()) {
-      newErrors.email = "Completá este campo con tu correo electrónico";
+      newErrors.email = "Completa este campo con tu correo electronico";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      newErrors.email = "Ingresá un formato de correo electrónico válido";
+      newErrors.email = "Ingresa un formato de correo electronico valido";
     }
 
     if (!password) {
-      newErrors.password = "Completá este campo con tu contraseña";
+      newErrors.password = "Completa este campo con tu contrasena";
     } else if (password.length < 6) {
-      newErrors.password = "La contraseña debe contener al menos 6 caracteres";
+      newErrors.password = "La contrasena debe contener al menos 6 caracteres";
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword = "Completá este campo para confirmar tu contraseña";
+      newErrors.confirmPassword = "Completa este campo para confirmar tu contrasena";
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Las contraseñas no coinciden";
+      newErrors.confirmPassword = "Las contrasenas no coinciden";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -102,8 +102,13 @@ function Register() {
 
       login(data.user, data.token);
 
-      const userRole = data.user.rol || data.user.role;
-      if (userRole === "profesional") {
+      const rawRole =
+        typeof data.user?.rol === "object" && (data.user?.rol as any)?.nombre
+          ? (data.user?.rol as any).nombre
+          : data.user?.role || data.user?.rol || rol;
+      const userRole = String(rawRole || "").toLowerCase().trim();
+
+      if (userRole === "profesional" || userRole === "admin") {
         navigate("/profesional/turnos");
       } else {
         navigate("/mascotas");
@@ -173,13 +178,13 @@ function Register() {
 
           <div className="mb-3">
             <label htmlFor="email" className="form-label">
-              Correo electrónico *
+              Correo electronico *
             </label>
             <input
               type="email"
               id="email"
               className={`form-control rounded-2 ${fieldErrors.email ? "is-invalid" : ""}`}
-              placeholder="Correo Electrónico"
+              placeholder="Correo Electronico"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -191,7 +196,7 @@ function Register() {
 
           <div className="mb-3">
             <label htmlFor="telefono" className="form-label">
-              Teléfono de contacto
+              Telefono de contacto
             </label>
             <div className="input-group">
               <span className="input-group-text phone-prefix-input">+54</span>
@@ -199,7 +204,7 @@ function Register() {
                 type="tel"
                 id="telefono"
                 className="form-control phone-number-field rounded-end-2"
-                placeholder="Teléfono"
+                placeholder="Telefono"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
               />
@@ -209,13 +214,13 @@ function Register() {
           <div className="row g-3 mb-3">
             <div className="col-md-6">
               <label htmlFor="password" className="form-label">
-                Contraseña *
+                Contrasena *
               </label>
               <input
                 type="password"
                 id="password"
                 className={`form-control rounded-2 ${fieldErrors.password ? "is-invalid" : ""}`}
-                placeholder="Contraseña"
+                placeholder="Contrasena"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -227,13 +232,13 @@ function Register() {
 
             <div className="col-md-6">
               <label htmlFor="confirmPassword" className="form-label">
-                Confirmar Contraseña *
+                Confirmar Contrasena *
               </label>
               <input
                 type="password"
                 id="confirmPassword"
                 className={`form-control rounded-2 ${fieldErrors.confirmPassword ? "is-invalid" : ""}`}
-                placeholder="Confirmar Contraseña"
+                placeholder="Confirmar Contrasena"
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
@@ -269,9 +274,9 @@ function Register() {
         </form>
 
         <div className="text-center mt-4 pt-2 border-top border-light-subtle">
-          <span className="auth-footer-text">¿Ya tenés una cuenta? </span>
+          <span className="auth-footer-text">Ya tenes una cuenta? </span>
           <Link to="/login" className="auth-link">
-            Iniciar sesión
+            Iniciar sesion
           </Link>
         </div>
       </div>
