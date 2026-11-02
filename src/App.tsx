@@ -16,6 +16,7 @@ import PublicVaccinationCard from "./pages/PublicVaccinationCard";
 import AlertasStock from "./pages/AlertasStock";
 import ProfessionalRoute from "./components/ProfessionalRoute";
 import MyRecipes from "./pages/MyRecipes";
+import BillingManagement from "./pages/BillingManagement";
 
 function App() {
   return (
@@ -139,6 +140,15 @@ function App() {
               allowedRoles={["profesional", "veterinario", "admin"]}
             >
               <PaymentManagement />
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/facturacion/ordenes"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "recepcion"]}>
+              <BillingManagement />
             </RoleProtectedRoute>
           }
         />

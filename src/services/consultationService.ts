@@ -10,8 +10,8 @@ export const consultationService = {
   async createConsultation(
     data: CreateConsultationDTO,
     token?: string | null
-  ): Promise<{ message: string; consulta: Consultation }> {
-    return apiFetch<{ message: string; consulta: Consultation }>("/consultas", {
+  ): Promise<Consultation> {
+    return apiFetch<Consultation>("/consultas", {
       method: "POST",
       body: JSON.stringify(data),
       token,

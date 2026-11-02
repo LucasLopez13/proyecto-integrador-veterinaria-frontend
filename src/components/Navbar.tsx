@@ -23,6 +23,8 @@ function Navbar() {
     role === "veterinario" ||
     role === "admin";
 
+  const canManageBilling = role === "admin" || role === "recepcion";
+
   const homePath = isProfessional ? "/profesional/turnos" : "/mascotas";
 
   return (
@@ -88,6 +90,15 @@ function Navbar() {
                 <i className="bi bi-exclamation-triangle"></i> Alertas de stock
               </Link>
             </>
+          )}
+
+          {canManageBilling && (
+            <Link
+              className="nav-link d-inline-flex align-items-center gap-1"
+              to="/facturacion/ordenes"
+            >
+              <i className="bi bi-receipt"></i> Facturación
+            </Link>
           )}
 
           <div className="user-profile-chip ms-lg-3 me-2 d-none d-sm-flex align-items-center gap-2">

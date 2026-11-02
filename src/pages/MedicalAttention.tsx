@@ -15,6 +15,27 @@ import { FileUploadZone } from "../components/common/FileUploadZone";
 import { ConsultationPatientSidebar } from "../components/consultations/ConsultationPatientSidebar";
 import "../styles/MedicalAttention.css";
 
+interface ServicioFacturacion {
+  id: number;
+  nombre: string;
+  precioUnitario: number;
+}
+
+interface ProductoFacturacion {
+  id: number;
+  nombre: string;
+  precioUnitario: number;
+  stockActual: number;
+}
+
+interface ConceptoSeleccionado {
+  tipo: "servicio" | "producto";
+  id: number;
+  nombre: string;
+  precio: number;
+  cantidad: number;
+}
+
 export default function MedicalAttention() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -46,6 +67,13 @@ export default function MedicalAttention() {
   const [plan, setPlan] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [servicios, setServicios] = useState<ServicioFacturacion[]>([]);
+  const [productos, setProductos] = useState<ProductoFacturacion[]>([]);
+  const [tipoConcepto, setTipoConcepto] = useState<"servicio" | "producto">("servicio");
+  const [referenciaId, setReferenciaId] = useState("");
+  const [cantidadConcepto, setCantidadConcepto] = useState("1");
+  const [conceptosSeleccionados, setConceptosSeleccionados] = useState<ConceptoSeleccionado[]>([]);
+  const [errorCatalogo, setErrorCatalogo] = useState("");
 
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
@@ -85,7 +113,7 @@ export default function MedicalAttention() {
             if (appData.motivo && !subjetivo) {
               setSubjetivo(`Motivo de consulta declarado: ${appData.motivo}\n\n`);
             }
-          } catch {}
+          } catch { }
         }
 
         const savedDraftStr = localStorage.getItem(`soap_draft_${mascotaIdParam}`);
@@ -101,7 +129,7 @@ export default function MedicalAttention() {
             if (savedDraft.analisis) setAnalisis(savedDraft.analisis);
             if (savedDraft.plan) setPlan(savedDraft.plan);
             if (savedDraft.observaciones) setObservaciones(savedDraft.observaciones);
-          } catch {}
+          } catch { }
         }
       } catch (err: any) {
         handleError(err.message || "Error al cargar los datos del paciente");
@@ -112,6 +140,63 @@ export default function MedicalAttention() {
 
     fetchData();
   }, [mascotaIdParam, turnoIdParam]);
+
+  useEffect(() => {
+    const cargarCatalogos = async () => {
+      try {
+        const [serviciosData, productosData] = await Promise.all([
+          apiFetch<ServicioFacturacion[]>("/facturacion/servicios"),
+          apiFetch<ProductoFacturacion[]>("/facturacion/productos"),
+        ]);
+
+        setServicios(serviciosData);
+        setProductos(productosData);
+      } catch (err: any) {
+        setErrorCatalogo(err.message || "No se pudieron cargar los servicios y productos.");
+      }
+    };
+
+    cargarCatalogos();
+  }, []);
+
+  const agregarConcepto = () => {
+    const id = Number(referenciaId);
+    const cantidad = Number(cantidadConcepto);
+
+    if (!id || !Number.isFinite(cantidad) || cantidad <= 0) {
+      setErrorCatalogo("Seleccioná un concepto e ingresá una cantidad válida.");
+      return;
+    }
+
+    const referencia = tipoConcepto === "servicio"
+      ? servicios.find((item) => item.id === id)
+      : productos.find((item) => item.id === id);
+
+    if (!referencia) {
+      setErrorCatalogo("No se encontró el concepto seleccionado.");
+      return;
+    }
+
+    if (tipoConcepto === "producto" && (referencia as ProductoFacturacion).stockActual < cantidad) {
+      setErrorCatalogo("La cantidad supera el stock disponible.");
+      return;
+    }
+
+    setConceptosSeleccionados((prev) => [
+      ...prev,
+      {
+        tipo: tipoConcepto,
+        id,
+        nombre: referencia.nombre,
+        precio: Number(referencia.precioUnitario),
+        cantidad,
+      },
+    ]);
+
+    setReferenciaId("");
+    setCantidadConcepto("1");
+    setErrorCatalogo("");
+  };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -200,7 +285,7 @@ export default function MedicalAttention() {
       setSaving(true);
       setError(null);
 
-      await consultationService.createConsultation(
+      const resultado = await consultationService.createConsultation(
         {
           mascotaId: pet.id,
           turnoId: turnoIdParam ? parseInt(turnoIdParam, 10) : null,
@@ -217,6 +302,23 @@ export default function MedicalAttention() {
         token
       );
 
+      const consultaId = resultado.id;
+
+      if (!consultaId) {
+        throw new Error("La consulta se guardó, pero no se recibió su identificador.");
+      }
+
+      for (const concepto of conceptosSeleccionados) {
+        await apiFetch(`/facturacion/consultas/${consultaId}/conceptos`, {
+          method: "POST",
+          body: JSON.stringify({
+            servicioId: concepto.tipo === "servicio" ? concepto.id : null,
+            productoId: concepto.tipo === "producto" ? concepto.id : null,
+            cantidad: concepto.cantidad,
+          }),
+        });
+      }
+
       for (const file of attachedFiles) {
         try {
           const formData = new FormData();
@@ -228,7 +330,7 @@ export default function MedicalAttention() {
             method: "POST",
             body: formData,
           });
-        } catch {}
+        } catch { }
       }
 
       if (mascotaIdParam) {
@@ -371,6 +473,114 @@ export default function MedicalAttention() {
                   />
                   <FormFieldError error={fieldErrors.subjetivo} />
                 </div>
+              </div>
+
+              <div className="soap-section-card">
+                <h3 className="h6 fw-bold mb-2 text-dark">Servicios y productos facturables</h3>
+                <p className="text-muted small">
+                  Agregá los servicios realizados o productos utilizados durante la consulta.
+                  Se incluirán en la orden de facturación.
+                </p>
+
+                {errorCatalogo && (
+                  <div className="alert alert-warning py-2">{errorCatalogo}</div>
+                )}
+
+                <div className="row g-2 align-items-end">
+                  <div className="col-md-3">
+                    <label className="form-label">Tipo</label>
+                    <select
+                      className="form-select"
+                      value={tipoConcepto}
+                      onChange={(e) => {
+                        setTipoConcepto(e.target.value as "servicio" | "producto");
+                        setReferenciaId("");
+                      }}
+                    >
+                      <option value="servicio">Servicio</option>
+                      <option value="producto">Producto</option>
+                    </select>
+                  </div>
+
+                  <div className="col-md-5">
+                    <label className="form-label">
+                      {tipoConcepto === "servicio" ? "Servicio" : "Producto"}
+                    </label>
+                    <select
+                      className="form-select"
+                      value={referenciaId}
+                      onChange={(e) => setReferenciaId(e.target.value)}
+                    >
+                      <option value="">Seleccionar...</option>
+                      {(tipoConcepto === "servicio" ? servicios : productos).map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.nombre} - ${Number(item.precioUnitario).toFixed(2)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="col-md-2">
+                    <label className="form-label">Cantidad</label>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      className="form-control"
+                      value={cantidadConcepto}
+                      onChange={(e) => setCantidadConcepto(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="col-md-2">
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary w-100"
+                      onClick={agregarConcepto}
+                    >
+                      Agregar
+                    </button>
+                  </div>
+                </div>
+
+                {conceptosSeleccionados.length > 0 && (
+                  <div className="table-responsive mt-3">
+                    <table className="table table-sm align-middle">
+                      <thead>
+                        <tr>
+                          <th>Concepto</th>
+                          <th>Cantidad</th>
+                          <th>Precio</th>
+                          <th>Subtotal</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {conceptosSeleccionados.map((concepto, index) => (
+                          <tr key={`${concepto.tipo}-${concepto.id}-${index}`}>
+                            <td>{concepto.nombre}</td>
+                            <td>{concepto.cantidad}</td>
+                            <td>${concepto.precio.toFixed(2)}</td>
+                            <td>${(concepto.precio * concepto.cantidad).toFixed(2)}</td>
+                            <td>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger"
+                                onClick={() =>
+                                  setConceptosSeleccionados((prev) =>
+                                    prev.filter((_, i) => i !== index)
+                                  )
+                                }
+                              >
+                                Quitar
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
               <div className="soap-section-card">
