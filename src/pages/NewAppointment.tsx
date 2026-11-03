@@ -83,23 +83,23 @@ function NewAppointment() {
     const newErrors: Record<string, string> = {};
 
     if (!selectedPetId) {
-      newErrors.selectedPetId = "Seleccioná la mascota para la consulta";
+      newErrors.selectedPetId = "Selecciona la mascota para la consulta";
     }
 
     if (!fecha) {
-      newErrors.fecha = "Completá este campo con la fecha de atención";
+      newErrors.fecha = "Completa este campo con la fecha de atencion";
     } else if (fecha < hoyStr) {
-      newErrors.fecha = "No podés seleccionar una fecha anterior al día de hoy";
+      newErrors.fecha = "No podes seleccionar una fecha anterior al dia de hoy";
     }
 
     if (!hora) {
-      newErrors.hora = "Seleccioná el horario de atención";
+      newErrors.hora = "Selecciona el horario de atencion";
     } else if (fecha === hoyStr && isSlotInPast(hora)) {
-      newErrors.hora = "El horario ya transcurrió. Elegí un horario posterior";
+      newErrors.hora = "El horario ya transcurrio. Elegi un horario posterior";
     }
 
     if (!motivo.trim()) {
-      newErrors.motivo = "Completá este campo con el motivo de la consulta";
+      newErrors.motivo = "Completa este campo con el motivo de la consulta";
     } else if (motivo.trim().length < 3) {
         newErrors.motivo = "El motivo debe tener al menos 3 caracteres";
     }
@@ -167,7 +167,7 @@ function NewAppointment() {
               Solicitar Turno
             </h1>
             <p className="text-muted small mb-0">
-              Completá los datos para solicitar una consulta veterinaria
+              Completa los datos para solicitar una consulta veterinaria
             </p>
           </div>
         </div>
@@ -209,9 +209,9 @@ function NewAppointment() {
               </>
             ) : (
               <div className="text-danger small mt-1">
-                No tenés mascotas registradas.{" "}
+                No tenes mascotas registradas.{" "}
                 <Link to="/mascotas/nueva" className="fw-semibold text-decoration-none">
-                  Registrá una aquí
+                  Registra una aqui
                 </Link>
               </div>
             )}
@@ -221,7 +221,7 @@ function NewAppointment() {
         <form onSubmit={handleSubmit} noValidate>
           <div className="appointment-form-grid">
             <div className="appointment-field">
-              <label htmlFor="date">Fecha de Atención</label>
+              <label htmlFor="date">Fecha de Atencion</label>
               <input
                 type="date"
                 id="date"
@@ -250,7 +250,7 @@ function NewAppointment() {
               >
                 <option value="">Seleccionar horario</option>
                 {availableSlots.length === 0 ? (
-                  <option disabled value="">No hay más horarios disponibles hoy</option>
+                  <option disabled value="">No hay mas horarios disponibles hoy</option>
                 ) : (
                   availableSlots.map((h) => (
                     <option key={h} value={h}>

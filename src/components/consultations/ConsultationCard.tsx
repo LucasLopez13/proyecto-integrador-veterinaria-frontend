@@ -55,7 +55,7 @@ export const ConsultationCard: React.FC<ConsultationCardProps> = ({
             <i className="bi bi-thermometer-half me-1 text-secondary"></i>{c.temperatura} °C
           </span>
           {c.frecuenciaCardiaca !== null && c.frecuenciaCardiaca !== undefined && (
-            <span className="badge bg-light text-dark border rounded-2" title="Frecuencia Cardíaca">
+            <span className="badge bg-light text-dark border rounded-2" title="Frecuencia Cardiaca">
               <i className="bi bi-heart-pulse me-1 text-danger"></i>{c.frecuenciaCardiaca} lpm
             </span>
           )}
@@ -74,12 +74,12 @@ export const ConsultationCard: React.FC<ConsultationCardProps> = ({
         </div>
 
         <div className="col-md-6">
-          <small className="text-warning-emphasis fw-bold d-block mb-1">[A] Diagnóstico / Análisis:</small>
+          <small className="text-warning-emphasis fw-bold d-block mb-1">[A] Diagnostico / Analisis:</small>
           <p className="small text-dark mb-0" style={{ whiteSpace: "pre-line" }}>{c.analisis}</p>
         </div>
 
         <div className="col-md-6">
-          <small className="text-success fw-bold d-block mb-1">[O] Objetivo (Examen Físico):</small>
+          <small className="text-success fw-bold d-block mb-1">[O] Objetivo (Examen Fisico):</small>
           <p className="small text-dark mb-0" style={{ whiteSpace: "pre-line" }}>
             {c.objetivo ? c.objetivo : "Sin hallazgos adicionales descriptos"}
           </p>
@@ -109,7 +109,7 @@ export const ConsultationCard: React.FC<ConsultationCardProps> = ({
           onClick={() => onOpenAudit(c)}
           title="Ver historial de cambios inmutables y trazabilidad legal"
         >
-          <i className="bi bi-clock-history me-1"></i> Auditoría (v{c.version || 1})
+          <i className="bi bi-clock-history me-1"></i> Auditoria (v{c.version || 1})
         </button>
 
         {isProfessional && (
@@ -118,7 +118,7 @@ export const ConsultationCard: React.FC<ConsultationCardProps> = ({
               type="button"
               className="btn btn-outline-secondary btn-sm rounded-2"
               onClick={() => onOpenEdit(c)}
-              title="Crear una nueva versión histórica con enmienda médica"
+              title="Crear una nueva version historica con enmienda medica"
             >
               <i className="bi bi-pencil-square me-1"></i> Enmendar
             </button>
@@ -127,7 +127,7 @@ export const ConsultationCard: React.FC<ConsultationCardProps> = ({
               type="button"
               className="btn btn-outline-danger btn-sm rounded-2"
               onClick={() => onOpenAnular(c)}
-              title="Anulación lógica de la consulta (soft delete)"
+              title="Anulacion logica de la consulta (soft delete)"
             >
               <i className="bi bi-trash3 me-1"></i> Anular
             </button>

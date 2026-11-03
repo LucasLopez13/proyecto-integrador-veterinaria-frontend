@@ -27,10 +27,10 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
           <div>
             <h3>
               <i className="bi bi-journal-medical me-2"></i>
-              Auditoría e Inmutabilidad de Historia Clínica
+              Auditoria e Inmutabilidad de Historia Clinica
             </h3>
             <p>
-              Paciente: <strong>{petName}</strong> · Consulta #{consulta.id} · Versión actual: v{consulta.version || 1}
+              Paciente: <strong>{petName}</strong> · Consulta #{consulta.id} · Version actual: v{consulta.version || 1}
             </p>
           </div>
           <button
@@ -46,9 +46,9 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
           <div className="legal-notice-banner">
             <i className="bi bi-shield-check text-purple" style={{ fontSize: "1.4rem" }}></i>
             <div>
-              <strong>Garantía Legal de Inalterabilidad e Inmutabilidad</strong>
+              <strong>Garantia Legal de Inalterabilidad e Inmutabilidad</strong>
               <div style={{ marginTop: 2, fontSize: "0.82rem" }}>
-                Cada intervención médica queda registrada de forma inmutable con su sello criptográfico SHA-256,
+                Cada intervencion medica queda registrada de forma inmutable con su sello criptografico SHA-256,
                 marca temporal exacta y autor responsable. Las modificaciones generan versiones correlativas sin sobreescribir el historial previo.
               </div>
             </div>
@@ -82,7 +82,7 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                     <div className="version-card">
                       <div className="version-card-header">
                         <div className="version-title">
-                          <span>Versión #{ver.numeroVersion}</span>
+                          <span>Version #{ver.numeroVersion}</span>
                           <span
                             className={`badge ${isCreation
                                 ? "bg-success"
@@ -95,19 +95,19 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                             {isCreation && (
                               <>
                                 <i className="bi bi-plus-circle me-1"></i>
-                                Creación Inicial
+                                Creacion Inicial
                               </>
                             )}
                             {!isCreation && !isAnnulment && (
                               <>
                                 <i className="bi bi-pencil-square me-1"></i>
-                                Enmienda / Modificación
+                                Enmienda / Modificacion
                               </>
                             )}
                             {isAnnulment && (
                               <>
                                 <i className="bi bi-slash-circle me-1"></i>
-                                Anulación Lógica
+                                Anulacion Logica
                               </>
                             )}
                           </span>
@@ -126,7 +126,7 @@ export const ConsultationAuditModal: React.FC<ConsultationAuditModalProps> = ({
                       </div>
 
                       <div className="version-motivo-box">
-                        <strong>Motivo y Justificación Médica Registrada:</strong>
+                        <strong>Motivo y Justificacion Medica Registrada:</strong>
                         "{ver.motivoEdicion}"
                       </div>
 

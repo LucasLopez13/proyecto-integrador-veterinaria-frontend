@@ -122,7 +122,7 @@ export const TriageCard: React.FC<TriageCardProps> = ({
               display: "inline-block",
             }}
           />
-          <span>Dra. García (Guardia)</span>
+          <span>Dra. Garcia (Guardia)</span>
         </div>
       </div>
 
@@ -153,9 +153,9 @@ export const TriageCard: React.FC<TriageCardProps> = ({
                   color: "var(--vet-primary, #6D28D9)",
                   borderColor: "var(--vet-primary, #6D28D9)",
                 }}
-                title="Iniciar Atención SOAP"
+                title="Iniciar Atencion SOAP"
               >
-                Iniciar Atención
+                Iniciar Atencion
               </Link>
             )}
 

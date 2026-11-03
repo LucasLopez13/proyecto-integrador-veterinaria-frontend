@@ -80,7 +80,7 @@ function ProfessionalAppointments() {
               Agenda de Turnos Profesionales
             </h1>
             <p className="text-muted small mb-0">
-              Gestión centralizada de atenciones, pacientes programados y estado de turnos
+              Gestion centralizada de atenciones, pacientes programados y estado de turnos
             </p>
           </div>
 
@@ -89,7 +89,7 @@ function ProfessionalAppointments() {
               to="/profesional/pagos"
               className="btn btn-outline-secondary rounded-2 shadow-sm d-inline-flex align-items-center gap-2 px-3 fw-medium"
             >
-              <i className="bi bi-wallet2"></i> Gestión de Pagos
+              <i className="bi bi-wallet2"></i> Gestion de Pagos
             </Link>
             <Link
               to="/profesional/triage"
@@ -140,7 +140,7 @@ function ProfessionalAppointments() {
           <EmptyState
             icon="bi-calendar-check"
             title="No hay turnos registrados"
-            description="Los turnos solicitados por los tutores aparecerán listados aquí."
+            description="Los turnos solicitados por los tutores apareceran listados aqui."
           />
         ) : (
           <div className="bg-white rounded-3 border border-light-subtle shadow-sm overflow-hidden" style={{ borderColor: "#EDE9FE" }}>
@@ -301,6 +301,7 @@ function ProfessionalAppointments() {
                             >
                               <option value="pendiente">Pendiente</option>
                               <option value="confirmado">Confirmado</option>
+                              <option value="atendido">Atendido</option>
                               <option value="cancelado">Cancelado</option>
                             </select>
                           )}

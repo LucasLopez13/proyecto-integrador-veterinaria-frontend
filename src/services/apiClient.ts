@@ -25,7 +25,7 @@ export async function apiFetch<T>(endpoint: string, options: RequestOptions = {}
 
     if (Array.isArray(errorBody.errors) && errorBody.errors.length > 0) {
       const detailedErrors = errorBody.errors
-        .map((e: any) => (typeof e === "string" ? e : e.message || `${e.field}: inválido`))
+        .map((e: any) => (typeof e === "string" ? e : e.message || `${e.field}: invalido`))
         .join(". ");
 
       if (message) {

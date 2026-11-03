@@ -33,12 +33,12 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       const file = fileList[i];
 
       if (!acceptedTypes.includes(file.type)) {
-        onError?.(`El archivo "${file.name}" no es válido. Formatos admitidos: PDF, JPG, PNG.`);
+        onError?.(`El archivo "${file.name}" no es valido. Formatos admitidos: PDF, JPG, PNG.`);
         return;
       }
 
       if (file.size > maxSizeBytes) {
-        onError?.(`El archivo "${file.name}" supera el límite permitido de ${(maxSizeBytes / 1024 / 1024).toFixed(0)} MB.`);
+        onError?.(`El archivo "${file.name}" supera el limite permitido de ${(maxSizeBytes / 1024 / 1024).toFixed(0)} MB.`);
         return;
       }
 
@@ -46,7 +46,7 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
     }
 
     if (files.length + validFiles.length > maxFiles) {
-      onError?.(`No se pueden adjuntar más de ${maxFiles} archivos.`);
+      onError?.(`No se pueden adjuntar mas de ${maxFiles} archivos.`);
       return;
     }
 
@@ -102,7 +102,7 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         <div className="fs-2 mb-2" style={{ color: "#6D28D9" }}>
           <i className="bi bi-cloud-arrow-up"></i>
         </div>
-        <strong className="d-block small text-dark">Arrastrá archivos aquí o hacé clic para explorar</strong>
+        <strong className="d-block small text-dark">Arrastra archivos aqui o hace clic para explorar</strong>
         <span className="text-muted" style={{ fontSize: "0.78rem" }}>
           Formatos admitidos: PDF, JPG, PNG (hasta 5 MB por archivo)
         </span>

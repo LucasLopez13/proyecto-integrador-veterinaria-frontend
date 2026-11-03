@@ -18,7 +18,7 @@ function RoleProtectedRoute({
   const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="container py-4">Verificando sesión...</div>;
+    return <div className="container py-4">Verificando sesion...</div>;
   }
 
   if (!isAuthenticated || !user) {

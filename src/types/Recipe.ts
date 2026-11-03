@@ -19,14 +19,27 @@ export type RecipeStatus = "activo" | "finalizado" | "cancelado";
 
 export interface Recipe {
   id: number;
-  fecha: string;
-  medicamento: string;
-  indicaciones: string;
-  estado: RecipeStatus;
-  mascotaId: number;
-  profesionalId: number;
+  fecha?: string;
+  medicamento?: string;
+  dosis?: string;
+  frecuencia?: number;
+  duracion?: number;
+  indicaciones?: string;
+  estado?: RecipeStatus;
+  mascotaId?: number;
+  profesionalId?: number;
   mascota?: RecipePet;
   profesional?: RecipeProfessional;
+  producto?: {
+    id: number;
+    nombre: string;
+  };
+  consulta?: {
+    id: number;
+    fecha?: string;
+    mascota?: RecipePet;
+    veterinario?: RecipeProfessional;
+  };
   createdAt?: string;
   updatedAt?: string;
 }

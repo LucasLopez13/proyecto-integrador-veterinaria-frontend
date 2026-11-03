@@ -50,7 +50,7 @@ function PaymentManagement() {
       await paymentService.updatePaymentStatus(pago.id, estado, token);
       await cargarPagos();
 
-      setMessage(`El pago #${pago.id} quedó ${estado}.`);
+      setMessage(`El pago #${pago.id} quedo ${estado}.`);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "No se pudo actualizar el pago."
@@ -71,8 +71,8 @@ function PaymentManagement() {
       isOpen: true,
       type: "confirm",
       confirmVariant: esAprobacion ? "primary" : "danger",
-      title: esAprobacion ? "Confirmar aprobación" : "Confirmar rechazo",
-      message: `¿Estás seguro de que deseás ${accion} el pago #${pago.id} por valor de ${formatoMonto(pago.monto)}?`,
+      title: esAprobacion ? "Confirmar aprobacion" : "Confirmar rechazo",
+      message: `¿Estas seguro de que deseas ${accion} el pago #${pago.id} por valor de ${formatoMonto(pago.monto)}?`,
       confirmText: esAprobacion ? "Aprobar pago" : "Rechazar pago",
       cancelText: "Cancelar",
       onConfirm: () => void ejecutarCambioEstado(pago, estado),
@@ -100,10 +100,10 @@ function PaymentManagement() {
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
           <div>
             <h1 className="h3 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
-              Gestión de Pagos
+              Gestion de Pagos
             </h1>
             <p className="text-muted small mb-0">
-              Administración de cobros, verificación de transferencias y estados de pago
+              Administracion de cobros, verificacion de transferencias y estados de pago
             </p>
           </div>
 
@@ -201,7 +201,7 @@ function PaymentManagement() {
           <EmptyState
             icon="bi-wallet2"
             title="No hay pagos para el filtro seleccionado"
-            description="Los pagos registrados por los tutores aparecerán listados aquí para su verificación."
+            description="Los pagos registrados por los tutores apareceran listados aqui para su verificacion."
           />
         ) : (
           <div className="row g-3">
@@ -281,13 +281,21 @@ function PaymentManagement() {
                         <strong className="text-dark">Concepto:</strong> {pago.concepto}
                       </div>
                       <div className="mb-2">
-                        <strong className="text-dark">Método:</strong>{" "}
+                        <strong className="text-dark">Metodo:</strong>{" "}
                         <span className="text-capitalize">{pago.metodo}</span>
                       </div>
                       <div className="mb-2">
                         <strong className="text-dark">Turno asociado:</strong>{" "}
                         {pago.turnoId ? `#${pago.turnoId}` : "No asociado"}
                       </div>
+                      {pago.presupuestoId && (
+                        <div className="mb-2">
+                          <strong className="text-dark">Orden de facturacion:</strong>{" "}
+                          <span className="fw-semibold" style={{ color: "var(--primary-violet, #6D28D9)" }}>
+                            #{pago.presupuestoId}
+                          </span>
+                        </div>
+                      )}
 
                       {pago.turno?.usuario && (
                         <div className="mb-2">

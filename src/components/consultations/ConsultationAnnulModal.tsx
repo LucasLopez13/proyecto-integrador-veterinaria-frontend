@@ -25,7 +25,7 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
 
   const handleConfirm = async () => {
     if (!motivo.trim() || motivo.trim().length < 5) {
-      setMotivoError("El motivo de anulación es obligatorio (mínimo 5 caracteres).");
+      setMotivoError("El motivo de anulacion es obligatorio (minimo 5 caracteres).");
       return;
     }
     setMotivoError(null);
@@ -39,7 +39,7 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
           <div>
             <h3 className="text-danger">
               <i className="bi bi-slash-circle me-2"></i>
-              Anular Consulta Médica
+              Anular Consulta Medica
             </h3>
             <p>Consulta #{consulta.id} · Paciente: {petName}</p>
           </div>
@@ -56,22 +56,22 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
           <div className="alert alert-danger" style={{ fontSize: "0.85rem" }}>
             <strong>
               <i className="bi bi-exclamation-triangle-fill me-1"></i>
-              Prohibición de Borrado Físico:
+              Prohibicion de Borrado Fisico:
             </strong>
             <div style={{ marginTop: 4 }}>
-              Por normativa legal y médica, los registros clínicos nunca se eliminan físicamente de la base de datos.
-              Esta consulta será dada de baja lógicamente y el evento quedará asentado en el registro de auditoría.
+              Por normativa legal y medica, los registros clinicos nunca se eliminan fisicamente de la base de datos.
+              Esta consulta sera dada de baja logicamente y el evento quedara asentado en el registro de auditoria.
             </div>
           </div>
 
           <div className="mb-3">
             <label className="form-label fw-bold">
-              * Motivo de la anulación (obligatorio):
+              * Motivo de la anulacion (obligatorio):
             </label>
             <textarea
               className={`form-control ${motivoError ? "is-invalid" : ""}`}
               rows={3}
-              placeholder="Motivo de la anulación"
+              placeholder="Motivo de la anulacion"
               value={motivo}
               onChange={(e) => {
                 setMotivo(e.target.value);
@@ -98,7 +98,7 @@ export const ConsultationAnnulModal: React.FC<ConsultationAnnulModalProps> = ({
             onClick={handleConfirm}
             disabled={saving}
           >
-            {saving ? "Anulando..." : "Confirmar Anulación Lógica"}
+            {saving ? "Anulando..." : "Confirmar Anulacion Logica"}
           </button>
         </div>
       </div>

@@ -42,7 +42,7 @@ export const ConsultationPatientSidebar: React.FC<ConsultationPatientSidebarProp
         <div className="d-flex flex-column gap-2 mb-3">
           <div className="d-flex justify-content-between small">
             <span className="text-muted">Edad:</span>
-            <strong className="text-dark">{pet?.edad ? `${pet.edad} años` : "No especificada"}</strong>
+            <strong className="text-dark">{pet?.edad ? `${pet.edad} anos` : "No especificada"}</strong>
           </div>
           <div className="d-flex justify-content-between small">
             <span className="text-muted">Sexo:</span>
@@ -76,7 +76,7 @@ export const ConsultationPatientSidebar: React.FC<ConsultationPatientSidebarProp
           </div>
           <FormFieldError error={pesoError} />
           <small className="text-muted d-block mt-1" style={{ fontSize: "0.72rem" }}>
-            Actualizará el peso registrado en la ficha oficial.
+            Actualizara el peso registrado en la ficha oficial.
           </small>
         </div>
 
@@ -112,7 +112,7 @@ export const ConsultationPatientSidebar: React.FC<ConsultationPatientSidebarProp
                 <a href={`tel:${tutorInfo.telefono}`} className="text-decoration-none fw-medium text-dark">{tutorInfo.telefono}</a>
               </span>
             ) : (
-              <span className="small text-muted d-block mt-1">Sin teléfono asentado</span>
+              <span className="small text-muted d-block mt-1">Sin telefono asentado</span>
             )}
             {tutorInfo.email && (
               <small className="text-muted d-block mt-1" style={{ fontSize: "0.75rem" }}>

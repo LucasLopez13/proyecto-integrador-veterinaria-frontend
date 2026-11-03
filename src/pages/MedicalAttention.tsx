@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { consultationService } from "../services/consultationService";
 import { apiFetch } from "../services/apiClient";
-import { TIMERS } from "../constants";
 import type { Pet } from "../types/Pet";
 import type { Appointment } from "../types/Appointment";
 import { FeedbackModal, type FeedbackModalState } from "../components/common/FeedbackModal";
@@ -20,6 +19,7 @@ import "../styles/MedicalAttention.css";
 import PrescriptionForm from "../components/consultations/PrescriptionForm";
 import type { Prescripcion } from "../types/Prescripcion";
 import PrescriptionCard from "../components/consultations/PrescriptionCard";
+
 interface ServicioFacturacion {
   id: number;
   nombre: string;
@@ -103,10 +103,10 @@ export default function MedicalAttention() {
   const [cantidadConsumo, setCantidadConsumo] = useState<string>("");
   const [observacionesConsumo, setObservacionesConsumo] = useState<string>("");
   const [errorConsumo, setErrorConsumo] = useState<string | null>(null);
-  const [mostrarFormularioPrescripcion, setMostrarFormularioPrescripcion] =useState(false);
-  const [prescripcionesCreadas, setPrescripcionesCreadas] =useState<Prescripcion[]>([]);
-  const [formularioPrescripcionKey, setFormularioPrescripcionKey] =useState(0);
-  const [guardandoPrescripcion, setGuardandoPrescripcion] =useState(false);
+  const [mostrarFormularioPrescripcion, setMostrarFormularioPrescripcion] = useState(false);
+  const [prescripcionesCreadas, setPrescripcionesCreadas] = useState<Prescripcion[]>([]);
+  const [formularioPrescripcionKey, setFormularioPrescripcionKey] = useState(0);
+  const [guardandoPrescripcion, setGuardandoPrescripcion] = useState(false);
 
   const handlePrescripcionConfirmada = (prescripcionActualizada: Prescripcion) => {
     setPrescripcionesCreadas((prev) =>
@@ -117,6 +117,7 @@ export default function MedicalAttention() {
       )
     );
   };
+
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
       if (!prev[field]) return prev;
@@ -148,21 +149,63 @@ export default function MedicalAttention() {
           setPeso(String(petData.peso));
         }
 
+        let foundApp: Appointment | null = null;
         if (turnoIdParam) {
           try {
-            const appData = await apiFetch<Appointment>(`/turnos/${turnoIdParam}`);
-            setAppointment(appData);
-            if (appData.motivo && !subjetivo) {
-              setSubjetivo(`Motivo de consulta declarado: ${appData.motivo}\n\n`);
+            foundApp = await apiFetch<Appointment>(`/turnos/${turnoIdParam}`);
+          } catch { }
+        } else {
+          try {
+            const turnosRes = await apiFetch<Appointment[] | { data?: Appointment[] }>("/turnos");
+            const listaTurnos = Array.isArray(turnosRes)
+              ? turnosRes
+              : Array.isArray(turnosRes?.data)
+              ? turnosRes.data
+              : [];
+            const idMascotaNum = Number(mascotaIdParam);
+            foundApp =
+              listaTurnos.find(
+                (t) =>
+                  Number(t.mascotaId) === idMascotaNum &&
+                  (t.estado === "confirmado" || t.estado === "pendiente")
+              ) || null;
+          } catch { }
+        }
+
+        let motivoTexto = "";
+        let motivoInicial = "";
+        if (foundApp) {
+          setAppointment(foundApp);
+          if (foundApp.motivo) {
+            motivoTexto = foundApp.motivo.trim();
+            motivoInicial = `Motivo de consulta declarado: ${motivoTexto}\n\n`;
+          }
+        }
+
+        if (!motivoInicial) {
+          try {
+            const triages = await apiFetch<any[]>("/triage");
+            if (Array.isArray(triages)) {
+              const idMascotaNum = Number(mascotaIdParam);
+              const triageActivo = triages.find(
+                (tr) =>
+                  Number(tr.mascotaId) === idMascotaNum &&
+                  (tr.estado === "en_atencion" || tr.estado === "en_espera")
+              );
+              if (triageActivo?.sintomas) {
+                motivoTexto = String(triageActivo.sintomas).trim();
+                motivoInicial = `Motivo de consulta declarado: ${motivoTexto}\n\n`;
+              }
             }
           } catch { }
         }
 
+        let draftSubjetivo = "";
         const savedDraftStr = localStorage.getItem(`soap_draft_${mascotaIdParam}`);
         if (savedDraftStr) {
           try {
             const savedDraft = JSON.parse(savedDraftStr);
-            if (savedDraft.subjetivo) setSubjetivo(savedDraft.subjetivo);
+            if (savedDraft.subjetivo) draftSubjetivo = String(savedDraft.subjetivo);
             if (savedDraft.objetivo) setObjetivo(savedDraft.objetivo);
             if (savedDraft.peso) setPeso(savedDraft.peso);
             if (savedDraft.temperatura) setTemperatura(savedDraft.temperatura);
@@ -174,7 +217,20 @@ export default function MedicalAttention() {
             if (Array.isArray(savedDraft.consumosSeleccionados)) {
               setConsumosSeleccionados(savedDraft.consumosSeleccionados);
             }
+            if (Array.isArray(savedDraft.conceptosSeleccionados)) {
+              setConceptosSeleccionados(savedDraft.conceptosSeleccionados);
+            }
           } catch { }
+        }
+
+        if (draftSubjetivo.trim()) {
+          if (motivoInicial && motivoTexto && !draftSubjetivo.includes(motivoTexto)) {
+            setSubjetivo(`${motivoInicial}${draftSubjetivo}`);
+          } else {
+            setSubjetivo(draftSubjetivo);
+          }
+        } else if (motivoInicial) {
+          setSubjetivo(motivoInicial);
         }
       } catch (err: any) {
         handleError(err.message || "Error al cargar los datos del paciente");
@@ -186,7 +242,6 @@ export default function MedicalAttention() {
     fetchData();
   }, [mascotaIdParam, turnoIdParam]);
 
-  // Cargar servicios y productos para facturación
   useEffect(() => {
     const cargarCatalogos = async () => {
       try {
@@ -207,50 +262,6 @@ export default function MedicalAttention() {
     cargarCatalogos();
   }, []);
 
-  const agregarConcepto = () => {
-    const id = Number(referenciaId);
-    const cantidad = Number(cantidadConcepto);
-
-    if (!id || !Number.isFinite(cantidad) || cantidad <= 0) {
-      setErrorCatalogo("Seleccioná un concepto e ingresá una cantidad válida.");
-      return;
-    }
-
-    const referencia =
-      tipoConcepto === "servicio"
-        ? servicios.find((item) => item.id === id)
-        : productos.find((item) => item.id === id);
-
-    if (!referencia) {
-      setErrorCatalogo("No se encontró el concepto seleccionado.");
-      return;
-    }
-
-    if (
-      tipoConcepto === "producto" &&
-      (referencia as ProductoFacturacion).stockActual < cantidad
-    ) {
-      setErrorCatalogo("La cantidad supera el stock disponible.");
-      return;
-    }
-
-    setConceptosSeleccionados((prev) => [
-      ...prev,
-      {
-        tipo: tipoConcepto,
-        id,
-        nombre: referencia.nombre,
-        precio: Number(referencia.precioUnitario),
-        cantidad,
-      },
-    ]);
-
-    setReferenciaId("");
-    setCantidadConcepto("1");
-    setErrorCatalogo("");
-  };
-
-  // Cargar productos de inventario con sus lotes
   useEffect(() => {
     const cargarInventario = async () => {
       try {
@@ -265,6 +276,121 @@ export default function MedicalAttention() {
 
     cargarInventario();
   }, [token]);
+
+  const agregarConcepto = () => {
+    const id = Number(referenciaId);
+    const cantidad = Number(cantidadConcepto);
+
+    if (!id || !Number.isFinite(cantidad) || cantidad <= 0) {
+      setErrorCatalogo("Selecciona un concepto e ingresa una cantidad valida.");
+      return;
+    }
+
+    const referencia =
+      tipoConcepto === "servicio"
+        ? servicios.find((item) => item.id === id)
+        : productos.find((item) => item.id === id);
+
+    if (!referencia) {
+      setErrorCatalogo("No se encontro el concepto seleccionado.");
+      return;
+    }
+
+    if (tipoConcepto === "producto") {
+      const prodFact = referencia as ProductoFacturacion;
+      const yaFacturado = conceptosSeleccionados
+        .filter((c) => c.tipo === "producto" && c.id === id)
+        .reduce((acc, c) => acc + c.cantidad, 0);
+
+      if (prodFact.stockActual < yaFacturado + cantidad) {
+        setErrorCatalogo("La cantidad supera el stock disponible.");
+        return;
+      }
+
+      const prodInv = productosInventario.find((p) => p.id === id);
+      if (prodInv && prodInv.lotesDisponibles.length > 0) {
+        const loteConStock =
+          prodInv.lotesDisponibles.find((l) => {
+            const usadoEnLote = consumosSeleccionados
+              .filter((item) => item.loteId === l.id)
+              .reduce((acc, curr) => acc + curr.cantidad, 0);
+            return l.stockActual - usadoEnLote >= cantidad;
+          }) || prodInv.lotesDisponibles[0];
+
+        if (loteConStock) {
+          setConsumosSeleccionados((prev) => {
+            const idxExistente = prev.findIndex(
+              (item) =>
+                item.productoId === prodInv.id &&
+                item.loteId === loteConStock.id
+            );
+            if (idxExistente >= 0) {
+              return prev.map((item, idx) =>
+                idx === idxExistente
+                  ? {
+                      ...item,
+                      cantidad: Number((item.cantidad + cantidad).toFixed(2)),
+                    }
+                  : item
+              );
+            }
+            return [
+              ...prev,
+              {
+                idTemporal: `${Date.now()}_${Math.random()}`,
+                productoId: prodInv.id,
+                productoNombre: prodInv.nombre,
+                unidadMedida: prodInv.unidadMedida,
+                loteId: loteConStock.id,
+                numeroLote: loteConStock.numeroLote,
+                stockDisponibleLote: loteConStock.stockActual,
+                fechaVencimiento: loteConStock.fechaVencimiento,
+                cantidad,
+                observaciones: "Sincronizado con facturacion",
+              },
+            ];
+          });
+        }
+      }
+    }
+
+    setConceptosSeleccionados((prev) => {
+      const idxExistente = prev.findIndex(
+        (c) => c.tipo === tipoConcepto && c.id === id
+      );
+      if (idxExistente >= 0) {
+        return prev.map((c, idx) =>
+          idx === idxExistente
+            ? { ...c, cantidad: Number((c.cantidad + cantidad).toFixed(2)) }
+            : c
+        );
+      }
+      return [
+        ...prev,
+        {
+          tipo: tipoConcepto,
+          id,
+          nombre: referencia.nombre,
+          precio: Number(referencia.precioUnitario),
+          cantidad,
+        },
+      ];
+    });
+
+    setReferenciaId("");
+    setCantidadConcepto("1");
+    setErrorCatalogo("");
+  };
+
+  const handleQuitarConcepto = (index: number) => {
+    const conceptoQuitado = conceptosSeleccionados[index];
+    setConceptosSeleccionados((prev) => prev.filter((_, i) => i !== index));
+    if (conceptoQuitado && conceptoQuitado.tipo === "producto") {
+      setConsumosSeleccionados((prev) =>
+        prev.filter((item) => item.productoId !== conceptoQuitado.id)
+      );
+    }
+  };
 
   const productoActual = productosInventario.find(
     (p) => String(p.id) === String(productoSelId)
@@ -296,7 +422,7 @@ export default function MedicalAttention() {
     const cant = parseFloat(cantidadConsumo);
 
     if (isNaN(cant) || cant <= 0) {
-      setErrorConsumo("La cantidad debe ser un número mayor a 0.");
+      setErrorConsumo("La cantidad debe ser un numero mayor a 0.");
       return;
     }
 
@@ -327,15 +453,60 @@ export default function MedicalAttention() {
     };
 
     setConsumosSeleccionados((prev) => [...prev, nuevoItem]);
+
+    const prodFact = productos.find((p) => p.id === productoActual.id);
+    if (prodFact) {
+      setConceptosSeleccionados((prev) => {
+        const idxExistente = prev.findIndex(
+          (c) => c.tipo === "producto" && c.id === prodFact.id
+        );
+        if (idxExistente >= 0) {
+          return prev.map((c, idx) =>
+            idx === idxExistente
+              ? { ...c, cantidad: Number((c.cantidad + cant).toFixed(2)) }
+              : c
+          );
+        }
+        return [
+          ...prev,
+          {
+            tipo: "producto",
+            id: prodFact.id,
+            nombre: prodFact.nombre,
+            precio: Number(prodFact.precioUnitario),
+            cantidad: cant,
+          },
+        ];
+      });
+    }
+
     setCantidadConsumo("");
     setObservacionesConsumo("");
     setErrorConsumo(null);
   };
 
   const handleEliminarConsumo = (idTemporal: string) => {
+    const itemEliminado = consumosSeleccionados.find(
+      (item) => item.idTemporal === idTemporal
+    );
     setConsumosSeleccionados((prev) =>
       prev.filter((item) => item.idTemporal !== idTemporal)
     );
+    if (itemEliminado) {
+      setConceptosSeleccionados((prev) =>
+        prev
+          .map((c) => {
+            if (c.tipo === "producto" && c.id === itemEliminado.productoId) {
+              const nuevaCantidad = Number(
+                (c.cantidad - itemEliminado.cantidad).toFixed(2)
+              );
+              return nuevaCantidad > 0 ? { ...c, cantidad: nuevaCantidad } : null;
+            }
+            return c;
+          })
+          .filter((c): c is ConceptoSeleccionado => c !== null)
+      );
+    }
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -436,10 +607,13 @@ export default function MedicalAttention() {
       setSaving(true);
       setError(null);
 
+      const turnoVinculadoId =
+        appointment?.id ?? (turnoIdParam ? parseInt(turnoIdParam, 10) : null);
+
       const resultado = await consultationService.createConsultation(
         {
           mascotaId: pet.id,
-          turnoId: turnoIdParam ? parseInt(turnoIdParam, 10) : null,
+          turnoId: turnoVinculadoId,
           subjetivo: subjetivo.trim(),
           objetivo: objetivo.trim(),
           peso: parsedPeso,
@@ -462,7 +636,7 @@ export default function MedicalAttention() {
       const consultaId = resultado.id;
 
       if (!consultaId) {
-        throw new Error("La consulta se guardó, pero no se recibió su identificador.");
+        throw new Error("La consulta se guardo, pero no se recibio su identificador.");
       }
       setConsultaGuardadaId(consultaId);
       for (const concepto of conceptosSeleccionados) {
@@ -494,7 +668,7 @@ export default function MedicalAttention() {
         localStorage.removeItem(`soap_draft_${mascotaIdParam}`);
       }
 
-      setSuccessMsg("Consulta SOAP guardada correctamente. Ahora podés generar prescripciones.");
+      setSuccessMsg("Consulta SOAP guardada correctamente. Ahora podes generar prescripciones.");
 
       setEtapaAtencion("prescripciones");
       setSaving(false);
@@ -520,109 +694,266 @@ export default function MedicalAttention() {
       plan,
       observaciones,
       consumosSeleccionados,
+      conceptosSeleccionados,
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem(`soap_draft_${mascotaIdParam}`, JSON.stringify(draft));
     setSuccessMsg("Borrador guardado localmente en esta estacion de trabajo.");
     setTimeout(() => setSuccessMsg(null), 3000);
   };
+
+  const solicitarFinalizarAtencion = () => {
+    const pendientesConfirmacion = prescripcionesCreadas.filter(
+      (p) => !p.confirmadaPorProfesional
+    ).length;
+
+    const navegarDestino = () => {
+      if (turnoIdParam || appointment?.id) {
+        navigate("/profesional/turnos");
+      } else {
+        navigate(`/profesional/mascotas/${pet?.id}`);
+      }
+    };
+
+    if (pendientesConfirmacion > 0) {
+      setFeedbackModal({
+        isOpen: true,
+        type: "confirm",
+        confirmVariant: "primary",
+        title: "Prescripciones sin confirmar",
+        message: `Tenes ${pendientesConfirmacion} prescripcion(es) pendiente(s) de confirmacion profesional. ¿Deseas finalizar la atencion de todos modos?`,
+        confirmText: "Si, finalizar atencion",
+        cancelText: "Volver a revisar",
+        onConfirm: navegarDestino,
+      });
+      return;
+    }
+
+    setFeedbackModal({
+      isOpen: true,
+      type: "confirm",
+      confirmVariant: "primary",
+      title: "Finalizar Atencion Clinica",
+      message: `¿Confirmas el cierre de la estacion de atencion para ${pet?.nombre || "el paciente"}?`,
+      confirmText: "Finalizar y salir",
+      cancelText: "Permanecer aqui",
+      onConfirm: navegarDestino,
+    });
+  };
+
   if (etapaAtencion === "prescripciones" && consultaGuardadaId !== null) {
     return (
       <main className="medical-attention-page">
-        <div className="container py-5">
-          <div className="soap-section-card">
-            <div className="mb-4">
-              <h2 className="h4 fw-bold">
-                Prescripciones médicas
-              </h2>
-              <p className="text-muted">
-                La consulta SOAP fue registrada correctamente.
-                Ahora podés generar las prescripciones correspondientes.
-              </p>
-            </div>
-
-            <div className="alert alert-success">
-              <strong>Consulta registrada:</strong> #{consultaGuardadaId}
-              <br />
-              <strong>Paciente:</strong> {pet?.nombre}
-              <br />
-              <strong>Peso:</strong> {peso} kg
-            </div>
-
-            <div className="d-flex gap-3 flex-wrap">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setFormularioPrescripcionKey((prev) => prev + 1);
-                  setMostrarFormularioPrescripcion(true);
-                }}
-                disabled={mostrarFormularioPrescripcion}
-              >
-                <i className="bi bi-plus-circle me-2"></i>
-                Nueva prescripción
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={() => {
-                  if (turnoIdParam) {
-                    navigate("/profesional/turnos");
-                  } else {
-                    navigate(`/profesional/mascotas/${pet?.id}`);
-                  }
+        <div className="container-fluid px-lg-5 py-4">
+          <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div className="d-flex align-items-center gap-3">
+              <div
+                className="rounded-2 d-flex align-items-center justify-content-center"
+                style={{
+                  width: "48px",
+                  height: "48px",
+                  backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
+                  color: "var(--vet-primary, #6D28D9)",
+                  border: "1px solid var(--vet-border-tint, #EDE9FE)",
+                  fontSize: "1.4rem",
                 }}
               >
-                Finalizar atención
-              </button>
-            </div>
-            {mostrarFormularioPrescripcion && (
-              <div className="mt-4">
-               <div className="d-flex justify-content-end mb-3">
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary btn-sm"
-                    onClick={() => setMostrarFormularioPrescripcion(false)}
-                    disabled={guardandoPrescripcion}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              <PrescriptionForm
-                  key={formularioPrescripcionKey}
-                  consultaId={consultaGuardadaId}
-                  token={token}
-                  onSavingChange={setGuardandoPrescripcion}
-                  onPrescripcionCreada={(prescripcion) => {
-                    setPrescripcionesCreadas((prev) => [
-                      ...prev,
-                      prescripcion,
-                    ]);
-                    setMostrarFormularioPrescripcion(false);
-                  }}
-                />
+                <i className="bi bi-capsule-pill"></i>
               </div>
-            )}
-            {prescripcionesCreadas.length > 0 && (
-            <div className="mt-4">
-              <h4 className="h6 fw-bold">
-                Prescripciones registradas en esta atención
-              </h4>
-              {prescripcionesCreadas.map((prescripcion) => (
-                <PrescriptionCard
-                  key={prescripcion.id}
-                  prescripcion={prescripcion}
-                  token={token}
-                  onConfirmada={handlePrescripcionConfirmada}
-                />
-              ))}
+              <div>
+                <h1
+                  className="h4 fw-bold mb-0"
+                  style={{ color: "var(--vet-text-main, #1E1B4B)" }}
+                >
+                  Prescripciones Medicas y Posologia
+                </h1>
+                <p className="text-muted small mb-0">
+                  Consulta SOAP #{consultaGuardadaId} registrada para{" "}
+                  <strong>{pet?.nombre}</strong> · Peso de calculo:{" "}
+                  <strong>{peso} kg</strong>
+                </p>
+              </div>
             </div>
-          )}
+
+            <button
+              type="button"
+              className="btn btn-primary rounded-2 shadow-sm px-4 fw-medium d-inline-flex align-items-center gap-2"
+              style={{
+                backgroundColor: "var(--vet-primary, #6D28D9)",
+                borderColor: "var(--vet-primary, #6D28D9)",
+              }}
+              onClick={solicitarFinalizarAtencion}
+            >
+              <i className="bi bi-check2-all"></i>
+              Finalizar atencion
+            </button>
           </div>
+
+          <div className="row g-4">
+            <ConsultationPatientSidebar
+              pet={pet}
+              appointment={appointment}
+              peso={peso}
+              onPesoChange={setPeso}
+              onClearPesoError={() => {}}
+            />
+
+            <div className="col-12 col-lg-8">
+              <div className="soap-section-card">
+                <div className="soap-section-header">
+                  <div
+                    className="soap-badge-letter"
+                    style={{
+                      backgroundColor: "#ECFDF5",
+                      color: "#059669",
+                      border: "1px solid #A7F3D0",
+                    }}
+                  >
+                    <i className="bi bi-check2"></i>
+                  </div>
+                  <div>
+                    <h2
+                      className="h6 fw-bold mb-0"
+                      style={{ color: "var(--vet-text-main, #1E1B4B)" }}
+                    >
+                      Consulta SOAP #{consultaGuardadaId} Guardada Exitosamente
+                    </h2>
+                    <small className="text-muted">
+                      Podes emitir recetas con calculo posologico automatico o
+                      finalizar la atencion clinica
+                    </small>
+                  </div>
+                </div>
+
+                <div
+                  className="rounded-3 p-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-3"
+                  style={{
+                    backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
+                    border: "1px solid var(--vet-border-tint, #EDE9FE)",
+                  }}
+                >
+                  <div className="small">
+                    <span
+                      className="fw-bold d-block"
+                      style={{ color: "var(--vet-text-main, #1E1B4B)" }}
+                    >
+                      Recetario y Calculadora Posologica Dinamica
+                    </span>
+                    <span className="text-muted">
+                      Paciente: <strong>{pet?.nombre}</strong> · Peso registrado:{" "}
+                      <strong>{peso} kg</strong> · Prescripciones emitidas:{" "}
+                      <strong>{prescripcionesCreadas.length}</strong>
+                    </span>
+                  </div>
+
+                  <div className="d-flex gap-2 flex-wrap">
+                    {!mostrarFormularioPrescripcion ? (
+                      <button
+                        type="button"
+                        className="btn btn-primary rounded-2 shadow-sm px-3 fw-medium d-inline-flex align-items-center gap-2"
+                        style={{
+                          backgroundColor: "var(--vet-primary, #6D28D9)",
+                          borderColor: "var(--vet-primary, #6D28D9)",
+                        }}
+                        onClick={() => {
+                          setFormularioPrescripcionKey((prev) => prev + 1);
+                          setMostrarFormularioPrescripcion(true);
+                        }}
+                      >
+                        <i className="bi bi-plus-circle"></i>
+                        Nueva prescripcion
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary rounded-2 btn-sm px-3 fw-medium"
+                        onClick={() => setMostrarFormularioPrescripcion(false)}
+                        disabled={guardandoPrescripcion}
+                      >
+                        Cancelar formulario
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {mostrarFormularioPrescripcion && (
+                  <div className="mb-4">
+                    <PrescriptionForm
+                      key={formularioPrescripcionKey}
+                      consultaId={consultaGuardadaId}
+                      pesoKg={parseFloat(peso) || pet?.peso || 0}
+                      token={token}
+                      onSavingChange={setGuardandoPrescripcion}
+                      onPrescripcionCreada={(prescripcion) => {
+                        setPrescripcionesCreadas((prev) => [
+                          ...prev,
+                          prescripcion,
+                        ]);
+                        setMostrarFormularioPrescripcion(false);
+                      }}
+                    />
+                  </div>
+                )}
+
+                {prescripcionesCreadas.length > 0 ? (
+                  <div className="mt-3">
+                    <h4
+                      className="h6 fw-bold mb-3"
+                      style={{ color: "var(--vet-text-main, #1E1B4B)" }}
+                    >
+                      Prescripciones registradas en esta atencion (
+                      {prescripcionesCreadas.length})
+                    </h4>
+                    {prescripcionesCreadas.map((prescripcion) => (
+                      <PrescriptionCard
+                        key={prescripcion.id}
+                        prescripcion={prescripcion}
+                        token={token}
+                        onConfirmada={handlePrescripcionConfirmada}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  !mostrarFormularioPrescripcion && (
+                    <div
+                      className="text-center py-4 rounded-3 border"
+                      style={{
+                        backgroundColor: "#FAF9FC",
+                        borderColor: "var(--vet-border-tint, #EDE9FE)",
+                      }}
+                    >
+                      <i
+                        className="bi bi-File-medical fs-3 d-block mb-2"
+                        style={{ color: "var(--vet-primary, #6D28D9)" }}
+                      ></i>
+                      <p className="small text-muted mb-0">
+                        No se agregaron prescripciones farmacologicas todavia.
+                        Hace clic en <strong>Nueva prescripcion</strong> si
+                        necesitas recetar medicacion.
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+
+          <FeedbackModal
+            isOpen={feedbackModal.isOpen}
+            type={feedbackModal.type}
+            confirmVariant={feedbackModal.confirmVariant}
+            title={feedbackModal.title}
+            message={feedbackModal.message}
+            confirmText={feedbackModal.confirmText}
+            cancelText={feedbackModal.cancelText}
+            onConfirm={feedbackModal.onConfirm}
+            onClose={() => setFeedbackModal({ isOpen: false, message: "" })}
+          />
         </div>
       </main>
     );
   }
+
   if (loading) {
     return (
       <main className="medical-attention-page">
@@ -728,103 +1059,136 @@ export default function MedicalAttention() {
               </div>
 
               <div className="soap-section-card">
-                <h3 className="h6 fw-bold mb-2 text-dark">Servicios y productos facturables</h3>
-                <p className="text-muted small">
-                  Agregá los servicios realizados o productos utilizados durante la consulta.
-                  Se incluirán en la orden de facturación.
-                </p>
+                <div className="soap-section-header">
+                  <span
+                    className="soap-badge-letter"
+                    style={{
+                      backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
+                      color: "var(--vet-primary, #6D28D9)",
+                      border: "1px solid var(--vet-border-tint, #EDE9FE)",
+                    }}
+                  >
+                    <i className="bi bi-receipt"></i>
+                  </span>
+                  <div>
+                    <h3 className="h6 fw-bold mb-0 text-dark">
+                      Servicios y productos facturables
+                    </h3>
+                    <small className="text-muted">
+                      Se incluiran en la orden de facturacion. Los productos se sincronizan automaticamente con Insumos y Farmacia Administrada.
+                    </small>
+                  </div>
+                </div>
 
                 {errorCatalogo && (
-                  <div className="alert alert-warning py-2">{errorCatalogo}</div>
+                  <div className="alert alert-warning py-2 small rounded-2">{errorCatalogo}</div>
                 )}
 
-                <div className="row g-2 align-items-end">
-                  <div className="col-md-3">
-                    <label className="form-label">Tipo</label>
-                    <select
-                      className="form-select"
-                      value={tipoConcepto}
-                      onChange={(e) => {
-                        setTipoConcepto(e.target.value as "servicio" | "producto");
-                        setReferenciaId("");
-                      }}
-                    >
-                      <option value="servicio">Servicio</option>
-                      <option value="producto">Producto</option>
-                    </select>
-                  </div>
+                <div className="bg-light p-3 rounded-3 mb-3 border">
+                  <div className="row g-2 align-items-end">
+                    <div className="col-md-3">
+                      <label className="form-label small fw-semibold text-muted mb-1">Tipo</label>
+                      <select
+                        className="form-select form-select-sm"
+                        value={tipoConcepto}
+                        onChange={(e) => {
+                          setTipoConcepto(e.target.value as "servicio" | "producto");
+                          setReferenciaId("");
+                        }}
+                      >
+                        <option value="servicio">Servicio</option>
+                        <option value="producto">Producto</option>
+                      </select>
+                    </div>
 
-                  <div className="col-md-5">
-                    <label className="form-label">
-                      {tipoConcepto === "servicio" ? "Servicio" : "Producto"}
-                    </label>
-                    <select
-                      className="form-select"
-                      value={referenciaId}
-                      onChange={(e) => setReferenciaId(e.target.value)}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {(tipoConcepto === "servicio" ? servicios : productos).map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.nombre} - ${Number(item.precioUnitario).toFixed(2)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="col-md-5">
+                      <label className="form-label small fw-semibold text-muted mb-1">
+                        {tipoConcepto === "servicio" ? "Servicio" : "Producto"}
+                      </label>
+                      <select
+                        className="form-select form-select-sm"
+                        value={referenciaId}
+                        onChange={(e) => setReferenciaId(e.target.value)}
+                      >
+                        <option value="">Seleccionar...</option>
+                        {(tipoConcepto === "servicio" ? servicios : productos).map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.nombre} - ${Number(item.precioUnitario).toFixed(2)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="col-md-2">
-                    <label className="form-label">Cantidad</label>
-                    <input
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      className="form-control"
-                      value={cantidadConcepto}
-                      onChange={(e) => setCantidadConcepto(e.target.value)}
-                    />
-                  </div>
+                    <div className="col-md-2">
+                      <label className="form-label small fw-semibold text-muted mb-1">Cantidad</label>
+                      <input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        className="form-control form-control-sm"
+                        value={cantidadConcepto}
+                        onChange={(e) => setCantidadConcepto(e.target.value)}
+                      />
+                    </div>
 
-                  <div className="col-md-2">
-                    <button
-                      type="button"
-                      className="btn btn-outline-primary w-100"
-                      onClick={agregarConcepto}
-                    >
-                      Agregar
-                    </button>
+                    <div className="col-md-2">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm w-100"
+                        style={{
+                          backgroundColor: "var(--vet-primary, #6D28D9)",
+                          borderColor: "var(--vet-primary, #6D28D9)",
+                        }}
+                        onClick={agregarConcepto}
+                      >
+                        <i className="bi bi-plus-lg me-1"></i> Agregar
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {conceptosSeleccionados.length > 0 && (
-                  <div className="table-responsive mt-3">
-                    <table className="table table-sm align-middle">
-                      <thead>
+                  <div className="table-responsive mt-2">
+                    <table className="table table-sm table-hover align-middle border mb-0 small">
+                      <thead className="table-light">
                         <tr>
                           <th>Concepto</th>
+                          <th>Tipo</th>
                           <th>Cantidad</th>
-                          <th>Precio</th>
+                          <th>Precio Unit.</th>
                           <th>Subtotal</th>
-                          <th></th>
+                          <th className="text-end">Accion</th>
                         </tr>
                       </thead>
                       <tbody>
                         {conceptosSeleccionados.map((concepto, index) => (
                           <tr key={`${concepto.tipo}-${concepto.id}-${index}`}>
-                            <td>{concepto.nombre}</td>
+                            <td className="fw-semibold text-dark">{concepto.nombre}</td>
+                            <td>
+                              <span
+                                className="badge rounded-pill text-capitalize"
+                                style={{
+                                  backgroundColor:
+                                    concepto.tipo === "servicio" ? "#F5F3FF" : "#EEF2FF",
+                                  color:
+                                    concepto.tipo === "servicio" ? "#6D28D9" : "#4F46E5",
+                                }}
+                              >
+                                {concepto.tipo}
+                              </span>
+                            </td>
                             <td>{concepto.cantidad}</td>
                             <td>${concepto.precio.toFixed(2)}</td>
-                            <td>${(concepto.precio * concepto.cantidad).toFixed(2)}</td>
-                            <td>
+                            <td className="fw-semibold">
+                              ${(concepto.precio * concepto.cantidad).toFixed(2)}
+                            </td>
+                            <td className="text-end">
                               <button
                                 type="button"
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() =>
-                                  setConceptosSeleccionados((prev) =>
-                                    prev.filter((_, i) => i !== index)
-                                  )
-                                }
+                                className="btn btn-sm btn-outline-danger py-0 px-2"
+                                onClick={() => handleQuitarConcepto(index)}
                               >
-                                Quitar
+                                <i className="bi bi-trash3"></i>
                               </button>
                             </td>
                           </tr>
@@ -1018,7 +1382,7 @@ export default function MedicalAttention() {
                       Insumos y Farmacia Administrada (Consumo Fraccionado)
                     </h2>
                     <p className="text-muted small mb-0">
-                      Debita automaticamente del stock el insumo o medicamento administrado durante la atencion clinica.
+                      Debita automaticamente del stock por lote y se sincroniza con los productos facturables de la consulta.
                     </p>
                   </div>
                 </div>

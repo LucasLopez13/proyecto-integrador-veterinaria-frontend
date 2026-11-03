@@ -69,11 +69,11 @@ export const ReceptionQueue: React.FC<ReceptionQueueProps> = ({
   return (
     <>
       <div className="reception-offcanvas-backdrop" onClick={onToggleOpen} />
-      <aside className="reception-offcanvas-panel" aria-label="Cola de Admisión y Recepción">
+      <aside className="reception-offcanvas-panel" aria-label="Cola de Admision y Recepcion">
         <div className="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom border-light-subtle">
           <div>
             <h3 className="h5 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
-              Cola de Admisión y Recepción
+              Cola de Admision y Recepcion
             </h3>
             <p className="text-muted small mb-0">
               Pacientes con turno confirmado para hoy
@@ -97,11 +97,11 @@ export const ReceptionQueue: React.FC<ReceptionQueueProps> = ({
 
         <div className="flex-grow-1 overflow-y-auto">
           {loading ? (
-            <LoadingSpinner message="Cargando cola de recepción..." />
+            <LoadingSpinner message="Cargando cola de recepcion..." />
           ) : availableAppointments.length === 0 ? (
             <div className="text-center py-5 text-muted small">
               <i className="bi bi-calendar3 fs-3 text-muted d-block mb-1"></i>
-              No hay turnos pendientes para el día de hoy.
+              No hay turnos pendientes para el dia de hoy.
             </div>
           ) : (
             availableAppointments.map((appt) => {

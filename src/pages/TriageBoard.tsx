@@ -118,7 +118,7 @@ export const TriageBoard: React.FC = () => {
       type: "confirm",
       confirmVariant: "danger",
       title: "¿Egresar paciente de guardia?",
-      message: `¿Deseas finalizar la atención y egresar a "${nombrePaciente}" del tablero de triage?\n\nEsta acción registrará la salida del paciente de la sala de espera de guardia.`,
+      message: `¿Deseas finalizar la atencion y egresar a "${nombrePaciente}" del tablero de triage?\n\nEsta accion registrara la salida del paciente de la sala de espera de guardia.`,
       confirmText: "Egresar paciente",
       cancelText: "Mantener en guardia",
       onConfirm: async () => {
@@ -186,7 +186,7 @@ export const TriageBoard: React.FC = () => {
             <div className="d-flex align-items-center gap-2 mt-1">
               <span className="live-pulse-dot" />
               <small className="text-muted" style={{ fontSize: "0.8rem" }}>
-                Sistema en vivo · Actualización automática
+                Sistema en vivo · Actualizacion automatica
               </small>
             </div>
           </div>
@@ -212,7 +212,7 @@ export const TriageBoard: React.FC = () => {
               onClick={() => setIsReceptionOpen(true)}
             >
               <i className="bi bi-inbox text-primary" style={{ color: "var(--vet-primary, #6D28D9)" }}></i>
-              <span>Cola de Recepción</span>
+              <span>Cola de Recepcion</span>
               <span
                 className="badge rounded-2"
                 style={{

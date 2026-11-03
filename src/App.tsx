@@ -205,11 +205,15 @@ function App() {
         <Route
           path="/facturacion/ordenes"
           element={
-            <RoleProtectedRoute allowedRoles={["admin", "recepcion"]}>
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin", "recepcion"]}
+              redirectTo="/mascotas"
+            >
               <BillingManagement />
             </RoleProtectedRoute>
           }
         />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

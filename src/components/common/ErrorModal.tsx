@@ -11,7 +11,7 @@ export interface ErrorModalProps {
 export const ErrorModal: React.FC<ErrorModalProps> = ({
   isOpen,
   error,
-  title = "Error de Validación",
+  title = "Error de Validacion",
   onClose,
   actionText = "Entendido",
 }) => {

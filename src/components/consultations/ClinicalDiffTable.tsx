@@ -23,7 +23,7 @@ const FIELD_CONFIGS: Record<string, FieldConfig> = {
     unit: "kg",
   },
   frecuenciaCardiaca: {
-    label: "Frecuencia Cardíaca",
+    label: "Frecuencia Cardiaca",
     icon: "bi-heart-pulse",
     unit: "lpm",
   },
@@ -41,11 +41,11 @@ const FIELD_CONFIGS: Record<string, FieldConfig> = {
     icon: "bi-clipboard2-pulse",
   },
   analisis: {
-    label: "Análisis Clínico (A)",
+    label: "Analisis Clinico (A)",
     icon: "bi-search",
   },
   plan: {
-    label: "Plan Terapéutico (P)",
+    label: "Plan Terapeutico (P)",
     icon: "bi-calendar2-check",
   },
   observaciones: {
@@ -53,7 +53,7 @@ const FIELD_CONFIGS: Record<string, FieldConfig> = {
     icon: "bi-eye",
   },
   diagnostico: {
-    label: "Diagnóstico",
+    label: "Diagnostico",
     icon: "bi-bandaid",
   },
   tratamiento: {
@@ -110,7 +110,7 @@ export const ClinicalDiffTable: React.FC<ClinicalDiffTableProps> = ({
           <tr>
             <th>
               <i className="bi bi-tag me-1"></i>
-              Campo Clínico
+              Campo Clinico
             </th>
             <th>
               <i className="bi bi-dash-circle me-1 text-danger"></i>

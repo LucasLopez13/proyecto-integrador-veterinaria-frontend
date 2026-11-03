@@ -68,33 +68,33 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
     const newErrors: Record<string, string> = {};
 
     if (!form.motivoEdicion.trim() || form.motivoEdicion.trim().length < 5) {
-      newErrors.motivoEdicion = "Completá este campo con el motivo de edición (mínimo 5 caracteres)";
+      newErrors.motivoEdicion = "Completa este campo con el motivo de edicion (minimo 5 caracteres)";
     }
 
     const parsedPeso = parseFloat(form.peso);
     if (!form.peso.trim() || isNaN(parsedPeso) || parsedPeso <= 0) {
-      newErrors.peso = "Ingresá un peso válido mayor a 0 kg";
+      newErrors.peso = "Ingresa un peso valido mayor a 0 kg";
     }
 
     const parsedTemp = parseFloat(form.temperatura);
     if (!form.temperatura.trim() || isNaN(parsedTemp) || parsedTemp < 30 || parsedTemp > 45) {
-      newErrors.temperatura = "Ingresá una temperatura fisiológica válida (entre 30 y 45 °C)";
+      newErrors.temperatura = "Ingresa una temperatura fisiologica valida (entre 30 y 45 °C)";
     }
 
     if (!form.subjetivo.trim()) {
-      newErrors.subjetivo = "Completá este campo con la anamnesis";
+      newErrors.subjetivo = "Completa este campo con la anamnesis";
     }
 
     if (!form.objetivo.trim()) {
-      newErrors.objetivo = "Completá este campo con los hallazgos";
+      newErrors.objetivo = "Completa este campo con los hallazgos";
     }
 
     if (!form.analisis.trim()) {
-      newErrors.analisis = "Completá este campo con el diagnóstico";
+      newErrors.analisis = "Completa este campo con el diagnostico";
     }
 
     if (!form.plan.trim()) {
-      newErrors.plan = "Completá este campo con el tratamiento";
+      newErrors.plan = "Completa este campo con el tratamiento";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -128,10 +128,10 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
           <div>
             <h3>
               <i className="bi bi-pencil-square me-2"></i>
-              Enmendar Consulta Médica
+              Enmendar Consulta Medica
             </h3>
             <p>
-              Se generará la <strong>Versión v{(consulta.version || 1) + 1}</strong> · Paciente: {petName}
+              Se generara la <strong>Version v{(consulta.version || 1) + 1}</strong> · Paciente: {petName}
             </p>
           </div>
           <button
@@ -147,22 +147,22 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
           <div className="legal-notice-banner legal-notice-banner-warning">
             <i className="bi bi-shield-check text-warning" style={{ fontSize: "1.4rem" }}></i>
             <div>
-              <strong>Aviso de Inmutabilidad Clínica:</strong>
+              <strong>Aviso de Inmutabilidad Clinica:</strong>
               <div style={{ marginTop: 2, fontSize: "0.82rem" }}>
-                Las consultas médicas finalizadas no se sobreescriben. Esta acción registrará una nueva versión histórica
-                inmutable con tus datos, la marca temporal actual y el motivo justificado a continuación.
+                Las consultas medicas finalizadas no se sobreescriben. Esta accion registrara una nueva version historica
+                inmutable con tus datos, la marca temporal actual y el motivo justificado a continuacion.
               </div>
             </div>
           </div>
 
           <div className="mb-3">
             <label className="form-label fw-bold text-danger">
-              * Motivo de la enmienda / Justificación clínica:
+              * Motivo de la enmienda / Justificacion clinica:
             </label>
             <textarea
               className={`form-control ${fieldErrors.motivoEdicion ? "is-invalid" : ""}`}
               rows={2}
-              placeholder="Motivo de la enmienda médica"
+              placeholder="Motivo de la enmienda medica"
               value={form.motivoEdicion}
               onChange={(e) => {
                 setForm({ ...form, motivoEdicion: e.target.value });
@@ -170,7 +170,7 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
               }}
             />
             <FormFieldError error={fieldErrors.motivoEdicion} />
-            <small className="text-muted">Este motivo quedará inalterable en el registro de auditoría legal.</small>
+            <small className="text-muted">Este motivo quedara inalterable en el registro de auditoria legal.</small>
           </div>
 
           <div className="row g-3 mb-3">
@@ -208,12 +208,12 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
             </div>
             <div className="col-md-3 col-6">
               <label className="form-label fw-semibold">
-                <i className="bi bi-heart-pulse me-1 text-danger"></i>Frec. Cardíaca
+                <i className="bi bi-heart-pulse me-1 text-danger"></i>Frec. Cardiaca
               </label>
               <input
                 type="number"
                 className="form-control"
-                placeholder="Frecuencia cardíaca (lpm)"
+                placeholder="Frecuencia cardiaca (lpm)"
                 value={form.frecuenciaCardiaca}
                 onChange={(e) => setForm({ ...form, frecuenciaCardiaca: e.target.value })}
               />
@@ -247,7 +247,7 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
               <FormFieldError error={fieldErrors.subjetivo} />
             </div>
             <div className="col-md-6">
-              <label className="form-label fw-semibold text-success">[O] Objetivo (Examen Físico) <span className="text-danger">*</span></label>
+              <label className="form-label fw-semibold text-success">[O] Objetivo (Examen Fisico) <span className="text-danger">*</span></label>
               <textarea
                 className={`form-control ${fieldErrors.objetivo ? "is-invalid" : ""}`}
                 rows={3}
@@ -260,7 +260,7 @@ export const ConsultationAmendmentModal: React.FC<ConsultationAmendmentModalProp
               <FormFieldError error={fieldErrors.objetivo} />
             </div>
             <div className="col-md-6">
-              <label className="form-label fw-semibold text-warning">[A] Diagnóstico / Análisis <span className="text-danger">*</span></label>
+              <label className="form-label fw-semibold text-warning">[A] Diagnostico / Analisis <span className="text-danger">*</span></label>
               <textarea
                 className={`form-control ${fieldErrors.analisis ? "is-invalid" : ""}`}
                 rows={3}

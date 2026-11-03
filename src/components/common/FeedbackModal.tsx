@@ -47,7 +47,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           border: "#FEF3C7",
           color: "#D97706",
           icon: "bi-exclamation-triangle",
-          defaultTitle: "Atención requerida",
+          defaultTitle: "Atencion requerida",
         };
       case "success":
         return {
@@ -55,7 +55,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           border: "#DCFCE7",
           color: "#16A34A",
           icon: "bi-check2-circle",
-          defaultTitle: "Operación exitosa",
+          defaultTitle: "Operacion exitosa",
         };
       case "confirm":
         return {
@@ -63,7 +63,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           border: confirmVariant === "danger" ? "#FEE2E2" : "#EDE9FE",
           color: confirmVariant === "danger" ? "#DC2626" : "var(--vet-primary, #6D28D9)",
           icon: confirmVariant === "danger" ? "bi-exclamation-triangle" : "bi-question-circle",
-          defaultTitle: "Confirmar acción",
+          defaultTitle: "Confirmar accion",
         };
       case "info":
       default:
@@ -72,7 +72,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           border: "#EDE9FE",
           color: "var(--vet-primary, #6D28D9)",
           icon: "bi-info-circle",
-          defaultTitle: "Información del sistema",
+          defaultTitle: "Informacion del sistema",
         };
     }
   };

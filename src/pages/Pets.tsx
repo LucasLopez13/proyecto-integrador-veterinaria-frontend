@@ -53,8 +53,8 @@ function Pets() {
         ) : pets.length === 0 ? (
           <EmptyState
             icon="bi-shield-plus"
-            title="Aún no tenés mascotas registradas"
-            description="Registrá el perfil de tu mascota para solicitar turnos y acceder a su historial médico."
+            title="Aun no tenes mascotas registradas"
+            description="Registra el perfil de tu mascota para solicitar turnos y acceder a su historial medico."
             actionText="Registrar mi primera mascota"
             actionTo="/mascotas/nueva"
           />

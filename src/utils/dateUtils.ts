@@ -6,7 +6,7 @@ export const MONTH_NAMES = [
 export function formatDate(dateInput: string | Date | null | undefined): string {
   if (!dateInput) return "Fecha no disponible";
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-  if (isNaN(date.getTime())) return "Fecha inválida";
+  if (isNaN(date.getTime())) return "Fecha invalida";
   return date.toLocaleDateString("es-AR");
 }
 
@@ -20,7 +20,7 @@ export function formatTime(dateInput: string | Date | null | undefined): string 
 export function formatDateTime(dateInput: string | Date | null | undefined): string {
   if (!dateInput) return "No registrada";
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
-  if (isNaN(date.getTime())) return "Fecha inválida";
+  if (isNaN(date.getTime())) return "Fecha invalida";
   return `${date.toLocaleDateString("es-AR")} ${date.toLocaleTimeString("es-AR", {
     hour: "2-digit",
     minute: "2-digit",

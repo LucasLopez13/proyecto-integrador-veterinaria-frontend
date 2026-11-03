@@ -114,7 +114,7 @@ function PetDetails() {
       setErrorCarnet(
         err instanceof Error
           ? err.message
-          : "No se pudo generar el carnet de vacunación."
+          : "No se pudo generar el carnet de vacunacion."
       );
     } finally {
       setLoadingCarnet(false);
@@ -198,11 +198,11 @@ function PetDetails() {
       const errors: Record<string, string> = {};
 
       if (!sanitaryForm.nombre.trim()) {
-        errors.nombre = "Ingresá el nombre de la vacuna o antiparasitario.";
+        errors.nombre = "Ingresa el nombre de la vacuna o antiparasitario.";
       }
 
       if (!sanitaryForm.fechaAplicacion) {
-        errors.fechaAplicacion = "La fecha de aplicación es obligatoria.";
+        errors.fechaAplicacion = "La fecha de aplicacion es obligatoria.";
       }
 
       if (
@@ -210,7 +210,7 @@ function PetDetails() {
         sanitaryForm.fechaRefuerzoEstimada < sanitaryForm.fechaAplicacion
       ) {
         errors.fechaRefuerzoEstimada =
-          "El refuerzo estimado no puede ser anterior a la aplicación.";
+          "El refuerzo estimado no puede ser anterior a la aplicacion.";
       }
 
       if (Object.keys(errors).length > 0) {
@@ -259,7 +259,7 @@ function PetDetails() {
           isOpen: true,
           type: "success",
           title: "Registro sanitario creado",
-          message: "El registro se guardó correctamente en la libreta sanitaria.",
+          message: "El registro se guardo correctamente en la libreta sanitaria.",
         });
       } catch (err: unknown) {
         setFeedbackModal({
@@ -312,11 +312,11 @@ function PetDetails() {
     const newErrors: Record<string, string> = {};
 
     if (!fileName.trim()) {
-      newErrors.fileName = "Completá este campo con el título o descripción del documento";
+      newErrors.fileName = "Completa este campo con el titulo o descripcion del documento";
     }
 
     if (!selectedFile) {
-      newErrors.file = "Seleccioná un archivo para adjuntar";
+      newErrors.file = "Selecciona un archivo para adjuntar";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -336,11 +336,11 @@ function PetDetails() {
 
       const formData = new FormData();
       if (!selectedFile) {
-        throw new Error("Seleccioná un archivo para adjuntar.");
+        throw new Error("Selecciona un archivo para adjuntar.");
       }
 
       if (!selectedFile) {
-        throw new Error("Seleccioná un archivo para adjuntar.");
+        throw new Error("Selecciona un archivo para adjuntar.");
       }
       formData.append("archivo", selectedFile);
       formData.append("nombre", fileName.trim());
@@ -366,14 +366,14 @@ function PetDetails() {
         isOpen: true,
         type: "success",
         title: "Estudio adjuntado",
-        message: "El archivo médico se adjuntó correctamente a la ficha del paciente.",
+        message: "El archivo medico se adjunto correctamente a la ficha del paciente.",
       });
     } catch (err: any) {
       setFeedbackModal({
         isOpen: true,
         type: "error",
         title: "Error al adjuntar archivo",
-        message: err.message || "Error al adjuntar el archivo médico",
+        message: err.message || "Error al adjuntar el archivo medico",
       });
     } finally {
       setUploading(false);
@@ -394,7 +394,7 @@ function PetDetails() {
         isOpen: true,
         type: "error",
         title: "Error al visualizar archivo",
-        message: err.message || "No se pudo abrir el archivo médico",
+        message: err.message || "No se pudo abrir el archivo medico",
       });
     }
   };
@@ -403,8 +403,8 @@ function PetDetails() {
     setFeedbackModal({
       isOpen: true,
       type: "confirm",
-      title: "¿Eliminar archivo médico?",
-      message: "¿Estás seguro de que querés eliminar este archivo médico adjunto?",
+      title: "¿Eliminar archivo medico?",
+      message: "¿Estas seguro de que queres eliminar este archivo medico adjunto?",
       confirmText: "Eliminar",
       cancelText: "Cancelar",
       onConfirm: async () => {
@@ -439,7 +439,7 @@ function PetDetails() {
       setFeedbackModal({
         isOpen: true,
         type: "error",
-        title: "Error de Auditoría",
+        title: "Error de Auditoria",
         message: err.message || "Error al cargar el historial de versiones",
       });
     } finally {
@@ -474,7 +474,7 @@ function PetDetails() {
         isOpen: true,
         type: "success",
         title: "Enmienda Registrada",
-        message: `La consulta fue enmendada correctamente (Versión v${updated.version}) con respaldo inmutable en auditoría.`,
+        message: `La consulta fue enmendada correctamente (Version v${updated.version}) con respaldo inmutable en auditoria.`,
       });
     } catch (err: any) {
       setFeedbackModal({
@@ -508,15 +508,15 @@ function PetDetails() {
       setFeedbackModal({
         isOpen: true,
         type: "success",
-        title: "Consulta médica anulada",
-        message: "La consulta médica fue anulada y archivada. El registro inalterable permanece visible en la auditoría legal con su motivo correspondiente.",
+        title: "Consulta medica anulada",
+        message: "La consulta medica fue anulada y archivada. El registro inalterable permanece visible en la auditoria legal con su motivo correspondiente.",
       });
     } catch (err: any) {
       setFeedbackModal({
         isOpen: true,
         type: "error",
         title: "Error al anular consulta",
-        message: err.message || "Error al anular la consulta médica",
+        message: err.message || "Error al anular la consulta medica",
       });
     } finally {
       setSavingAnulacion(false);
@@ -626,7 +626,7 @@ function PetDetails() {
                   disabled={loadingCarnet}
                 >
                   <i className="bi bi-qr-code"></i>
-                  {loadingCarnet ? "Generando..." : "Carnet de vacunación"}
+                  {loadingCarnet ? "Generando..." : "Carnet de vacunacion"}
                 </button>
               )}
             </div>
@@ -648,7 +648,7 @@ function PetDetails() {
                       <i className="bi bi-qr-code-scan"></i>
                     </div>
                     <div>
-                      <h2 className="h6 fw-bold mb-0 text-dark">Carnet de Vacunación Digital</h2>
+                      <h2 className="h6 fw-bold mb-0 text-dark">Carnet de Vacunacion Digital</h2>
                       <span className="text-muted small">{pet.nombre}</span>
                     </div>
                   </div>
@@ -661,7 +661,7 @@ function PetDetails() {
                 </div>
                 <div className="card-body text-center p-4">
                   <p className="text-muted small mb-3">
-                    Escaneá el código QR desde cualquier dispositivo para consultar las vacunas registradas en tiempo real.
+                    Escanea el codigo QR desde cualquier dispositivo para consultar las vacunas registradas en tiempo real.
                   </p>
 
                   <div className="d-inline-flex justify-content-center p-3 bg-light rounded-3 mx-auto border-subtle mb-3">
@@ -680,7 +680,7 @@ function PetDetails() {
                       rel="noopener noreferrer"
                       className="btn btn-primary btn-sm rounded-2 shadow-sm d-inline-flex align-items-center gap-2"
                     >
-                      <i className="bi bi-box-arrow-up-right"></i> Abrir carnet público
+                      <i className="bi bi-box-arrow-up-right"></i> Abrir carnet publico
                     </a>
                     <button
                       type="button"
@@ -703,7 +703,7 @@ function PetDetails() {
             className={`pet-tab-btn ${activeTab === "historial" ? "active" : ""}`}
             onClick={() => setActiveTab("historial")}
           >
-            Historial Clínico ({consultas.length})
+            Historial Clinico ({consultas.length})
           </button>
           <button
             type="button"
@@ -724,7 +724,7 @@ function PetDetails() {
             className={`pet-tab-btn ${activeTab === "ficha" ? "active" : ""}`}
             onClick={() => setActiveTab("ficha")}
           >
-            Ficha Médica
+            Ficha Medica
           </button>
         </nav>
 
@@ -733,10 +733,10 @@ function PetDetails() {
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
                 <h2 className="h5 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
-                  Consultas y Evolución Clínica
+                  Consultas y Evolucion Clinica
                 </h2>
                 <p className="text-muted small mb-0">
-                  Registros médicos inmutables y versionados con validez legal.
+                  Registros medicos inmutables y versionados con validez legal.
                 </p>
               </div>
               {isProfessional && (
@@ -754,8 +754,8 @@ function PetDetails() {
             ) : consultas.length === 0 ? (
               <EmptyState
                 icon="bi-clipboard2-pulse"
-                title="Sin registros de consulta aún"
-                description="No hay atenciones médicas registradas formalmente para este paciente."
+                title="Sin registros de consulta aun"
+                description="No hay atenciones medicas registradas formalmente para este paciente."
                 actionText={isProfessional ? "Registrar Primera Consulta" : undefined}
                 actionTo={isProfessional ? `/profesional/atencion?mascotaId=${pet.id}` : undefined}
                 actionIcon="bi-plus-lg"
@@ -782,13 +782,13 @@ function PetDetails() {
             {isProfessional && (
               <div className="bg-white rounded-3 border border-light-subtle p-4 mb-4 shadow-sm">
                 <h2 className="h6 fw-bold mb-3" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
-                  Adjuntar Nuevo Estudio o Análisis
+                  Adjuntar Nuevo Estudio o Analisis
                 </h2>
 
                 <div className="row g-3 align-items-start">
                   <div className="col-md-5">
                     <label htmlFor="medical-file-name" className="form-label small fw-medium text-muted">
-                      Título o Descripción del Documento <span className="text-danger">*</span>
+                      Titulo o Descripcion del Documento <span className="text-danger">*</span>
                     </label>
                     <input
                       id="medical-file-name"
@@ -811,7 +811,7 @@ function PetDetails() {
                   </div>
                   <div className="col-md-4">
                     <label htmlFor="medical-file-input" className="form-label small fw-medium text-muted">
-                      Archivo (PDF, JPG, PNG · Máx 5MB) <span className="text-danger">*</span>
+                      Archivo (PDF, JPG, PNG · Max 5MB) <span className="text-danger">*</span>
                     </label>
                     <input
                       id="medical-file-input"
@@ -847,7 +847,7 @@ function PetDetails() {
                 <EmptyState
                   icon="bi-folder2-open"
                   title="Sin archivos adjuntos"
-                  description="No hay archivos ni análisis complementarios adjuntos."
+                  description="No hay archivos ni analisis complementarios adjuntos."
                 />
               ) : (
                 <div className="d-flex flex-column gap-2">
@@ -926,7 +926,7 @@ function PetDetails() {
                   noValidate
                 >
                   <h3 className="h6 fw-bold mb-3">
-                    Registrar vacuna o desparasitación
+                    Registrar vacuna o desparasitacion
                   </h3>
 
                   <div className="row g-3">
@@ -946,7 +946,7 @@ function PetDetails() {
                         }
                       >
                         <option value="vacuna">Vacuna</option>
-                        <option value="antiparasitario">Desparasitación</option>
+                        <option value="antiparasitario">Desparasitacion</option>
                       </select>
                     </div>
 
@@ -958,7 +958,7 @@ function PetDetails() {
                         id="sanitary-nombre"
                         type="text"
                         className={`form-control ${sanitaryFormErrors.nombre ? "is-invalid" : ""}`}
-                        placeholder="Ej.: Antirrábica"
+                        placeholder="Ej.: Antirrabica"
                         value={sanitaryForm.nombre}
                         onChange={(e) => {
                           setSanitaryForm((prev) => ({
@@ -986,7 +986,7 @@ function PetDetails() {
                         id="sanitary-lote"
                         type="text"
                         className="form-control"
-                        placeholder="Número de lote"
+                        placeholder="Numero de lote"
                         value={sanitaryForm.lote}
                         onChange={(e) =>
                           setSanitaryForm((prev) => ({
@@ -999,7 +999,7 @@ function PetDetails() {
                     
                     <div className="col-md-6">
                       <label htmlFor="sanitary-fecha" className="form-label">
-                        Fecha de aplicación *
+                        Fecha de aplicacion *
                       </label>
                       <input
                         id="sanitary-fecha"
@@ -1026,7 +1026,7 @@ function PetDetails() {
 
                     <div className="col-md-6">
                     <label htmlFor="sanitary-refuerzo" className="form-label">
-                      Próximo refuerzo estimado{" "}
+                      Proximo refuerzo estimado{" "}
                       <span className="text-muted">(opcional)</span>
                     </label>
                     <input
@@ -1096,7 +1096,7 @@ function PetDetails() {
                 <EmptyState
                   icon="bi-shield-plus"
                   title="Sin registros sanitarios"
-                  description="Todavía no hay vacunas ni desparasitaciones registradas para esta mascota."
+                  description="Todavia no hay vacunas ni desparasitaciones registradas para esta mascota."
                 />
               ) : (
                   <div className="d-flex flex-column gap-3">
@@ -1134,7 +1134,7 @@ function PetDetails() {
                                 <h3 className="h6 fw-bold mb-2">{record.nombre}</h3>
 
                                 <p className="small mb-1">
-                                  <strong>Fecha de aplicación:</strong>{" "}
+                                  <strong>Fecha de aplicacion:</strong>{" "}
                                   {formatDate(record.fechaAplicacion)}
                                 </p>
 
@@ -1146,7 +1146,7 @@ function PetDetails() {
 
                                 {record.fechaRefuerzoEstimada && (
                                   <p className="small mb-0">
-                                    <strong>Próximo refuerzo estimado:</strong>{" "}
+                                    <strong>Proximo refuerzo estimado:</strong>{" "}
                                     {formatDate(record.fechaRefuerzoEstimada)}
                                   </p>
                                 )}
@@ -1195,7 +1195,7 @@ function PetDetails() {
                                 <h3 className="h6 fw-bold mb-2">{record.nombre}</h3>
 
                                 <p className="small mb-1">
-                                  <strong>Fecha de aplicación:</strong>{" "}
+                                  <strong>Fecha de aplicacion:</strong>{" "}
                                   {formatDate(record.fechaAplicacion)}
                                 </p>
 
@@ -1207,7 +1207,7 @@ function PetDetails() {
 
                                 {record.fechaRefuerzoEstimada && (
                                   <p className="small mb-0">
-                                    <strong>Próximo refuerzo estimado:</strong>{" "}
+                                    <strong>Proximo refuerzo estimado:</strong>{" "}
                                     {formatDate(record.fechaRefuerzoEstimada)}
                                   </p>
                                 )}
@@ -1254,7 +1254,7 @@ function PetDetails() {
                 <div>
                   <div className="pet-info-cell-label">Edad</div>
                   <div className="pet-info-cell-value">
-                    {pet.edad !== undefined && pet.edad !== null ? `${pet.edad} años` : "No especificada"}
+                    {pet.edad !== undefined && pet.edad !== null ? `${pet.edad} anos` : "No especificada"}
                   </div>
                 </div>
               </div>

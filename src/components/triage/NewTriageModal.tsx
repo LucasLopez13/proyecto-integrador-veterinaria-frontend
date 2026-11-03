@@ -98,15 +98,15 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (isExistingPet && !selectedPetId) {
-      newErrors.selectedPetId = "Seleccioná la mascota registrada en el sistema";
+      newErrors.selectedPetId = "Selecciona la mascota registrada en el sistema";
     }
 
     if (!isExistingPet && !nombrePaciente.trim()) {
-      newErrors.nombrePaciente = "Completá este campo con el nombre del paciente";
+      newErrors.nombrePaciente = "Completa este campo con el nombre del paciente";
     }
 
     if (!motivo.trim()) {
-      newErrors.motivo = "Completá este campo con el motivo de ingreso o síntoma";
+      newErrors.motivo = "Completa este campo con el motivo de ingreso o sintoma";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -317,13 +317,13 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
                 </div>
                 <div className="col-sm-6">
                   <label htmlFor="telefonoTutor" className="form-label small fw-semibold text-muted">
-                    Teléfono (+54)
+                    Telefono (+54)
                   </label>
                   <input
                     id="telefonoTutor"
                     type="tel"
                     className="form-control form-control-sm rounded-2"
-                    placeholder="Teléfono del tutor"
+                    placeholder="Telefono del tutor"
                     value={telefonoTutor}
                     onChange={(e) => setTelefonoTutor(e.target.value)}
                   />
@@ -333,7 +333,7 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
 
             <div className="mb-3">
               <label className="form-label small fw-bold text-dark mb-2">
-                Nivel de Triage Inicial (Clasificación de Guardia)
+                Nivel de Triage Inicial (Clasificacion de Guardia)
               </label>
               <div className="level-selection-grid">
                 {TRIAGE_LEVELS.map((level) => {
@@ -369,13 +369,13 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
 
             <div className="mb-3">
               <label htmlFor="motivoIngreso" className="form-label small fw-semibold text-muted">
-                Motivo de ingreso o síntoma principal <span className="text-danger">*</span>
+                Motivo de ingreso o sintoma principal <span className="text-danger">*</span>
               </label>
               <input
                 id="motivoIngreso"
                 type="text"
                 className={`form-control rounded-2 ${fieldErrors.motivo ? "is-invalid" : ""}`}
-                placeholder="Motivo de ingreso o síntoma principal"
+                placeholder="Motivo de ingreso o sintoma principal"
                 value={motivo}
                 onChange={(e) => {
                   setMotivo(e.target.value);
@@ -387,13 +387,13 @@ export const NewTriageModal: React.FC<NewTriageModalProps> = ({
 
             <div className="mb-3">
               <label htmlFor="notasTriage" className="form-label small fw-semibold text-muted">
-                Observaciones iniciales / Signos vitales rápidos
+                Observaciones iniciales / Signos vitales rapidos
               </label>
               <textarea
                 id="notasTriage"
                 rows={2}
                 className="form-control rounded-2"
-                placeholder="Observaciones iniciales o signos vitales rápidos"
+                placeholder="Observaciones iniciales o signos vitales rapidos"
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
               />

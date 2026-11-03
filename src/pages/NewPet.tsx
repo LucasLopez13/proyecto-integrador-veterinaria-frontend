@@ -35,24 +35,24 @@ function NewPet() {
     const newErrors: Record<string, string> = {};
 
     if (!nombre.trim()) {
-      newErrors.nombre = "Completá este campo con el nombre de la mascota";
+      newErrors.nombre = "Completa este campo con el nombre de la mascota";
     }
 
     if (!especie.trim()) {
-      newErrors.especie = "Seleccioná la especie de la mascota";
+      newErrors.especie = "Selecciona la especie de la mascota";
     }
 
     if (edad.trim()) {
       const edadNum = Number(edad);
       if (isNaN(edadNum) || edadNum < 0 || edadNum > 40) {
-        newErrors.edad = "Ingresá una edad válida (entre 0 y 40 años)";
+        newErrors.edad = "Ingresa una edad valida (entre 0 y 40 anos)";
       }
     }
 
     if (peso.trim()) {
       const pesoNum = Number(peso);
       if (isNaN(pesoNum) || pesoNum <= 0) {
-        newErrors.peso = "Ingresá un peso válido mayor a 0 kg";
+        newErrors.peso = "Ingresa un peso valido mayor a 0 kg";
       }
     }
 
@@ -108,7 +108,7 @@ function NewPet() {
         <div className="card rounded-3 p-4 p-md-5 bg-white shadow-sm border" style={{ borderColor: "#EDE9FE" }}>
           <div className="mb-4 pb-2 border-bottom border-light-subtle">
             <h2 className="fw-bold mb-1" style={{ color: "#1E1B4B" }}>Registrar Nueva Mascota</h2>
-            <p className="text-muted small mb-0">Completá los datos básicos para abrir su historia clínica</p>
+            <p className="text-muted small mb-0">Completa los datos basicos para abrir su historia clinica</p>
           </div>
 
           {error && <div className="alert alert-danger rounded-2 py-2 px-3 small mb-4">{error}</div>}
@@ -171,7 +171,7 @@ function NewPet() {
 
               <div className="col-md-6">
                 <label htmlFor="age" className="form-label">
-                  Edad (años)
+                  Edad (anos)
                 </label>
                 <input
                   type="number"
@@ -179,7 +179,7 @@ function NewPet() {
                   className={`form-control rounded-2 ${fieldErrors.edad ? "is-invalid" : ""}`}
                   min="0"
                   max="40"
-                  placeholder="Edad en años"
+                  placeholder="Edad en anos"
                   value={edad}
                   onChange={(e) => {
                     setEdad(e.target.value);

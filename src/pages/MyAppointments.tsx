@@ -14,11 +14,39 @@ import { Pagination } from "../components/common/Pagination";
 import { paymentService } from "../services/paymentService";
 import type { Payment, PaymentMethod } from "../types/Payment";
 
+interface DetalleOrdenCliente {
+  id: number;
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number | string;
+  subtotal: number | string;
+}
+
+interface OrdenFacturacionCliente {
+  id: number;
+  consultaId: number;
+  fechaGeneracion: string;
+  total: number | string;
+  estado: "pendiente" | "pagada" | "anulada";
+  detalles?: DetalleOrdenCliente[];
+  consulta?: {
+    id: number;
+    turnoId?: number | null;
+    mascotaId?: number;
+    mascota?: {
+      id: number;
+      nombre: string;
+      especie?: string;
+    };
+  };
+}
 
 function MyAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [ordenesFacturacion, setOrdenesFacturacion] = useState<OrdenFacturacionCliente[]>([]);
   const [paymentFormTurnoId, setPaymentFormTurnoId] = useState<number | null>(null);
+  const [paymentFormOrdenId, setPaymentFormOrdenId] = useState<number | null>(null);
   const [paymentMonto, setPaymentMonto] = useState("");
   const [paymentMetodo, setPaymentMetodo] = useState<PaymentMethod>("transferencia");
   const [paymentObservaciones, setPaymentObservaciones] = useState("");
@@ -28,6 +56,7 @@ function MyAppointments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentMessageTurnoId, setPaymentMessageTurnoId] = useState<number | null>(null);
+  const [paymentMessageOrdenId, setPaymentMessageOrdenId] = useState<number | null>(null);
 
   const [reprogramandoId, setReprogramandoId] = useState<number | null>(null);
   const [nuevaFecha, setNuevaFecha] = useState("");
@@ -68,11 +97,6 @@ function MyAppointments() {
     }
   };
 
-  useEffect(() => {
-    cargarTurnos(1);
-    cargarPagos();
-  }, []);
-
   const cargarPagos = async () => {
     try {
       const data = await paymentService.getPayments();
@@ -82,36 +106,71 @@ function MyAppointments() {
     }
   };
 
-  const handleRegistrarPago = async (turnoId: number) => {
+  const cargarOrdenes = async () => {
+    try {
+      const data = await apiFetch<OrdenFacturacionCliente[]>("/facturacion/mis-ordenes");
+      setOrdenesFacturacion(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("No se pudieron cargar las ordenes de facturacion:", err);
+    }
+  };
+
+  useEffect(() => {
+    cargarTurnos(1);
+    cargarPagos();
+    cargarOrdenes();
+  }, []);
+
+  const handleRegistrarPago = async (opts: {
+    turnoId?: number;
+    ordenId?: number;
+  }) => {
     setPaymentError(null);
     setPaymentMessage(null);
 
     const monto = Number(paymentMonto);
 
     if (!paymentMonto.trim() || !Number.isFinite(monto) || monto <= 0) {
-      setPaymentError("Ingresá un monto válido mayor que cero.");
+      setPaymentError("Ingresa un monto valido mayor que cero.");
       return;
     }
 
     try {
       setPaymentLoading(true);
 
+      const concepto = opts.ordenId
+        ? `Pago de orden de facturacion #${opts.ordenId}${
+            opts.turnoId ? ` (Turno #${opts.turnoId})` : ""
+          }`
+        : `Pago de turno #${opts.turnoId}`;
+
       await paymentService.createPayment({
         monto,
-        concepto: `Pago de turno #${turnoId}`,
+        concepto,
         metodo: paymentMetodo,
-        turnoId,
+        turnoId: opts.turnoId,
+        presupuestoId: opts.ordenId,
         observaciones: paymentObservaciones.trim() || undefined,
       });
 
-      await cargarPagos();
+      await Promise.all([cargarPagos(), cargarOrdenes()]);
 
       setPaymentFormTurnoId(null);
+      setPaymentFormOrdenId(null);
       setPaymentMonto("");
       setPaymentMetodo("transferencia");
       setPaymentObservaciones("");
-      setPaymentMessageTurnoId(turnoId);
-      setPaymentMessage(`El pago del turno #${turnoId} se registró como pendiente.`);
+      if (opts.turnoId) {
+        setPaymentMessageTurnoId(opts.turnoId);
+        setPaymentMessage(
+          `El pago se registro como pendiente de verificacion administrativa.`
+        );
+      } else if (opts.ordenId) {
+        setPaymentMessageOrdenId(opts.ordenId);
+        setPaymentMessage(
+          `El pago de la orden #${opts.ordenId} se registro como pendiente de aprobacion.`
+        );
+      }
     } catch (err) {
       setPaymentError(
         err instanceof Error ? err.message : "No se pudo registrar el pago."
@@ -132,8 +191,8 @@ function MyAppointments() {
       isOpen: true,
       type: "confirm",
       title: "¿Cancelar Turno?",
-      message: "¿Estás seguro de que deseás cancelar este turno veterinario? Esta acción no se puede deshacer.",
-      confirmText: "Sí, Cancelar Turno",
+      message: "¿Estas seguro de que deseas cancelar este turno veterinario? Esta accion no se puede deshacer.",
+      confirmText: "Si, Cancelar Turno",
       cancelText: "Mantener Turno",
       onConfirm: () => ejecutarCancelacion(id),
     });
@@ -174,12 +233,12 @@ function MyAppointments() {
     setRescheduleError(null);
 
     if (!nuevaFecha) {
-      setRescheduleError("Seleccioná una nueva fecha y hora para reprogramar el turno.");
+      setRescheduleError("Selecciona una nueva fecha y hora para reprogramar el turno.");
       return;
     }
 
     if (new Date(nuevaFecha).getTime() <= Date.now()) {
-      setRescheduleError("No podés reprogramar un turno para una fecha u horario que ya ha transcurrido.");
+      setRescheduleError("No podes reprogramar un turno para una fecha u horario que ya ha transcurrido.");
       return;
     }
 
@@ -209,16 +268,21 @@ function MyAppointments() {
     }
   };
 
+  const turnosIdsEnVista = new Set(appointments.map((a) => a.id));
+  const ordenesSinTurnoEnVista = ordenesFacturacion.filter(
+    (o) => !o.consulta?.turnoId || !turnosIdsEnVista.has(o.consulta.turnoId)
+  );
+
   return (
     <main style={{ minHeight: "calc(100vh - 72px)", backgroundColor: "var(--vet-bg-canvas, #FAF9FC)", paddingBottom: "60px" }}>
       <div className="container py-4" style={{ maxWidth: "860px" }}>
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <div>
             <h1 className="h3 fw-bold mb-1" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
-              Mis Turnos
+              Mis Turnos y Facturacion
             </h1>
             <p className="text-muted small mb-0">
-              Consultá y gestioná las próximas citas veterinarias de tus mascotas
+              Consulta tus citas veterinarias, liquidaciones clinicas y registra tus pagos
             </p>
           </div>
 
@@ -236,13 +300,215 @@ function MyAppointments() {
           </div>
         )}
 
+        {ordenesSinTurnoEnVista.length > 0 && (
+          <section className="mb-4">
+            <h2 className="h6 fw-bold mb-3" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+              <i className="bi bi-receipt me-2" style={{ color: "var(--vet-primary, #6D28D9)" }}></i>
+              Ordenes de Facturacion de Consultas Clinicas
+            </h2>
+            <div className="d-flex flex-column gap-3">
+              {ordenesSinTurnoEnVista.map((orden) => {
+                const pagosOrden = payments.filter(
+                  (p) =>
+                    p.presupuestoId === orden.id ||
+                    (orden.consulta?.turnoId && p.turnoId === orden.consulta.turnoId)
+                );
+                const pagoActivo = pagosOrden.find(
+                  (p) => p.estado === "pendiente" || p.estado === "aprobado"
+                );
+                const puedeAbonar =
+                  orden.estado === "pendiente" &&
+                  !pagoActivo &&
+                  (!pagosOrden.length || pagosOrden.every((p) => p.estado === "rechazado"));
+
+                return (
+                  <div
+                    key={orden.id}
+                    className="bg-white rounded-3 border p-3 shadow-sm"
+                    style={{ borderColor: "var(--vet-border-tint, #EDE9FE)" }}
+                  >
+                    <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                      <div>
+                        <span className="fw-bold" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                          Orden de Facturacion #{orden.id}
+                        </span>
+                        <span className="text-muted small ms-2">
+                          Consulta #{orden.consultaId}
+                          {orden.consulta?.mascota?.nombre
+                            ? ` · ${orden.consulta.mascota.nombre}`
+                            : ""}
+                        </span>
+                      </div>
+                      <span
+                        className="badge rounded-pill px-3 py-1 fw-semibold text-capitalize"
+                        style={{
+                          backgroundColor:
+                            orden.estado === "pagada"
+                              ? "#ECFDF5"
+                              : orden.estado === "anulada"
+                              ? "#FEF2F2"
+                              : "#FFFBEB",
+                          color:
+                            orden.estado === "pagada"
+                              ? "#059669"
+                              : orden.estado === "anulada"
+                              ? "#DC2626"
+                              : "#D97706",
+                        }}
+                      >
+                        {orden.estado}
+                      </span>
+                    </div>
+
+                    {orden.detalles && orden.detalles.length > 0 && (
+                      <div className="small text-muted mb-2">
+                        {orden.detalles
+                          .map(
+                            (d) =>
+                              `${d.descripcion} (x${d.cantidad}: $${Number(d.subtotal).toLocaleString("es-AR")})`
+                          )
+                          .join(" · ")}
+                      </div>
+                    )}
+
+                    <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top border-light-subtle">
+                      <span className="small">
+                        Total facturado:{" "}
+                        <strong style={{ color: "var(--vet-primary, #6D28D9)" }}>
+                          ${Number(orden.total).toLocaleString("es-AR")}
+                        </strong>
+                      </span>
+
+                      {pagoActivo ? (
+                        <span className="small">
+                          Pago registrado: <strong>{pagoActivo.estado}</strong> ({pagoActivo.metodo})
+                        </span>
+                      ) : (
+                        puedeAbonar && (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm rounded-2"
+                            style={{
+                              backgroundColor: "var(--vet-primary, #6D28D9)",
+                              borderColor: "var(--vet-primary, #6D28D9)",
+                            }}
+                            onClick={() => {
+                              setPaymentFormOrdenId(orden.id);
+                              setPaymentFormTurnoId(null);
+                              setPaymentMonto(String(Number(orden.total)));
+                              setPaymentMetodo("transferencia");
+                              setPaymentObservaciones("");
+                              setPaymentError(null);
+                              setPaymentMessage(null);
+                            }}
+                          >
+                            <i className="bi bi-wallet2 me-1"></i>
+                            Abonar orden
+                          </button>
+                        )
+                      )}
+                    </div>
+
+                    {paymentFormOrdenId === orden.id && (
+                      <form
+                        className="mt-3 p-3 rounded-2"
+                        style={{ backgroundColor: "#FAF9FC" }}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          void handleRegistrarPago({
+                            ordenId: orden.id,
+                            turnoId: orden.consulta?.turnoId ?? undefined,
+                          });
+                        }}
+                      >
+                        <div className="row g-2 mb-2">
+                          <div className="col-sm-6">
+                            <label className="form-label small fw-semibold">Monto a abonar ($)</label>
+                            <input
+                              type="number"
+                              min="0.01"
+                              step="0.01"
+                              className="form-control form-control-sm"
+                              value={paymentMonto}
+                              onChange={(e) => setPaymentMonto(e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div className="col-sm-6">
+                            <label className="form-label small fw-semibold">Metodo de pago</label>
+                            <select
+                              className="form-select form-select-sm"
+                              value={paymentMetodo}
+                              onChange={(e) =>
+                                setPaymentMetodo(e.target.value as PaymentMethod)
+                              }
+                            >
+                              <option value="transferencia">Transferencia</option>
+                              <option value="tarjeta">Tarjeta</option>
+                              <option value="efectivo">Efectivo</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="mb-2">
+                          <label className="form-label small fw-semibold">
+                            Comprobante / Observaciones (opcional)
+                          </label>
+                          <input
+                            type="text"
+                            className="form-control form-control-sm"
+                            placeholder="Ej: Nro de comprobante de transferencia..."
+                            value={paymentObservaciones}
+                            onChange={(e) => setPaymentObservaciones(e.target.value)}
+                          />
+                        </div>
+
+                        {paymentError && (
+                          <div className="alert alert-danger py-2 small">{paymentError}</div>
+                        )}
+
+                        <div className="d-flex gap-2">
+                          <button
+                            type="submit"
+                            className="btn btn-primary btn-sm"
+                            disabled={paymentLoading}
+                          >
+                            {paymentLoading ? "Registrando..." : "Confirmar pago"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary btn-sm"
+                            disabled={paymentLoading}
+                            onClick={() => {
+                              setPaymentFormOrdenId(null);
+                              setPaymentError(null);
+                            }}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {paymentMessage && paymentMessageOrdenId === orden.id && (
+                      <div className="alert alert-success py-2 small mt-2 mb-0">
+                        {paymentMessage}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {loading ? (
           <LoadingSpinner message="Cargando tus turnos..." />
         ) : appointments.length === 0 ? (
           <EmptyState
             icon="bi-calendar-check"
-            title="No tenés turnos solicitados"
-            description="Cuando solicites una cita, vas a poder darle seguimiento desde esta sección."
+            title="No tenes turnos solicitados"
+            description="Cuando solicites una cita, vas a poder darle seguimiento desde esta seccion."
             actionText="Solicitar mi primer turno"
             actionTo="/turnos/nuevo"
           />
@@ -260,6 +526,9 @@ function MyAppointments() {
                 const mascotaNombre = appointment.mascota?.nombre || "Mascota";
                 const isReprogramando = reprogramandoId === appointment.id;
                 const isPastOrCancelled = ["cancelado", "completado", "atendido"].includes(appointment.estado);
+                const ordenVinculada = ordenesFacturacion.find(
+                  (o) => o.consulta?.turnoId === appointment.id
+                );
 
                 return (
                   <div
@@ -299,7 +568,7 @@ function MyAppointments() {
                           </div>
 
                           <p className="small text-muted mb-0">
-                            <strong>Motivo:</strong> {appointment.motivo || "Consulta de rutina / Revisión"}
+                            <strong>Motivo:</strong> {appointment.motivo || "Consulta de rutina / Revision"}
                           </p>
                           <small className="text-secondary" style={{ fontSize: "0.8rem" }}>
                             Veterinario: <span className="fw-medium text-dark">Servicio General VetCare</span>
@@ -338,15 +607,68 @@ function MyAppointments() {
                     </div>
 
                     <div className="mt-3 pt-3 border-top border-light-subtle">
-                      <h4 className="small fw-bold mb-2">
-                        <i className="bi bi-credit-card me-2"></i>
-                        Pago del turno
-                      </h4>
+                      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <h4 className="small fw-bold mb-0">
+                          <i className="bi bi-credit-card me-2" style={{ color: "var(--vet-primary, #6D28D9)" }}></i>
+                          {ordenVinculada
+                            ? `Facturacion de la Consulta (Orden #${ordenVinculada.id})`
+                            : "Pago del turno"}
+                        </h4>
+                        {ordenVinculada && (
+                          <span
+                            className="badge rounded-pill px-2 py-1 text-capitalize"
+                            style={{
+                              backgroundColor:
+                                ordenVinculada.estado === "pagada"
+                                  ? "#ECFDF5"
+                                  : ordenVinculada.estado === "anulada"
+                                  ? "#FEF2F2"
+                                  : "#FFFBEB",
+                              color:
+                                ordenVinculada.estado === "pagada"
+                                  ? "#059669"
+                                  : ordenVinculada.estado === "anulada"
+                                  ? "#DC2626"
+                                  : "#D97706",
+                            }}
+                          >
+                            Factura {ordenVinculada.estado}
+                          </span>
+                        )}
+                      </div>
 
+                      {ordenVinculada && (
+                        <div
+                          className="rounded-2 p-2 mb-2 small"
+                          style={{
+                            backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
+                            border: "1px solid var(--vet-border-tint, #EDE9FE)",
+                          }}
+                        >
+                          {ordenVinculada.detalles && ordenVinculada.detalles.length > 0 && (
+                            <div className="text-muted mb-1">
+                              {ordenVinculada.detalles
+                                .map(
+                                  (d) =>
+                                    `${d.descripcion} x${d.cantidad} ($${Number(d.subtotal).toLocaleString("es-AR")})`
+                                )
+                                .join(" · ")}
+                            </div>
+                          )}
+                          <div className="fw-semibold" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                            Importe total facturado:{" "}
+                            <span style={{ color: "var(--vet-primary, #6D28D9)" }}>
+                              ${Number(ordenVinculada.total).toLocaleString("es-AR")}
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {(() => {
                         const pagosTurno = payments.filter(
-                          (p) => p.turnoId === appointment.id
+                          (p) =>
+                            p.turnoId === appointment.id ||
+                            (ordenVinculada && p.presupuestoId === ordenVinculada.id)
                         );
                         const pagoActivo = pagosTurno.find(
                           (p) => p.estado === "pendiente" || p.estado === "aprobado"
@@ -354,7 +676,10 @@ function MyAppointments() {
                         const puedeRegistrar =
                           !pagoActivo &&
                           (!pagosTurno.length ||
-                            pagosTurno.every((p) => p.estado === "rechazado"));
+                            pagosTurno.every((p) => p.estado === "rechazado")) &&
+                          ordenVinculada?.estado !== "pagada" &&
+                          ordenVinculada?.estado !== "anulada" &&
+                          appointment.estado !== "cancelado";
 
                         if (pagoActivo) {
                           return (
@@ -364,22 +689,36 @@ function MyAppointments() {
                               </span>
                               {" · "}
                               <span className="fw-semibold">
-                                Estado: {pagoActivo.estado}
+                                Estado del pago: {pagoActivo.estado}
                               </span>
                               {" · "}
-                              <span>Método: {pagoActivo.metodo}</span>
+                              <span>Metodo: {pagoActivo.metodo}</span>
                             </div>
                           );
                         }
 
-                        if (puedeRegistrar && !isPastOrCancelled) {
+                        if (ordenVinculada?.estado === "pagada") {
+                          return (
+                            <div className="small text-success fw-semibold">
+                              <i className="bi bi-check-circle-fill me-1"></i>
+                              Orden abonada y aprobada.
+                            </div>
+                          );
+                        }
+
+                        if (puedeRegistrar && (!isPastOrCancelled || !!ordenVinculada)) {
                           return (
                             <button
                               type="button"
                               className="btn btn-outline-primary btn-sm rounded-2"
                               onClick={() => {
                                 setPaymentFormTurnoId(appointment.id);
-                                setPaymentMonto("");
+                                setPaymentFormOrdenId(null);
+                                setPaymentMonto(
+                                  ordenVinculada
+                                    ? String(Number(ordenVinculada.total))
+                                    : ""
+                                );
                                 setPaymentMetodo("transferencia");
                                 setPaymentObservaciones("");
                                 setPaymentError(null);
@@ -387,7 +726,9 @@ function MyAppointments() {
                               }}
                             >
                               <i className="bi bi-wallet2 me-1"></i>
-                              Registrar pago
+                              {ordenVinculada
+                                ? `Abonar factura ($${Number(ordenVinculada.total).toLocaleString("es-AR")})`
+                                : "Registrar pago"}
                             </button>
                           );
                         }
@@ -395,14 +736,16 @@ function MyAppointments() {
                         return null;
                       })()}
 
-
                       {paymentFormTurnoId === appointment.id && (
                         <form
                           className="mt-3 p-3 rounded-2"
                           style={{ backgroundColor: "#FAF9FC" }}
                           onSubmit={(e) => {
                             e.preventDefault();
-                            void handleRegistrarPago(appointment.id);
+                            void handleRegistrarPago({
+                              turnoId: appointment.id,
+                              ordenId: ordenVinculada?.id,
+                            });
                           }}
                         >
                           <div className="mb-3">
@@ -429,7 +772,7 @@ function MyAppointments() {
                               htmlFor={`pago-metodo-${appointment.id}`}
                               className="form-label small fw-semibold"
                             >
-                              Método de pago
+                              Metodo de pago
                             </label>
                             <select
                               id={`pago-metodo-${appointment.id}`}
@@ -500,7 +843,6 @@ function MyAppointments() {
                     </div>
 
                     {isReprogramando && (
-
                       <div
                         className="mt-3 pt-3 border-top border-light-subtle"
                         style={{ backgroundColor: "#FAF9FC", padding: "14px", borderRadius: "6px" }}
@@ -528,7 +870,7 @@ function MyAppointments() {
                             onClick={() => handleReprogramarTurno(appointment.id)}
                             className="btn btn-primary btn-sm rounded-2 fw-medium px-3"
                           >
-                            Confirmar Reprogramación
+                            Confirmar Reprogramacion
                           </button>
                         </div>
                         <FormFieldError error={rescheduleError || undefined} />

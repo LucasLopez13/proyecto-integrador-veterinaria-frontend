@@ -54,7 +54,7 @@ export default function PublicVaccinationCard() {
 
       try {
         if (!token) {
-          throw new Error("El enlace del carnet no es válido.");
+          throw new Error("El enlace del carnet no es valido.");
         }
 
         const response = await fetch(
@@ -77,7 +77,7 @@ export default function PublicVaccinationCard() {
           setError(
             err instanceof Error
               ? err.message
-              : "Ocurrió un error al consultar el carnet."
+              : "Ocurrio un error al consultar el carnet."
           );
         }
       } finally {
@@ -115,10 +115,10 @@ export default function PublicVaccinationCard() {
             </div>
             <div>
               <h1 className="h4 fw-bold mb-1" style={{ color: "var(--text-heading, #1E1B4B)" }}>
-                Carnet de Vacunación Digital
+                Carnet de Vacunacion Digital
               </h1>
               <p className="text-muted small mb-0">
-                Información sanitaria y control de vacunas
+                Informacion sanitaria y control de vacunas
               </p>
             </div>
           </div>
@@ -134,7 +134,7 @@ export default function PublicVaccinationCard() {
 
         {cargando && (
           <div className="card border-subtle rounded-3 bg-white p-5 shadow-sm">
-            <LoadingSpinner message="Consultando carnet de vacunación..." />
+            <LoadingSpinner message="Consultando carnet de vacunacion..." />
           </div>
         )}
 
@@ -267,8 +267,8 @@ export default function PublicVaccinationCard() {
                       <thead>
                         <tr style={{ backgroundColor: "#F8FAFC", borderBottom: "1px solid var(--lavender-border, #EDE9FE)" }}>
                           <th className="py-3 px-4 text-muted small fw-semibold">Vacuna</th>
-                          <th className="py-3 px-4 text-muted small fw-semibold">Fecha de aplicación</th>
-                          <th className="py-3 px-4 text-muted small fw-semibold">Próximo refuerzo</th>
+                          <th className="py-3 px-4 text-muted small fw-semibold">Fecha de aplicacion</th>
+                          <th className="py-3 px-4 text-muted small fw-semibold">Proximo refuerzo</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -329,7 +329,7 @@ export default function PublicVaccinationCard() {
                     Constancia Oficial
                   </h3>
                   <p className="text-muted small mb-0">
-                    Este carnet muestra los datos sanitarios y de vacunación registrados en tiempo real en la plataforma VetCare. Para confirmar el plan sanitario de tu mascota, consultá con tu veterinario de cabecera.
+                    Este carnet muestra los datos sanitarios y de vacunacion registrados en tiempo real en la plataforma VetCare. Para confirmar el plan sanitario de tu mascota, consulta con tu veterinario de cabecera.
                   </p>
                 </div>
               </div>

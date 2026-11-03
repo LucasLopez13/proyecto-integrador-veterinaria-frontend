@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
@@ -27,7 +26,10 @@ function Navbar() {
     role === "profesional" ||
     role === "admin";
 
-  const canManageBilling = role === "admin" || role === "recepcion";
+  const canManageBilling =
+    role === "profesional" ||
+    role === "admin" ||
+    role === "recepcion";
 
   const homePath = isProfessional ? "/profesional/turnos" : "/mascotas";
 
@@ -101,7 +103,7 @@ function Navbar() {
               className="nav-link d-inline-flex align-items-center gap-1"
               to="/facturacion/ordenes"
             >
-              <i className="bi bi-receipt"></i> Facturación
+              <i className="bi bi-receipt"></i> Facturacion
             </Link>
           )}
 
@@ -121,7 +123,7 @@ function Navbar() {
             type="button"
             className="btn btn-outline-secondary btn-sm rounded-2 d-inline-flex align-items-center gap-1"
             onClick={handleLogout}
-            title="Cerrar sesión"
+            title="Cerrar sesion"
           >
             <i className="bi bi-box-arrow-right"></i> Salir
           </button>

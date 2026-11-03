@@ -26,7 +26,7 @@ export const PetCard: React.FC<PetCardProps> = ({ pet }) => {
               </div>
 
               <p className="pet-details text-muted small mb-0">
-                {pet.raza || "Mestizo"} · {pet.edad !== undefined && pet.edad !== null ? `${pet.edad} años` : "Edad no especificada"}
+                {pet.raza || "Mestizo"} · {pet.edad !== undefined && pet.edad !== null ? `${pet.edad} anos` : "Edad no especificada"}
               </p>
               {pet.sexo && (
                 <small className="text-muted d-block mt-1">
@@ -42,7 +42,7 @@ export const PetCard: React.FC<PetCardProps> = ({ pet }) => {
             to={`/mascotas/${pet.id}`}
             className="btn btn-outline-primary rounded-2 w-100 fw-medium d-inline-flex align-items-center justify-content-center gap-2"
           >
-            <i className="bi bi-file-earmark-medical"></i> Ver Ficha Médica
+            <i className="bi bi-file-earmark-medical"></i> Ver Ficha Medica
           </Link>
           <Link
             to={`/turnos/nuevo?mascota=${pet.id}`}
