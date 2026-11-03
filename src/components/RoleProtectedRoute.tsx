@@ -7,11 +7,13 @@ import type { UserRole } from "../types/User";
 interface RoleProtectedRouteProps {
   children: ReactNode;
   allowedRoles: UserRole[];
+  redirectTo?: string;
 }
 
 function RoleProtectedRoute({
   children,
   allowedRoles,
+  redirectTo,
 }: RoleProtectedRouteProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -23,10 +25,21 @@ function RoleProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  const role = user.role || user.rol;
+  const role = (
+    typeof user.rol === "object" && (user.rol as any)?.nombre
+      ? (user.rol as any).nombre
+      : user.role || user.rol || ""
+  )
+    .toLowerCase()
+    .trim() as UserRole;
 
   if (!role || !allowedRoles.includes(role)) {
-    return <Navigate to="/" replace />;
+    const fallbackPath =
+      redirectTo ||
+      (role === "profesional" || role === "admin"
+        ? "/profesional/turnos"
+        : "/mascotas");
+    return <Navigate to={fallbackPath} replace />;
   }
 
   return children;

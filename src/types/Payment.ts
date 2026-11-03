@@ -1,4 +1,4 @@
-﻿export type PaymentMethod = "transferencia" | "tarjeta" | "efectivo";
+export type PaymentMethod = "transferencia" | "tarjeta" | "efectivo";
 export type PaymentStatus = "pendiente" | "aprobado" | "rechazado";
 
 export interface Payment {
@@ -12,6 +12,23 @@ export interface Payment {
   observaciones: string | null;
   createdAt: string;
   updatedAt: string;
+  turno?: {
+    id: number;
+    fecha: string;
+    motivo: string;
+    mascota?: {
+      id: number;
+      nombre: string;
+      especie: string;
+    };
+    usuario?: {
+      id: number;
+      nombre: string;
+      apellido: string;
+      email: string;
+      telefono?: string;
+    };
+  };
 }
 
 export interface CreatePaymentDTO {

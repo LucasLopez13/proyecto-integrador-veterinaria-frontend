@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { consultationService } from "../services/consultationService";
@@ -11,8 +11,11 @@ import { ErrorModal } from "../components/common/ErrorModal";
 import { BackButton } from "../components/common/BackButton";
 import { FormFieldError } from "../components/common/FormFieldError";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
+import { EmptyState } from "../components/common/EmptyState";
 import { FileUploadZone } from "../components/common/FileUploadZone";
 import { ConsultationPatientSidebar } from "../components/consultations/ConsultationPatientSidebar";
+import { inventarioService } from "../services/inventarioService";
+import type { ProductoConLotes } from "../types/Inventario";
 import "../styles/MedicalAttention.css";
 
 interface ServicioFacturacion {
@@ -36,6 +39,19 @@ interface ConceptoSeleccionado {
   cantidad: number;
 }
 
+interface ItemConsumoClinico {
+  idTemporal: string;
+  productoId: number;
+  productoNombre: string;
+  unidadMedida: string;
+  loteId: number;
+  numeroLote: string;
+  stockDisponibleLote: number;
+  fechaVencimiento: string;
+  cantidad: number;
+  observaciones: string;
+}
+
 export default function MedicalAttention() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -48,6 +64,7 @@ export default function MedicalAttention() {
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -75,6 +92,14 @@ export default function MedicalAttention() {
   const [conceptosSeleccionados, setConceptosSeleccionados] = useState<ConceptoSeleccionado[]>([]);
   const [errorCatalogo, setErrorCatalogo] = useState("");
 
+  const [productosInventario, setProductosInventario] = useState<ProductoConLotes[]>([]);
+  const [consumosSeleccionados, setConsumosSeleccionados] = useState<ItemConsumoClinico[]>([]);
+  const [productoSelId, setProductoSelId] = useState<string>("");
+  const [loteSelId, setLoteSelId] = useState<string>("");
+  const [cantidadConsumo, setCantidadConsumo] = useState<string>("");
+  const [observacionesConsumo, setObservacionesConsumo] = useState<string>("");
+  const [errorConsumo, setErrorConsumo] = useState<string | null>(null);
+
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
       if (!prev[field]) return prev;
@@ -91,7 +116,7 @@ export default function MedicalAttention() {
   useEffect(() => {
     const fetchData = async () => {
       if (!mascotaIdParam) {
-        handleError("No se especificó un paciente para la atención médica.");
+        handleError("No se especifico un paciente para la atencion medica.");
         setLoading(false);
         return;
       }
@@ -129,6 +154,9 @@ export default function MedicalAttention() {
             if (savedDraft.analisis) setAnalisis(savedDraft.analisis);
             if (savedDraft.plan) setPlan(savedDraft.plan);
             if (savedDraft.observaciones) setObservaciones(savedDraft.observaciones);
+            if (Array.isArray(savedDraft.consumosSeleccionados)) {
+              setConsumosSeleccionados(savedDraft.consumosSeleccionados);
+            }
           } catch { }
         }
       } catch (err: any) {
@@ -141,6 +169,7 @@ export default function MedicalAttention() {
     fetchData();
   }, [mascotaIdParam, turnoIdParam]);
 
+  // Cargar servicios y productos para facturación
   useEffect(() => {
     const cargarCatalogos = async () => {
       try {
@@ -152,7 +181,9 @@ export default function MedicalAttention() {
         setServicios(serviciosData);
         setProductos(productosData);
       } catch (err: any) {
-        setErrorCatalogo(err.message || "No se pudieron cargar los servicios y productos.");
+        setErrorCatalogo(
+          err.message || "No se pudieron cargar los servicios y productos."
+        );
       }
     };
 
@@ -168,16 +199,20 @@ export default function MedicalAttention() {
       return;
     }
 
-    const referencia = tipoConcepto === "servicio"
-      ? servicios.find((item) => item.id === id)
-      : productos.find((item) => item.id === id);
+    const referencia =
+      tipoConcepto === "servicio"
+        ? servicios.find((item) => item.id === id)
+        : productos.find((item) => item.id === id);
 
     if (!referencia) {
       setErrorCatalogo("No se encontró el concepto seleccionado.");
       return;
     }
 
-    if (tipoConcepto === "producto" && (referencia as ProductoFacturacion).stockActual < cantidad) {
+    if (
+      tipoConcepto === "producto" &&
+      (referencia as ProductoFacturacion).stockActual < cantidad
+    ) {
       setErrorCatalogo("La cantidad supera el stock disponible.");
       return;
     }
@@ -198,16 +233,108 @@ export default function MedicalAttention() {
     setErrorCatalogo("");
   };
 
+  // Cargar productos de inventario con sus lotes
+  useEffect(() => {
+    const cargarInventario = async () => {
+      try {
+        const prods = await inventarioService.getProductosConLotes(
+          token || undefined
+        );
+        setProductosInventario(prods);
+      } catch (err: any) {
+        console.error("Error al cargar productos de inventario:", err);
+      }
+    };
+
+    cargarInventario();
+  }, [token]);
+
+  const productoActual = productosInventario.find(
+    (p) => String(p.id) === String(productoSelId)
+  );
+
+  const lotesDisponibles = productoActual
+    ? productoActual.lotesDisponibles
+    : [];
+
+  const loteActual = lotesDisponibles.find(
+    (l) => String(l.id) === String(loteSelId)
+  );
+
+  const handleAgregarConsumo = () => {
+    setErrorConsumo(null);
+
+    if (!productoSelId || !productoActual) {
+      setErrorConsumo(
+        "Por favor selecciona un medicamento o insumo de la lista."
+      );
+      return;
+    }
+
+    if (!loteSelId || !loteActual) {
+      setErrorConsumo("Por favor selecciona un lote disponible con stock.");
+      return;
+    }
+
+    const cant = parseFloat(cantidadConsumo);
+
+    if (isNaN(cant) || cant <= 0) {
+      setErrorConsumo("La cantidad debe ser un número mayor a 0.");
+      return;
+    }
+
+    const consumidoPrevio = consumosSeleccionados
+      .filter((item) => item.loteId === loteActual.id)
+      .reduce((acc, curr) => acc + curr.cantidad, 0);
+
+    const stockRestante = loteActual.stockActual - consumidoPrevio;
+
+    if (cant > stockRestante) {
+      setErrorConsumo(
+        `Stock insuficiente en el lote ${loteActual.numeroLote}. Disponible: ${stockRestante} ${productoActual.unidadMedida}.`
+      );
+      return;
+    }
+
+    const nuevoItem: ItemConsumoClinico = {
+      idTemporal: `${Date.now()}_${Math.random()}`,
+      productoId: productoActual.id,
+      productoNombre: productoActual.nombre,
+      unidadMedida: productoActual.unidadMedida,
+      loteId: loteActual.id,
+      numeroLote: loteActual.numeroLote,
+      stockDisponibleLote: loteActual.stockActual,
+      fechaVencimiento: loteActual.fechaVencimiento,
+      cantidad: cant,
+      observaciones: observacionesConsumo.trim(),
+    };
+
+    setConsumosSeleccionados((prev) => [...prev, nuevoItem]);
+    setCantidadConsumo("");
+    setObservacionesConsumo("");
+    setErrorConsumo(null);
+  };
+
+  const handleEliminarConsumo = (idTemporal: string) => {
+    setConsumosSeleccionados((prev) =>
+      prev.filter((item) => item.idTemporal !== idTemporal)
+    );
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
+    if (saving || isSubmittingRef.current) {
+      return;
+    }
+
     if (!token) {
-      handleError("No hay sesión activa.");
+      handleError("No hay sesion activa.");
       return;
     }
 
     if (!pet) {
-      handleError("No se encontró el paciente.");
+      handleError("No se encontro el paciente.");
       return;
     }
 
@@ -216,26 +343,26 @@ export default function MedicalAttention() {
     const newErrors: Record<string, string> = {};
     const parsedPeso = parseFloat(peso);
     if (!peso.trim()) {
-      newErrors.peso = "Completá este campo con el peso en consulta";
+      newErrors.peso = "Completa este campo con el peso en consulta";
     } else if (isNaN(parsedPeso) || parsedPeso <= 0) {
-      newErrors.peso = "Ingresá un peso válido mayor a 0 kg";
+      newErrors.peso = "Ingresa un peso valido mayor a 0 kg";
     }
 
     if (!subjetivo.trim()) {
-      newErrors.subjetivo = "Completá este campo con la anamnesis o motivo de consulta";
+      newErrors.subjetivo = "Completa este campo con la anamnesis o motivo de consulta";
     }
 
     const parsedTemp = parseFloat(temperatura);
     if (!temperatura.trim()) {
-      newErrors.temperatura = "Completá este campo con la temperatura en °C";
+      newErrors.temperatura = "Completa este campo con la temperatura en °C";
     } else if (isNaN(parsedTemp) || parsedTemp < 30 || parsedTemp > 45) {
-      newErrors.temperatura = "Ingresá una temperatura válida (entre 30 y 45 °C)";
+      newErrors.temperatura = "Ingresa una temperatura valida (entre 30 y 45 °C)";
     }
 
     if (frecuenciaCardiaca.trim()) {
       const fcNum = parseInt(frecuenciaCardiaca, 10);
       if (isNaN(fcNum) || fcNum < 20 || fcNum > 300) {
-        newErrors.frecuenciaCardiaca = "La frecuencia cardíaca debe estar entre 20 y 300 lpm";
+        newErrors.frecuenciaCardiaca = "La frecuencia cardiaca debe estar entre 20 y 300 lpm";
       }
     }
 
@@ -247,15 +374,15 @@ export default function MedicalAttention() {
     }
 
     if (!objetivo.trim()) {
-      newErrors.objetivo = "Completá este campo con el examen físico y hallazgos";
+      newErrors.objetivo = "Completa este campo con el examen fisico y hallazgos";
     }
 
     if (!analisis.trim()) {
-      newErrors.analisis = "Completá este campo con el diagnóstico o juicio clínico";
+      newErrors.analisis = "Completa este campo con el diagnostico o juicio clinico";
     }
 
     if (!plan.trim()) {
-      newErrors.plan = "Completá este campo con el plan terapéutico o indicaciones";
+      newErrors.plan = "Completa este campo con el plan terapeutico o indicaciones";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -282,6 +409,7 @@ export default function MedicalAttention() {
     }
 
     try {
+      isSubmittingRef.current = true;
       setSaving(true);
       setError(null);
 
@@ -298,6 +426,12 @@ export default function MedicalAttention() {
           analisis: analisis.trim(),
           plan: plan.trim(),
           observaciones: observaciones.trim() || null,
+          consumosStock: consumosSeleccionados.map((item) => ({
+            productoId: item.productoId,
+            loteId: item.loteId,
+            cantidad: item.cantidad,
+            observaciones: item.observaciones || undefined,
+          })),
         },
         token
       );
@@ -337,7 +471,7 @@ export default function MedicalAttention() {
         localStorage.removeItem(`soap_draft_${mascotaIdParam}`);
       }
 
-      setSuccessMsg("¡Consulta finalizada y registrada correctamente! Registro inmutable y peso actualizado.");
+      setSuccessMsg("Consulta finalizada correctamente. Registro clinico y deduccion de stock completados.");
 
       setTimeout(() => {
         if (turnoIdParam) {
@@ -347,9 +481,9 @@ export default function MedicalAttention() {
         }
       }, TIMERS.REDIRECT_DELAY_MS);
     } catch (err: any) {
-      handleError(err.message || "Error al registrar la atención médica");
-    } finally {
+      isSubmittingRef.current = false;
       setSaving(false);
+      handleError(err.message || "Error al registrar la atencion medica");
     }
   };
 
@@ -365,17 +499,18 @@ export default function MedicalAttention() {
       analisis,
       plan,
       observaciones,
+      consumosSeleccionados,
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem(`soap_draft_${mascotaIdParam}`, JSON.stringify(draft));
-    setSuccessMsg("Borrador guardado localmente en esta estación de trabajo.");
+    setSuccessMsg("Borrador guardado localmente en esta estacion de trabajo.");
     setTimeout(() => setSuccessMsg(null), 3000);
   };
 
   if (loading) {
     return (
       <main className="medical-attention-page">
-        <LoadingSpinner message="Cargando estación de consulta..." />
+        <LoadingSpinner message="Cargando estacion de consulta..." />
       </main>
     );
   }
@@ -383,13 +518,14 @@ export default function MedicalAttention() {
   if (error && !pet) {
     return (
       <main className="medical-attention-page">
-        <div className="container py-5">
-          <div className="alert alert-danger rounded-2 shadow-sm">{error}</div>
-          <BackButton
-            to="/profesional/turnos"
-            text="Volver a turnos"
-            variant="outline"
-            className="mt-3"
+        <div className="container py-5" style={{ maxWidth: "600px" }}>
+          <EmptyState
+            icon="bi-clipboard2-x"
+            title="Paciente o atencion no disponible"
+            description="La mascota indicada para esta consulta no existe o no se encontro en el sistema."
+            actionText="Volver a la Agenda"
+            actionTo="/profesional/turnos"
+            actionIcon="bi-arrow-left"
           />
         </div>
       </main>
@@ -416,10 +552,10 @@ export default function MedicalAttention() {
             </div>
             <div>
               <h1 className="h4 fw-bold mb-0" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
-                Estación de Consulta Clínica (SOAP)
+                Estacion de Consulta Clinica (SOAP)
               </h1>
               <p className="text-muted small mb-0">
-                Atención en curso para <strong>{pet?.nombre}</strong>
+                Atencion en curso para <strong>{pet?.nombre}</strong>
                 {appointment && ` · Turno #${appointment.id}`} · Registro inmutable
               </p>
             </div>
@@ -452,13 +588,13 @@ export default function MedicalAttention() {
                   <div className="soap-badge-letter badge-s">S</div>
                   <div>
                     <h2 className="h6 fw-bold mb-0 text-dark">Subjetivo (Anamnesis)</h2>
-                    <small className="text-muted">Motivo de consulta, síntomas declarados y tiempo de evolución</small>
+                    <small className="text-muted">Motivo de consulta, sintomas declarados y tiempo de evolucion</small>
                   </div>
                 </div>
 
                 <div className="mb-2">
                   <label htmlFor="subjetivo" className="form-label small fw-semibold text-muted">
-                    Anamnesis clínica / Motivo <span className="text-danger">*</span>
+                    Anamnesis clinica / Motivo <span className="text-danger">*</span>
                   </label>
                   <textarea
                     id="subjetivo"
@@ -587,8 +723,8 @@ export default function MedicalAttention() {
                 <div className="soap-section-header">
                   <div className="soap-badge-letter badge-o">O</div>
                   <div>
-                    <h2 className="h6 fw-bold mb-0 text-dark">Objetivo (Constantes y Examen Físico)</h2>
-                    <small className="text-muted">Parámetros fisiológicos medidos y hallazgos a la inspección</small>
+                    <h2 className="h6 fw-bold mb-0 text-dark">Objetivo (Constantes y Examen Fisico)</h2>
+                    <small className="text-muted">Parametros fisiologicos medidos y hallazgos a la inspeccion</small>
                   </div>
                 </div>
 
@@ -619,7 +755,7 @@ export default function MedicalAttention() {
 
                   <div className="col-sm-4">
                     <label htmlFor="fc" className="form-label small fw-semibold text-muted">
-                      Frec. Cardíaca (lpm)
+                      Frec. Cardiaca (lpm)
                     </label>
                     <div className="input-group input-group-sm">
                       <input
@@ -627,7 +763,7 @@ export default function MedicalAttention() {
                         type="number"
                         min="20"
                         max="300"
-                        placeholder="Frecuencia cardíaca (lpm)"
+                        placeholder="Frecuencia cardiaca (lpm)"
                         className={`form-control rounded-2 ${fieldErrors.frecuenciaCardiaca ? "is-invalid" : ""}`}
                         value={frecuenciaCardiaca}
                         onChange={(e) => {
@@ -666,13 +802,13 @@ export default function MedicalAttention() {
 
                 <div>
                   <label htmlFor="objetivo" className="form-label small fw-semibold text-muted">
-                    Examen Físico / Hallazgos Clínicos <span className="text-danger">*</span>
+                    Examen Fisico / Hallazgos Clinicos <span className="text-danger">*</span>
                   </label>
                   <textarea
                     id="objetivo"
                     rows={3}
                     className={`form-control rounded-2 ${fieldErrors.objetivo ? "is-invalid" : ""}`}
-                    placeholder="Objetivo (Examen físico y hallazgos)"
+                    placeholder="Objetivo (Examen fisico y hallazgos)"
                     value={objetivo}
                     onChange={(e) => {
                       setObjetivo(e.target.value);
@@ -687,20 +823,20 @@ export default function MedicalAttention() {
                 <div className="soap-section-header">
                   <div className="soap-badge-letter badge-a">A</div>
                   <div>
-                    <h2 className="h6 fw-bold mb-0 text-dark">Análisis (Diagnóstico)</h2>
-                    <small className="text-muted">Diagnóstico presuntivo o definitivo y juicio profesional</small>
+                    <h2 className="h6 fw-bold mb-0 text-dark">Analisis (Diagnostico)</h2>
+                    <small className="text-muted">Diagnostico presuntivo o definitivo y juicio profesional</small>
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="analisis" className="form-label small fw-semibold text-muted">
-                    Diagnóstico Clínico <span className="text-danger">*</span>
+                    Diagnostico Clinico <span className="text-danger">*</span>
                   </label>
                   <textarea
                     id="analisis"
                     rows={2}
                     className={`form-control rounded-2 ${fieldErrors.analisis ? "is-invalid" : ""}`}
-                    placeholder="Análisis (Diagnóstico clínico)"
+                    placeholder="Analisis (Diagnostico clinico)"
                     value={analisis}
                     onChange={(e) => {
                       setAnalisis(e.target.value);
@@ -715,20 +851,20 @@ export default function MedicalAttention() {
                 <div className="soap-section-header">
                   <div className="soap-badge-letter badge-p">P</div>
                   <div>
-                    <h2 className="h6 fw-bold mb-0 text-dark">Plan (Tratamiento y Prescripción)</h2>
-                    <small className="text-muted">Indicaciones farmacológicas, posología, estudios solicitados y recomendaciones</small>
+                    <h2 className="h6 fw-bold mb-0 text-dark">Plan (Tratamiento y Prescripcion)</h2>
+                    <small className="text-muted">Indicaciones farmacologicas, posologia, estudios solicitados y recomendaciones</small>
                   </div>
                 </div>
 
                 <div className="mb-3">
                   <label htmlFor="plan" className="form-label small fw-semibold text-muted">
-                    Tratamiento y Medicación Indicada <span className="text-danger">*</span>
+                    Tratamiento y Medicacion Indicada <span className="text-danger">*</span>
                   </label>
                   <textarea
                     id="plan"
                     rows={3}
                     className={`form-control rounded-2 ${fieldErrors.plan ? "is-invalid" : ""}`}
-                    placeholder="Plan (Tratamiento y prescripción)"
+                    placeholder="Plan (Tratamiento y prescripcion)"
                     value={plan}
                     onChange={(e) => {
                       setPlan(e.target.value);
@@ -754,8 +890,186 @@ export default function MedicalAttention() {
               </div>
 
               <div className="soap-section-card">
+                <div className="soap-section-header">
+                  <span
+                    className="soap-badge-letter"
+                    style={{ background: "#EEF2FF", color: "#4F46E5", border: "1px solid #C7D2FE" }}
+                  >
+                    <i className="bi bi-capsule"></i>
+                  </span>
+                  <div>
+                    <h2 className="h5 fw-bold mb-0 text-dark">
+                      Insumos y Farmacia Administrada (Consumo Fraccionado)
+                    </h2>
+                    <p className="text-muted small mb-0">
+                      Debita automaticamente del stock el insumo o medicamento administrado durante la atencion clinica.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-light p-3 rounded-3 mb-3 border">
+                  <div className="row g-2 align-items-end">
+                    <div className="col-12 col-md-4">
+                      <label htmlFor="selectProductoStock" className="form-label small fw-semibold text-muted mb-1">
+                        Medicamento / Insumo
+                      </label>
+                      <select
+                        id="selectProductoStock"
+                        className="form-select form-select-sm"
+                        value={productoSelId}
+                        onChange={(e) => {
+                          setProductoSelId(e.target.value);
+                          setLoteSelId("");
+                          setErrorConsumo(null);
+                        }}
+                      >
+                        <option value="">-- Seleccionar producto --</option>
+                        {productosInventario.map((prod) => (
+                          <option key={prod.id} value={prod.id}>
+                            {prod.nombre} (Disp: {prod.stockActual} {prod.unidadMedida})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-12 col-md-3">
+                      <label htmlFor="selectLoteStock" className="form-label small fw-semibold text-muted mb-1">
+                        Lote y Vencimiento
+                      </label>
+                      <select
+                        id="selectLoteStock"
+                        className="form-select form-select-sm"
+                        value={loteSelId}
+                        onChange={(e) => {
+                          setLoteSelId(e.target.value);
+                          setErrorConsumo(null);
+                        }}
+                        disabled={!productoSelId}
+                      >
+                        <option value="">-- Seleccionar lote --</option>
+                        {lotesDisponibles.map((lote) => (
+                          <option key={lote.id} value={lote.id}>
+                            Lote {lote.numeroLote} ({lote.stockActual} {productoActual?.unidadMedida} - Vence {lote.fechaVencimiento})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-12 col-md-2">
+                      <label htmlFor="inputCantidadConsumo" className="form-label small fw-semibold text-muted mb-1">
+                        Cantidad ({productoActual?.unidadMedida || "unid."})
+                      </label>
+                      <input
+                        id="inputCantidadConsumo"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="Ej: 1.5"
+                        className="form-control form-control-sm"
+                        value={cantidadConsumo}
+                        onChange={(e) => {
+                          setCantidadConsumo(e.target.value);
+                          setErrorConsumo(null);
+                        }}
+                        disabled={!loteSelId}
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-3">
+                      <label htmlFor="inputObservacionesConsumo" className="form-label small fw-semibold text-muted mb-1">
+                        Detalle / Observacion
+                      </label>
+                      <div className="d-flex gap-2">
+                        <input
+                          id="inputObservacionesConsumo"
+                          type="text"
+                          placeholder="Ej: Administrado SC"
+                          className="form-control form-control-sm"
+                          value={observacionesConsumo}
+                          onChange={(e) => setObservacionesConsumo(e.target.value)}
+                          disabled={!loteSelId}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm px-3 text-nowrap"
+                          onClick={handleAgregarConsumo}
+                          disabled={!loteSelId || !cantidadConsumo}
+                          style={{ backgroundColor: "var(--vet-primary, #6D28D9)", borderColor: "var(--vet-primary, #6D28D9)" }}
+                        >
+                          <i className="bi bi-plus-lg me-1"></i> Agregar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {errorConsumo && (
+                    <div className="alert alert-warning py-1 px-2 mt-2 mb-0 small rounded-2">
+                      <i className="bi bi-exclamation-triangle-fill me-1"></i>
+                      {errorConsumo}
+                    </div>
+                  )}
+
+                  {productoActual && lotesDisponibles.length === 0 && (
+                    <div className="alert alert-secondary py-1 px-2 mt-2 mb-0 small rounded-2">
+                      <i className="bi bi-info-circle me-1"></i>
+                      Este producto no cuenta con lotes activos o con stock disponible en este momento.
+                    </div>
+                  )}
+                </div>
+
+                {consumosSeleccionados.length > 0 ? (
+                  <div className="table-responsive">
+                    <table className="table table-sm table-hover align-middle border mb-0 small">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Insumo / Farmaco</th>
+                          <th>Lote / Vencimiento</th>
+                          <th className="text-center">Cantidad Debitada</th>
+                          <th>Observaciones</th>
+                          <th className="text-end">Accion</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {consumosSeleccionados.map((item) => (
+                          <tr key={item.idTemporal}>
+                            <td className="fw-semibold text-dark">{item.productoNombre}</td>
+                            <td>
+                              <span className="badge bg-secondary-subtle text-secondary me-1">
+                                Lote {item.numeroLote}
+                              </span>
+                              <span className="text-muted small">Vence: {item.fechaVencimiento}</span>
+                            </td>
+                            <td className="text-center">
+                              <span className="badge bg-primary-subtle text-primary fw-bold px-2 py-1">
+                                {item.cantidad} {item.unidadMedida}
+                              </span>
+                            </td>
+                            <td className="text-muted">{item.observaciones || "-"}</td>
+                            <td className="text-end">
+                              <button
+                                type="button"
+                                className="btn btn-outline-danger btn-sm py-0 px-2"
+                                title="Eliminar de la atencion"
+                                onClick={() => handleEliminarConsumo(item.idTemporal)}
+                              >
+                                <i className="bi bi-trash3"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-muted small fst-italic mb-0 text-center py-2 border rounded-2 bg-light">
+                    No se han registrado consumos de farmacia para esta consulta (opcional).
+                  </p>
+                )}
+              </div>
+
+              <div className="soap-section-card">
                 <h3 className="h6 fw-bold mb-2 text-dark">Estudios Complementarios & Archivos</h3>
-                <p className="text-muted small mb-3">Adjuntar análisis de laboratorio, RX o ecografías a esta consulta</p>
+                <p className="text-muted small mb-3">Adjuntar analisis de laboratorio, RX o ecografias a esta consulta</p>
                 <FileUploadZone
                   files={attachedFiles}
                   onFilesAdded={(newFiles) => setAttachedFiles((prev) => [...prev, ...newFiles])}

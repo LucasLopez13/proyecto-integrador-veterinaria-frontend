@@ -13,11 +13,24 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const extractRoleName = (u: any): string => {
+  if (!u) return "cliente";
+  if (typeof u.rol === "object" && u.rol?.nombre) {
+    return String(u.rol.nombre).toLowerCase().trim();
+  }
+  if (typeof u.role === "object" && u.role?.nombre) {
+    return String(u.role.nombre).toLowerCase().trim();
+  }
+  return String(u.role || u.rol || "cliente").toLowerCase().trim();
+};
+
 const normalizeUser = (u: any): User => {
+  const normalizedRole = extractRoleName(u) as any;
   return {
     ...u,
     name: u.name || `${u.nombre || ""} ${u.apellido || ""}`.trim(),
-    role: u.role || u.rol || "cliente",
+    role: normalizedRole,
+    rol: normalizedRole,
   };
 };
 

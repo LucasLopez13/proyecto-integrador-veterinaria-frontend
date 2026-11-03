@@ -100,6 +100,8 @@ function NewAppointment() {
 
     if (!motivo.trim()) {
       newErrors.motivo = "Completá este campo con el motivo de la consulta";
+    } else if (motivo.trim().length < 3) {
+        newErrors.motivo = "El motivo debe tener al menos 3 caracteres";
     }
 
     if (Object.keys(newErrors).length > 0) {

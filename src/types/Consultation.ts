@@ -65,6 +65,12 @@ export interface CreateConsultationDTO {
   observaciones?: string | null;
   mascotaId: number;
   turnoId?: number | null;
+  consumosStock?: {
+    productoId: number;
+    loteId: number;
+    cantidad: number;
+    observaciones?: string;
+  }[];
 }
 
 export interface UpdateConsultationDTO {

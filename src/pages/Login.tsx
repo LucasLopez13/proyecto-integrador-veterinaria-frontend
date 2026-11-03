@@ -31,13 +31,13 @@ function Login() {
     const newErrors: Record<string, string> = {};
 
     if (!email.trim()) {
-      newErrors.email = "Completá este campo con tu correo electrónico";
+      newErrors.email = "Completa este campo con tu correo electronico";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      newErrors.email = "Ingresá un formato de correo electrónico válido";
+      newErrors.email = "Ingresa un formato de correo electronico valido";
     }
 
     if (!password) {
-      newErrors.password = "Completá este campo con tu contraseña";
+      newErrors.password = "Completa este campo con tu contrasena";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -57,14 +57,20 @@ function Login() {
       const data = await authService.login({ email, password });
       login(data.user, data.token);
 
-      const userRole = data.user.rol || data.user.role;
-      if (userRole === "profesional") {
+      const rawUser = data.user as any;
+      const userRole = (
+        typeof rawUser?.rol === "object" && rawUser?.rol?.nombre
+          ? rawUser.rol.nombre
+          : rawUser?.role || rawUser?.rol || ""
+      ).toLowerCase().trim();
+
+      if (userRole === "profesional" || userRole === "admin") {
         navigate("/profesional/turnos");
       } else {
         navigate("/mascotas");
       }
     } catch (err: any) {
-      setError(err.message || "Error al iniciar sesión. Verifique sus credenciales.");
+      setError(err.message || "Error al iniciar sesion. Verifique sus credenciales.");
     } finally {
       setLoading(false);
     }
@@ -78,7 +84,7 @@ function Login() {
             <i className="bi bi-shield-plus fs-2"></i>
           </div>
           <h1 className="auth-title mb-1">Portal Veterinario</h1>
-          <p className="auth-subtitle mb-0">Gestión clínica y turnos</p>
+          <p className="auth-subtitle mb-0">Gestion clinica y turnos</p>
         </div>
 
         {error && (
@@ -90,13 +96,13 @@ function Login() {
         <form onSubmit={handleSubmit} noValidate>
           <div className="mb-3">
             <label htmlFor="email" className="form-label">
-              Correo electrónico
+              Correo electronico
             </label>
             <input
               type="email"
               id="email"
               className={`form-control rounded-2 ${fieldErrors.email ? "is-invalid" : ""}`}
-              placeholder="Correo Electrónico"
+              placeholder="Correo Electronico"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -109,14 +115,14 @@ function Login() {
           <div className="mb-4">
             <div className="d-flex justify-content-between align-items-center mb-1">
               <label htmlFor="password" className="form-label mb-0">
-                Contraseña
+                Contrasena
               </label>
             </div>
             <input
               type="password"
               id="password"
               className={`form-control rounded-2 ${fieldErrors.password ? "is-invalid" : ""}`}
-              placeholder="Contraseña"
+              placeholder="Contrasena"
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -136,7 +142,7 @@ function Login() {
         </form>
 
         <div className="text-center mt-4 pt-2 border-top border-light-subtle">
-          <span className="auth-footer-text">¿No tenés una cuenta? </span>
+          <span className="auth-footer-text">No tenes una cuenta? </span>
           <Link to="/registro" className="auth-link">
             Crear cuenta
           </Link>

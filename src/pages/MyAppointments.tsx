@@ -337,7 +337,6 @@ function MyAppointments() {
 
                     </div>
 
-                    {/* Sección de pagos */}
                     <div className="mt-3 pt-3 border-top border-light-subtle">
                       <h4 className="small fw-bold mb-2">
                         <i className="bi bi-credit-card me-2"></i>

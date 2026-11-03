@@ -2,21 +2,21 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Pets from "./pages/Pets";
+import NewPet from "./pages/NewPet";
 import NewAppointment from "./pages/NewAppointment";
 import ProfessionalAppointments from "./pages/ProfessionalAppointments";
 import PetDetails from "./pages/PetDetails";
 import MedicalAttention from "./pages/MedicalAttention";
 import TriageBoard from "./pages/TriageBoard";
-import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import MyAppointments from "./pages/MyAppointments";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import PaymentManagement from "./pages/PaymentManagement";
 import PublicVaccinationCard from "./pages/PublicVaccinationCard";
 import AlertasStock from "./pages/AlertasStock";
-import ProfessionalRoute from "./components/ProfessionalRoute";
 import MyRecipes from "./pages/MyRecipes";
 import BillingManagement from "./pages/BillingManagement";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -37,99 +37,156 @@ function App() {
         <Route
           path="/mascotas"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["cliente"]}
+              redirectTo="/profesional/turnos"
+            >
               <Pets />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mascotas/nueva"
+          element={
+            <RoleProtectedRoute
+              allowedRoles={["cliente"]}
+              redirectTo="/profesional/turnos"
+            >
+              <NewPet />
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/profesional/alertas-stock"
           element={
-            <ProfessionalRoute>
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin"]}
+              redirectTo="/mascotas"
+            >
               <AlertasStock />
-            </ProfessionalRoute>
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/mascotas/:id"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["cliente"]}
+              redirectTo="/profesional/turnos"
+            >
               <PetDetails />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/turnos/nuevo"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["cliente"]}
+              redirectTo="/profesional/turnos"
+            >
               <NewAppointment />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/mis-turnos"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["cliente"]}
+              redirectTo="/profesional/turnos"
+            >
               <MyAppointments />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/recetas"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["cliente"]}
+              redirectTo="/profesional/turnos"
+            >
               <MyRecipes />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/profesional/turnos"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin"]}
+              redirectTo="/mascotas"
+            >
               <ProfessionalAppointments />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/profesional/atencion"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin"]}
+              redirectTo="/mascotas"
+            >
               <MedicalAttention />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profesional/mascotas/nueva"
+          element={
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin"]}
+              redirectTo="/mascotas"
+            >
+              <NewPet />
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/profesional/mascotas/:id"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin"]}
+              redirectTo="/mascotas"
+            >
               <PetDetails />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/profesional/triage"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin"]}
+              redirectTo="/mascotas"
+            >
               <TriageBoard />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
 
         <Route
           path="/triage"
           element={
-            <ProtectedRoute>
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin"]}
+              redirectTo="/mascotas"
+            >
               <TriageBoard />
-            </ProtectedRoute>
+            </RoleProtectedRoute>
           }
         />
 
@@ -137,7 +194,8 @@ function App() {
           path="/profesional/pagos"
           element={
             <RoleProtectedRoute
-              allowedRoles={["profesional", "veterinario", "admin"]}
+              allowedRoles={["profesional", "admin"]}
+              redirectTo="/mascotas"
             >
               <PaymentManagement />
             </RoleProtectedRoute>
@@ -152,10 +210,10 @@ function App() {
             </RoleProtectedRoute>
           }
         />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
 }
 
 export default App;
-

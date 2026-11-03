@@ -1,4 +1,5 @@
 import type { Pet } from "./Pet";
+import type { Payment } from "./Payment";
 
 export type AppointmentStatus =
   | "pendiente"
@@ -22,6 +23,7 @@ export interface Appointment {
     email: string;
     telefono?: string;
   };
+  pagos?: Payment[];
 }
 
 export interface PaginatedAppointments {
