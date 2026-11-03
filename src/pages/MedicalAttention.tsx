@@ -17,7 +17,9 @@ import { ConsultationPatientSidebar } from "../components/consultations/Consulta
 import { inventarioService } from "../services/inventarioService";
 import type { ProductoConLotes } from "../types/Inventario";
 import "../styles/MedicalAttention.css";
-
+import PrescriptionForm from "../components/consultations/PrescriptionForm";
+import type { Prescripcion } from "../types/Prescripcion";
+import PrescriptionCard from "../components/consultations/PrescriptionCard";
 interface ServicioFacturacion {
   id: number;
   nombre: string;
@@ -65,6 +67,8 @@ export default function MedicalAttention() {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const isSubmittingRef = useRef<boolean>(false);
+  const [consultaGuardadaId, setConsultaGuardadaId] = useState<number | null>(null);
+  const [etapaAtencion, setEtapaAtencion] = useState<"soap" | "prescripciones">("soap");
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -99,7 +103,20 @@ export default function MedicalAttention() {
   const [cantidadConsumo, setCantidadConsumo] = useState<string>("");
   const [observacionesConsumo, setObservacionesConsumo] = useState<string>("");
   const [errorConsumo, setErrorConsumo] = useState<string | null>(null);
+  const [mostrarFormularioPrescripcion, setMostrarFormularioPrescripcion] =useState(false);
+  const [prescripcionesCreadas, setPrescripcionesCreadas] =useState<Prescripcion[]>([]);
+  const [formularioPrescripcionKey, setFormularioPrescripcionKey] =useState(0);
+  const [guardandoPrescripcion, setGuardandoPrescripcion] =useState(false);
 
+  const handlePrescripcionConfirmada = (prescripcionActualizada: Prescripcion) => {
+    setPrescripcionesCreadas((prev) =>
+      prev.map((prescripcion) =>
+        prescripcion.id === prescripcionActualizada.id
+          ? prescripcionActualizada
+          : prescripcion
+      )
+    );
+  };
   const clearFieldError = (field: string) => {
     setFieldErrors((prev) => {
       if (!prev[field]) return prev;
@@ -323,6 +340,12 @@ export default function MedicalAttention() {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (consultaGuardadaId !== null) {
+      handleError(
+        "La consulta SOAP ya fue registrada. No es necesario volver a guardarla."
+      );
+      return;
+    }
 
     if (saving || isSubmittingRef.current) {
       return;
@@ -441,7 +464,7 @@ export default function MedicalAttention() {
       if (!consultaId) {
         throw new Error("La consulta se guardó, pero no se recibió su identificador.");
       }
-
+      setConsultaGuardadaId(consultaId);
       for (const concepto of conceptosSeleccionados) {
         await apiFetch(`/facturacion/consultas/${consultaId}/conceptos`, {
           method: "POST",
@@ -471,15 +494,12 @@ export default function MedicalAttention() {
         localStorage.removeItem(`soap_draft_${mascotaIdParam}`);
       }
 
-      setSuccessMsg("Consulta finalizada correctamente. Registro clinico y deduccion de stock completados.");
+      setSuccessMsg("Consulta SOAP guardada correctamente. Ahora podés generar prescripciones.");
 
-      setTimeout(() => {
-        if (turnoIdParam) {
-          navigate("/profesional/turnos");
-        } else {
-          navigate(`/profesional/mascotas/${pet.id}`);
-        }
-      }, TIMERS.REDIRECT_DELAY_MS);
+      setEtapaAtencion("prescripciones");
+      setSaving(false);
+      isSubmittingRef.current = false;
+
     } catch (err: any) {
       isSubmittingRef.current = false;
       setSaving(false);
@@ -506,7 +526,103 @@ export default function MedicalAttention() {
     setSuccessMsg("Borrador guardado localmente en esta estacion de trabajo.");
     setTimeout(() => setSuccessMsg(null), 3000);
   };
+  if (etapaAtencion === "prescripciones" && consultaGuardadaId !== null) {
+    return (
+      <main className="medical-attention-page">
+        <div className="container py-5">
+          <div className="soap-section-card">
+            <div className="mb-4">
+              <h2 className="h4 fw-bold">
+                Prescripciones médicas
+              </h2>
+              <p className="text-muted">
+                La consulta SOAP fue registrada correctamente.
+                Ahora podés generar las prescripciones correspondientes.
+              </p>
+            </div>
 
+            <div className="alert alert-success">
+              <strong>Consulta registrada:</strong> #{consultaGuardadaId}
+              <br />
+              <strong>Paciente:</strong> {pet?.nombre}
+              <br />
+              <strong>Peso:</strong> {peso} kg
+            </div>
+
+            <div className="d-flex gap-3 flex-wrap">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setFormularioPrescripcionKey((prev) => prev + 1);
+                  setMostrarFormularioPrescripcion(true);
+                }}
+                disabled={mostrarFormularioPrescripcion}
+              >
+                <i className="bi bi-plus-circle me-2"></i>
+                Nueva prescripción
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => {
+                  if (turnoIdParam) {
+                    navigate("/profesional/turnos");
+                  } else {
+                    navigate(`/profesional/mascotas/${pet?.id}`);
+                  }
+                }}
+              >
+                Finalizar atención
+              </button>
+            </div>
+            {mostrarFormularioPrescripcion && (
+              <div className="mt-4">
+               <div className="d-flex justify-content-end mb-3">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => setMostrarFormularioPrescripcion(false)}
+                    disabled={guardandoPrescripcion}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              <PrescriptionForm
+                  key={formularioPrescripcionKey}
+                  consultaId={consultaGuardadaId}
+                  token={token}
+                  onSavingChange={setGuardandoPrescripcion}
+                  onPrescripcionCreada={(prescripcion) => {
+                    setPrescripcionesCreadas((prev) => [
+                      ...prev,
+                      prescripcion,
+                    ]);
+                    setMostrarFormularioPrescripcion(false);
+                  }}
+                />
+              </div>
+            )}
+            {prescripcionesCreadas.length > 0 && (
+            <div className="mt-4">
+              <h4 className="h6 fw-bold">
+                Prescripciones registradas en esta atención
+              </h4>
+              {prescripcionesCreadas.map((prescripcion) => (
+                <PrescriptionCard
+                  key={prescripcion.id}
+                  prescripcion={prescripcion}
+                  token={token}
+                  onConfirmada={handlePrescripcionConfirmada}
+                />
+              ))}
+            </div>
+          )}
+          </div>
+        </div>
+      </main>
+    );
+  }
   if (loading) {
     return (
       <main className="medical-attention-page">
@@ -1103,10 +1219,10 @@ export default function MedicalAttention() {
                   {saving ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                      Finalizando...
+                       Guardando consulta...
                     </>
                   ) : (
-                    "Finalizar Consulta"
+                    "Guardar SOAP y continuar"
                   )}
                 </button>
               </div>
