@@ -15,6 +15,7 @@ import PaymentManagement from "./pages/PaymentManagement";
 import PublicVaccinationCard from "./pages/PublicVaccinationCard";
 import AlertasStock from "./pages/AlertasStock";
 import MyRecipes from "./pages/MyRecipes";
+import BillingManagement from "./pages/BillingManagement";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -201,6 +202,14 @@ function App() {
           }
         />
 
+        <Route
+          path="/facturacion/ordenes"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin", "recepcion"]}>
+              <BillingManagement />
+            </RoleProtectedRoute>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
