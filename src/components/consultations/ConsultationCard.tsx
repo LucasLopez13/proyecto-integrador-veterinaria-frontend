@@ -1,6 +1,6 @@
 import React from "react";
 import type { Consultation } from "../../types/Consultation";
-
+import ConsultationPrescriptions from "./ConsultationPrescriptions";
 interface ConsultationCardProps {
   consulta: Consultation;
   isProfessional: boolean;
@@ -98,19 +98,8 @@ export const ConsultationCard: React.FC<ConsultationCardProps> = ({
         </div>
       )}
 
-      {c.prescripciones && c.prescripciones.length > 0 && (
-        <div className="mt-3 pt-2 border-top border-light-subtle">
-          <small className="text-muted fw-bold d-block mb-2">
-            <i className="bi bi-capsule me-1 text-purple"></i> Medicamentos Prescriptos:
-          </small>
-          <div className="d-flex flex-wrap gap-2">
-            {c.prescripciones.map((p, idx) => (
-              <span key={idx} className="badge bg-purple-subtle rounded-2 p-2 text-start">
-                <strong>{p.medicamento}</strong> - {p.dosis} ({p.frecuencia})
-              </span>
-            ))}
-          </div>
-        </div>
+      {c.id != null && (
+        <ConsultationPrescriptions consultaId={c.id} />
       )}
 
       <div className="d-flex justify-content-end gap-2 mt-3 pt-2 border-top border-light-subtle flex-wrap">
