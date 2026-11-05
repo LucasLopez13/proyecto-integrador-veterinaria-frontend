@@ -184,17 +184,19 @@ export default function MedicalAttention() {
 
         if (!motivoInicial) {
           try {
-            const triages = await apiFetch<any[]>("/triage");
+            const triages = await apiFetch<any[]>("/triage/kanban");
             if (Array.isArray(triages)) {
               const idMascotaNum = Number(mascotaIdParam);
               const triageActivo = triages.find(
-                (tr) =>
-                  Number(tr.mascotaId) === idMascotaNum &&
-                  (tr.estado === "en_atencion" || tr.estado === "en_espera")
+                (tr) => Number(tr.mascotaId) === idMascotaNum
               );
-              if (triageActivo?.sintomas) {
-                motivoTexto = String(triageActivo.sintomas).trim();
-                motivoInicial = `Motivo de consulta declarado: ${motivoTexto}\n\n`;
+              const textoMotivoTriage = triageActivo?.motivo || triageActivo?.sintomas;
+              if (textoMotivoTriage) {
+                motivoTexto = String(textoMotivoTriage).trim();
+                const notasExtra = triageActivo?.notas
+                  ? `\nObservaciones de Triage: ${String(triageActivo.notas).trim()}`
+                  : "";
+                motivoInicial = `Motivo de consulta declarado: ${motivoTexto}${notasExtra}\n\n`;
               }
             }
           } catch { }

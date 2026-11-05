@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authService } from "../services/authService";
 import type { UserRole } from "../types/User";
@@ -27,8 +27,25 @@ function Register() {
     });
   };
 
-  const { login } = useAuth();
+  const { login, user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  if (!isLoading && isAuthenticated && user) {
+    const activeRole = (
+      typeof user.rol === "object" && (user.rol as any)?.nombre
+        ? (user.rol as any).nombre
+        : user.role || user.rol || ""
+    )
+      .toLowerCase()
+      .trim();
+
+    const homePath =
+      activeRole === "profesional" || activeRole === "admin" || activeRole === "recepcion"
+        ? "/profesional/turnos"
+        : "/mascotas";
+
+    return <Navigate to={homePath} replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

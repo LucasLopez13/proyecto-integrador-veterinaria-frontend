@@ -16,6 +16,7 @@ import PublicVaccinationCard from "./pages/PublicVaccinationCard";
 import AlertasStock from "./pages/AlertasStock";
 import MyRecipes from "./pages/MyRecipes";
 import BillingManagement from "./pages/BillingManagement";
+import ProfessionalPatients from "./pages/ProfessionalPatients";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -122,10 +123,22 @@ function App() {
           path="/profesional/turnos"
           element={
             <RoleProtectedRoute
-              allowedRoles={["profesional", "admin"]}
+              allowedRoles={["profesional", "admin", "recepcion"]}
               redirectTo="/mascotas"
             >
               <ProfessionalAppointments />
+            </RoleProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profesional/pacientes"
+          element={
+            <RoleProtectedRoute
+              allowedRoles={["profesional", "admin", "recepcion"]}
+              redirectTo="/mascotas"
+            >
+              <ProfessionalPatients />
             </RoleProtectedRoute>
           }
         />

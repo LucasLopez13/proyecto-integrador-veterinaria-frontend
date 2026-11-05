@@ -55,7 +55,7 @@ export const TriageCard: React.FC<TriageCardProps> = ({
           </div>
         </div>
 
-        {item.mascotaId ? (
+        {item.turnoId || item.columna === "CONSULTA_PROGRAMADA" ? (
           <span
             className="badge rounded-1 fw-medium"
             style={{
@@ -65,7 +65,7 @@ export const TriageCard: React.FC<TriageCardProps> = ({
               fontSize: "0.7rem",
             }}
           >
-            Registrado
+            Con Turno
           </span>
         ) : (
           <span
