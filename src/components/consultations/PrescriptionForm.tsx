@@ -23,6 +23,7 @@ export default function PrescriptionForm({
   const [unidadConcentracion, setUnidadConcentracion] = useState("mg/ml");
   const [dosisIndicada, setDosisIndicada] = useState("");
   const [unidadDosis, setUnidadDosis] = useState("mg/kg");
+  const [unidadAdministracion, setUnidadAdministracion] = useState("ml");
   const [frecuenciaHoras, setFrecuenciaHoras] = useState("");
   const [duracionDias, setDuracionDias] = useState("");
   const [indicaciones, setIndicaciones] = useState("");
@@ -44,8 +45,15 @@ export default function PrescriptionForm({
       : null;
   const previewVolumenMl =
     previewDosisTotal !== null &&
-    Number.isFinite(concentracionNum) &&
-    concentracionNum > 0
+      Number.isFinite(concentracionNum) &&
+      concentracionNum > 0
+      ? Number((previewDosisTotal / concentracionNum).toFixed(2))
+      : null;
+
+  const previewComprimidos =
+    previewDosisTotal !== null &&
+      unidadConcentracion === "mg/comprimido" &&
+      concentracionNum > 0
       ? Number((previewDosisTotal / concentracionNum).toFixed(2))
       : null;
 
@@ -114,14 +122,19 @@ export default function PrescriptionForm({
       unidadConcentracion,
       dosisIndicada: dosisNum,
       unidadDosis,
+      unidadAdministracion,
       frecuenciaHoras: frecuenciaNum,
       duracionDias: duracionNum,
       indicaciones: indicaciones.trim() || null,
     };
 
     const resumenCalculo =
-      previewDosisTotal !== null && previewVolumenMl !== null
-        ? ` (Dosis calculada: ${previewDosisTotal} mg / ${previewVolumenMl} ml por toma)`
+      previewDosisTotal !== null
+        ? unidadAdministracion === "ml" && previewVolumenMl !== null
+          ? ` (Dosis calculada: ${previewDosisTotal} mg / ${previewVolumenMl} ml por toma)`
+          : previewComprimidos !== null
+            ? ` (Dosis calculada: ${previewDosisTotal} mg / ${previewComprimidos} comprimidos por toma)`
+            : ""
         : "";
 
     setFeedbackModal({
@@ -214,10 +227,17 @@ export default function PrescriptionForm({
             <select
               className="form-select rounded-2"
               value={unidadConcentracion}
-              onChange={(e) => setUnidadConcentracion(e.target.value)}
+              onChange={(e) => {
+                const nuevaUnidad = e.target.value;
+                setUnidadConcentracion(nuevaUnidad);
+                setUnidadAdministracion(
+                  nuevaUnidad === "mg/comprimido" ? "comprimidos" : "ml"
+                );
+              }}
               disabled={saving || !!prescripcionCreada}
             >
               <option value="mg/ml">mg/ml</option>
+              <option value="mg/comprimido">mg/comprimido</option>
             </select>
           </div>
 
@@ -249,6 +269,21 @@ export default function PrescriptionForm({
               disabled={saving || !!prescripcionCreada}
             >
               <option value="mg/kg">mg/kg</option>
+            </select>
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label small fw-semibold text-muted">
+              Unidad de administración
+            </label>
+            <select
+              className="form-select rounded-2"
+              value={unidadAdministracion}
+              onChange={(e) => setUnidadAdministracion(e.target.value)}
+              disabled={saving || !!prescripcionCreada}
+            >
+              <option value="ml">ML</option>
+              <option value="comprimidos">Comprimidos</option>
             </select>
           </div>
 
@@ -286,7 +321,7 @@ export default function PrescriptionForm({
             />
           </div>
 
-          {previewDosisTotal !== null && previewVolumenMl !== null && (
+          {previewDosisTotal !== null && (
             <div className="col-12">
               <div
                 className="rounded-2 p-3 d-flex flex-wrap justify-content-between align-items-center gap-3"
@@ -318,9 +353,16 @@ export default function PrescriptionForm({
                     </strong>
                   </div>
                   <div className="text-end">
-                    <span className="text-muted small d-block">Volumen a administrar</span>
+                    <span className="text-muted small d-block">
+                      {unidadAdministracion === "ml"
+                        ? "Volumen a administrar"
+                        : "Cantidad a administrar"}
+                    </span>
+
                     <strong style={{ color: "var(--vet-primary, #6D28D9)" }}>
-                      {previewVolumenMl} ml
+                      {unidadAdministracion === "ml"
+                        ? `${previewVolumenMl ?? "-"} ml`
+                        : `${previewComprimidos ?? "-"} comprimidos`}
                     </strong>
                   </div>
                 </div>

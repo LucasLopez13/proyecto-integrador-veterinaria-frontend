@@ -45,7 +45,7 @@ function NewPet() {
     if (edad.trim()) {
       const edadNum = Number(edad);
       if (isNaN(edadNum) || edadNum < 0 || edadNum > 40) {
-        newErrors.edad = "Ingresa una edad valida (entre 0 y 40 anos)";
+        newErrors.edad = "Ingresa una edad valida (entre 0 y 40 años)";
       }
     }
 
