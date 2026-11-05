@@ -171,7 +171,7 @@ function NewPet() {
 
               <div className="col-md-6">
                 <label htmlFor="age" className="form-label">
-                  Edad (anos)
+                  Edad
                 </label>
                 <input
                   type="number"
@@ -179,7 +179,7 @@ function NewPet() {
                   className={`form-control rounded-2 ${fieldErrors.edad ? "is-invalid" : ""}`}
                   min="0"
                   max="40"
-                  placeholder="Edad en anos"
+                  placeholder="Edad"
                   value={edad}
                   onChange={(e) => {
                     setEdad(e.target.value);
