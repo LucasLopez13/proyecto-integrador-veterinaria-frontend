@@ -98,6 +98,7 @@ export default function MedicalAttention() {
 
   const [productosInventario, setProductosInventario] = useState<ProductoConLotes[]>([]);
   const [consumosSeleccionados, setConsumosSeleccionados] = useState<ItemConsumoClinico[]>([]);
+  const [loteAbierto, setLoteAbierto] = useState<string | null>(null);
   const [productoSelId, setProductoSelId] = useState<string>("");
   const [loteSelId, setLoteSelId] = useState<string>("");
   const [cantidadConsumo, setCantidadConsumo] = useState<string>("");
@@ -160,8 +161,8 @@ export default function MedicalAttention() {
             const listaTurnos = Array.isArray(turnosRes)
               ? turnosRes
               : Array.isArray(turnosRes?.data)
-              ? turnosRes.data
-              : [];
+                ? turnosRes.data
+                : [];
             const idMascotaNum = Number(mascotaIdParam);
             foundApp =
               listaTurnos.find(
@@ -330,9 +331,9 @@ export default function MedicalAttention() {
               return prev.map((item, idx) =>
                 idx === idxExistente
                   ? {
-                      ...item,
-                      cantidad: Number((item.cantidad + cantidad).toFixed(2)),
-                    }
+                    ...item,
+                    cantidad: Number((item.cantidad + cantidad).toFixed(2)),
+                  }
                   : item
               );
             }
@@ -797,7 +798,7 @@ export default function MedicalAttention() {
               appointment={appointment}
               peso={peso}
               onPesoChange={setPeso}
-              onClearPesoError={() => {}}
+              onClearPesoError={() => { }}
             />
 
             <div className="col-12 col-lg-8">
@@ -1060,7 +1061,7 @@ export default function MedicalAttention() {
                 </div>
               </div>
 
-              
+
 
               <div className="soap-section-card">
                 <div className="soap-section-header">
@@ -1512,33 +1513,116 @@ export default function MedicalAttention() {
                         </tr>
                       </thead>
                       <tbody>
-                        {consumosSeleccionados.map((item) => (
-                          <tr key={item.idTemporal}>
-                            <td className="fw-semibold text-dark">{item.productoNombre}</td>
-                            <td>
-                              <span className="badge bg-secondary-subtle text-secondary me-1">
-                                Lote {item.numeroLote}
-                              </span>
-                              <span className="text-muted small">Vence: {item.fechaVencimiento}</span>
-                            </td>
-                            <td className="text-center">
-                              <span className="badge bg-primary-subtle text-primary fw-bold px-2 py-1">
-                                {item.cantidad} {item.unidadMedida}
-                              </span>
-                            </td>
-                            <td className="text-muted">{item.observaciones || "-"}</td>
-                            <td className="text-end">
-                              <button
-                                type="button"
-                                className="btn btn-outline-danger btn-sm py-0 px-2"
-                                title="Eliminar de la atencion"
-                                onClick={() => handleEliminarConsumo(item.idTemporal)}
+                        {consumosSeleccionados.map((item) => {
+                          const abierto = loteAbierto === item.idTemporal;
+
+                          return (
+                            <>
+                              <tr
+                                key={item.idTemporal}
+                                onClick={() =>
+                                  setLoteAbierto(abierto ? null : item.idTemporal)
+                                }
+                                style={{
+                                  borderBottom: abierto ? "none" : "1px solid #F1F5F9",
+                                  cursor: "pointer",
+                                }}
                               >
-                                <i className="bi bi-trash3"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                                <td className="fw-semibold text-dark">
+                                  {item.productoNombre}
+                                </td>
+
+                                <td>
+                                  <span className="badge bg-secondary-subtle text-secondary me-1">
+                                    Lote {item.numeroLote}
+                                  </span>
+                                  <span className="text-muted small">
+                                    Vence: {item.fechaVencimiento}
+                                  </span>
+                                </td>
+
+                                <td className="text-center">
+                                  <span className="badge bg-primary-subtle text-primary fw-bold px-2 py-1">
+                                    {item.cantidad} {item.unidadMedida}
+                                  </span>
+                                </td>
+
+                                <td className="text-muted">
+                                  {item.observaciones || "-"}
+                                </td>
+
+                                <td className="text-end">
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline-danger btn-sm py-0 px-2"
+                                    title="Eliminar de la atencion"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEliminarConsumo(item.idTemporal);
+                                    }}
+                                  >
+                                    <i className="bi bi-trash3"></i>
+                                  </button>
+                                </td>
+                              </tr>
+
+                              {abierto && (
+                                <tr key={`${item.idTemporal}-detalle`}>
+                                  <td colSpan={5} className="bg-light border-0">
+                                    <div className="p-3">
+                                      <div className="row g-3">
+                                        <div className="col-md-4">
+                                          <div className="text-muted small">
+                                            Número de lote
+                                          </div>
+                                          <div className="fw-semibold">
+                                            Lote {item.numeroLote}
+                                          </div>
+                                        </div>
+
+                                        <div className="col-md-4">
+                                          <div className="text-muted small">
+                                            Fecha de vencimiento
+                                          </div>
+                                          <div className="fw-semibold">
+                                            {item.fechaVencimiento}
+                                          </div>
+                                        </div>
+
+                                        <div className="col-md-4">
+                                          <div className="text-muted small">
+                                            Stock disponible del lote
+                                          </div>
+                                          <div className="fw-semibold">
+                                            {item.stockDisponibleLote} {item.unidadMedida}
+                                          </div>
+                                        </div>
+
+                                        <div className="col-md-4">
+                                          <div className="text-muted small">
+                                            Cantidad debitada
+                                          </div>
+                                          <div className="fw-semibold">
+                                            {item.cantidad} {item.unidadMedida}
+                                          </div>
+                                        </div>
+
+                                        <div className="col-md-8">
+                                          <div className="text-muted small">
+                                            Observaciones
+                                          </div>
+                                          <div className="fw-semibold">
+                                            {item.observaciones || "-"}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1585,7 +1669,7 @@ export default function MedicalAttention() {
                   {saving ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                       Guardando consulta...
+                      Guardando consulta...
                     </>
                   ) : (
                     "Guardar SOAP y continuar"

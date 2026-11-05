@@ -139,9 +139,8 @@ function MyAppointments() {
       setPaymentLoading(true);
 
       const concepto = opts.ordenId
-        ? `Pago de orden de facturacion #${opts.ordenId}${
-            opts.turnoId ? ` (Turno #${opts.turnoId})` : ""
-          }`
+        ? `Pago de orden de facturacion #${opts.ordenId}${opts.turnoId ? ` (Turno #${opts.turnoId})` : ""
+        }`
         : `Pago de turno #${opts.turnoId}`;
 
       await paymentService.createPayment({
@@ -234,6 +233,13 @@ function MyAppointments() {
 
     if (!nuevaFecha) {
       setRescheduleError("Selecciona una nueva fecha y hora para reprogramar el turno.");
+      return;
+    }
+
+    const hora = nuevaFecha.split("T")[1]?.slice(0, 5);
+
+    if (!hora || hora < "08:00" || hora > "20:00") {
+      setRescheduleError("El horario de reprogramación debe ser entre las 08:00 y las 20:00.");
       return;
     }
 
@@ -346,14 +352,14 @@ function MyAppointments() {
                             orden.estado === "pagada"
                               ? "#ECFDF5"
                               : orden.estado === "anulada"
-                              ? "#FEF2F2"
-                              : "#FFFBEB",
+                                ? "#FEF2F2"
+                                : "#FFFBEB",
                           color:
                             orden.estado === "pagada"
                               ? "#059669"
                               : orden.estado === "anulada"
-                              ? "#DC2626"
-                              : "#D97706",
+                                ? "#DC2626"
+                                : "#D97706",
                         }}
                       >
                         {orden.estado}
@@ -622,14 +628,14 @@ function MyAppointments() {
                                 ordenVinculada.estado === "pagada"
                                   ? "#ECFDF5"
                                   : ordenVinculada.estado === "anulada"
-                                  ? "#FEF2F2"
-                                  : "#FFFBEB",
+                                    ? "#FEF2F2"
+                                    : "#FFFBEB",
                               color:
                                 ordenVinculada.estado === "pagada"
                                   ? "#059669"
                                   : ordenVinculada.estado === "anulada"
-                                  ? "#DC2626"
-                                  : "#D97706",
+                                    ? "#DC2626"
+                                    : "#D97706",
                             }}
                           >
                             Factura {ordenVinculada.estado}

@@ -4,6 +4,7 @@ export interface CreatePrescripcionDTO {
   unidadConcentracion: string;
   dosisIndicada: number;
   unidadDosis: string;
+  unidadAdministracion: string;
   frecuenciaHoras: number;
   duracionDias: number;
   indicaciones?: string | null;

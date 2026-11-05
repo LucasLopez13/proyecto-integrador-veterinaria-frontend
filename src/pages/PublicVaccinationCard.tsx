@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { API_CONFIG } from "../constants";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { EmptyState } from "../components/common/EmptyState";
+import React from "react";
 
 interface Vacuna {
   nombre: string;
@@ -43,6 +44,7 @@ export default function PublicVaccinationCard() {
   const [carnet, setCarnet] = useState<CarnetData | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [vacunaAbierta, setVacunaAbierta] = useState<number | null>(null);
 
   useEffect(() => {
     let activo = true;
@@ -97,7 +99,7 @@ export default function PublicVaccinationCard() {
   return (
     <main className="min-vh-100 py-5" style={{ backgroundColor: "var(--app-canvas, #FAF9FC)" }}>
       <div className="container" style={{ maxWidth: "800px" }}>
-        
+
         <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
           <div className="d-flex align-items-center gap-3">
             <div
@@ -122,14 +124,6 @@ export default function PublicVaccinationCard() {
               </p>
             </div>
           </div>
-
-          <Link
-            to="/login"
-            className="btn btn-light rounded-2 border-subtle d-inline-flex align-items-center gap-2 text-decoration-none shadow-sm"
-            style={{ fontSize: "0.875rem" }}
-          >
-            <i className="bi bi-box-arrow-in-right"></i> Acceso VetCare
-          </Link>
         </div>
 
         {cargando && (
@@ -272,42 +266,118 @@ export default function PublicVaccinationCard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {carnet.vacunas.map((vacuna, index) => (
-                          <tr key={`${vacuna.nombre}-${vacuna.fechaAplicacion}-${index}`} style={{ borderBottom: "1px solid #F1F5F9" }}>
-                            <td className="py-3 px-4">
-                              <div className="d-flex align-items-center gap-2">
-                                <div
-                                  className="d-flex align-items-center justify-content-center rounded-2"
-                                  style={{
-                                    width: "32px",
-                                    height: "32px",
-                                    backgroundColor: "var(--lavender-tint, #F5F3FF)",
-                                    color: "var(--primary-violet, #6D28D9)",
-                                  }}
-                                >
-                                  <i className="bi bi-capsule"></i>
-                                </div>
-                                <span className="fw-semibold text-dark">{vacuna.nombre}</span>
-                              </div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className="badge bg-success-subtle text-success border border-success-subtle rounded-2 px-2 py-1">
-                                <i className="bi bi-check2-circle me-1"></i>
-                                {formatearFecha(vacuna.fechaAplicacion)}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              {vacuna.fechaRefuerzoEstimada ? (
-                                <span className="badge rounded-2 px-2 py-1" style={{ backgroundColor: "var(--lavender-tint, #F5F3FF)", color: "var(--primary-violet, #6D28D9)", border: "1px solid var(--lavender-border, #EDE9FE)" }}>
-                                  <i className="bi bi-calendar3 me-1"></i>
-                                  {formatearFecha(vacuna.fechaRefuerzoEstimada)}
-                                </span>
-                              ) : (
-                                <span className="text-muted small">No programado</span>
+                        {carnet.vacunas.map((vacuna, index) => {
+                          const abierta = vacunaAbierta === index;
+
+                          return (
+                            <React.Fragment key={`${vacuna.nombre}-${vacuna.fechaAplicacion}-${index}`}>
+                              <tr
+                                onClick={() =>
+                                  setVacunaAbierta(abierta ? null : index)
+                                }
+                                style={{
+                                  borderBottom: abierta ? "none" : "1px solid #F1F5F9",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <td className="py-3 px-4">
+                                  <div className="d-flex align-items-center gap-2">
+                                    <div
+                                      className="d-flex align-items-center justify-content-center rounded-2"
+                                      style={{
+                                        width: "32px",
+                                        height: "32px",
+                                        backgroundColor: "var(--lavender-tint, #F5F3FF)",
+                                        color: "var(--primary-violet, #6D28D9)",
+                                      }}
+                                    >
+                                      <i className="bi bi-capsule"></i>
+                                    </div>
+
+                                    <span className="fw-semibold text-dark">
+                                      {vacuna.nombre}
+                                    </span>
+
+                                    <i
+                                      className={`bi ${abierta
+                                          ? "bi-chevron-up"
+                                          : "bi-chevron-down"
+                                        } ms-auto`}
+                                      style={{
+                                        color: "var(--primary-violet, #6D28D9)",
+                                      }}
+                                    ></i>
+                                  </div>
+                                </td>
+
+                                <td className="py-3 px-4">
+                                  <span className="text-muted small">
+                                    {abierta ? "Ocultar detalles" : "Ver detalles"}
+                                  </span>
+                                </td>
+
+                                <td className="py-3 px-4"></td>
+                              </tr>
+
+                              {abierta && (
+                                <tr>
+                                  <td
+                                    colSpan={3}
+                                    className="px-4 pb-3"
+                                    style={{
+                                      backgroundColor: "#FAF9FF",
+                                      borderBottom: "1px solid #F1F5F9",
+                                    }}
+                                  >
+                                    <div className="p-3">
+                                      <div className="row g-3">
+                                        <div className="col-md-6">
+                                          <div className="small text-muted mb-1">
+                                            Fecha de aplicación
+                                          </div>
+
+                                          <span className="badge bg-success-subtle text-success border border-success-subtle rounded-2 px-2 py-1">
+                                            <i className="bi bi-check2-circle me-1"></i>
+                                            {formatearFecha(vacuna.fechaAplicacion)}
+                                          </span>
+                                        </div>
+
+                                        <div className="col-md-6">
+                                          <div className="small text-muted mb-1">
+                                            Próximo refuerzo
+                                          </div>
+
+                                          {vacuna.fechaRefuerzoEstimada ? (
+                                            <span
+                                              className="badge rounded-2 px-2 py-1"
+                                              style={{
+                                                backgroundColor:
+                                                  "var(--lavender-tint, #F5F3FF)",
+                                                color:
+                                                  "var(--primary-violet, #6D28D9)",
+                                                border:
+                                                  "1px solid var(--lavender-border, #EDE9FE)",
+                                              }}
+                                            >
+                                              <i className="bi bi-calendar3 me-1"></i>
+                                              {formatearFecha(
+                                                vacuna.fechaRefuerzoEstimada
+                                              )}
+                                            </span>
+                                          ) : (
+                                            <span className="text-muted small">
+                                              No programado
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
                               )}
-                            </td>
-                          </tr>
-                        ))}
+                            </React.Fragment>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
