@@ -1058,146 +1058,7 @@ export default function MedicalAttention() {
                 </div>
               </div>
 
-              <div className="soap-section-card">
-                <div className="soap-section-header">
-                  <span
-                    className="soap-badge-letter"
-                    style={{
-                      backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
-                      color: "var(--vet-primary, #6D28D9)",
-                      border: "1px solid var(--vet-border-tint, #EDE9FE)",
-                    }}
-                  >
-                    <i className="bi bi-receipt"></i>
-                  </span>
-                  <div>
-                    <h3 className="h6 fw-bold mb-0 text-dark">
-                      Servicios y productos facturables
-                    </h3>
-                    <small className="text-muted">
-                      Se incluiran en la orden de facturacion. Los productos se sincronizan automaticamente con Insumos y Farmacia Administrada.
-                    </small>
-                  </div>
-                </div>
-
-                {errorCatalogo && (
-                  <div className="alert alert-warning py-2 small rounded-2">{errorCatalogo}</div>
-                )}
-
-                <div className="bg-light p-3 rounded-3 mb-3 border">
-                  <div className="row g-2 align-items-end">
-                    <div className="col-md-3">
-                      <label className="form-label small fw-semibold text-muted mb-1">Tipo</label>
-                      <select
-                        className="form-select form-select-sm"
-                        value={tipoConcepto}
-                        onChange={(e) => {
-                          setTipoConcepto(e.target.value as "servicio" | "producto");
-                          setReferenciaId("");
-                        }}
-                      >
-                        <option value="servicio">Servicio</option>
-                        <option value="producto">Producto</option>
-                      </select>
-                    </div>
-
-                    <div className="col-md-5">
-                      <label className="form-label small fw-semibold text-muted mb-1">
-                        {tipoConcepto === "servicio" ? "Servicio" : "Producto"}
-                      </label>
-                      <select
-                        className="form-select form-select-sm"
-                        value={referenciaId}
-                        onChange={(e) => setReferenciaId(e.target.value)}
-                      >
-                        <option value="">Seleccionar...</option>
-                        {(tipoConcepto === "servicio" ? servicios : productos).map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.nombre} - ${Number(item.precioUnitario).toFixed(2)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="col-md-2">
-                      <label className="form-label small fw-semibold text-muted mb-1">Cantidad</label>
-                      <input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        className="form-control form-control-sm"
-                        value={cantidadConcepto}
-                        onChange={(e) => setCantidadConcepto(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="col-md-2">
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm w-100"
-                        style={{
-                          backgroundColor: "var(--vet-primary, #6D28D9)",
-                          borderColor: "var(--vet-primary, #6D28D9)",
-                        }}
-                        onClick={agregarConcepto}
-                      >
-                        <i className="bi bi-plus-lg me-1"></i> Agregar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {conceptosSeleccionados.length > 0 && (
-                  <div className="table-responsive mt-2">
-                    <table className="table table-sm table-hover align-middle border mb-0 small">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Concepto</th>
-                          <th>Tipo</th>
-                          <th>Cantidad</th>
-                          <th>Precio Unit.</th>
-                          <th>Subtotal</th>
-                          <th className="text-end">Accion</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {conceptosSeleccionados.map((concepto, index) => (
-                          <tr key={`${concepto.tipo}-${concepto.id}-${index}`}>
-                            <td className="fw-semibold text-dark">{concepto.nombre}</td>
-                            <td>
-                              <span
-                                className="badge rounded-pill text-capitalize"
-                                style={{
-                                  backgroundColor:
-                                    concepto.tipo === "servicio" ? "#F5F3FF" : "#EEF2FF",
-                                  color:
-                                    concepto.tipo === "servicio" ? "#6D28D9" : "#4F46E5",
-                                }}
-                              >
-                                {concepto.tipo}
-                              </span>
-                            </td>
-                            <td>{concepto.cantidad}</td>
-                            <td>${concepto.precio.toFixed(2)}</td>
-                            <td className="fw-semibold">
-                              ${(concepto.precio * concepto.cantidad).toFixed(2)}
-                            </td>
-                            <td className="text-end">
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-danger py-0 px-2"
-                                onClick={() => handleQuitarConcepto(index)}
-                              >
-                                <i className="bi bi-trash3"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+              
 
               <div className="soap-section-card">
                 <div className="soap-section-header">
@@ -1368,7 +1229,146 @@ export default function MedicalAttention() {
                   />
                 </div>
               </div>
+              <div className="soap-section-card">
+                <div className="soap-section-header">
+                  <span
+                    className="soap-badge-letter"
+                    style={{
+                      backgroundColor: "var(--vet-subtle-lavender, #F5F3FF)",
+                      color: "var(--vet-primary, #6D28D9)",
+                      border: "1px solid var(--vet-border-tint, #EDE9FE)",
+                    }}
+                  >
+                    <i className="bi bi-receipt"></i>
+                  </span>
+                  <div>
+                    <h3 className="h6 fw-bold mb-0 text-dark">
+                      Servicios y productos facturables
+                    </h3>
+                    <small className="text-muted">
+                      Se incluiran en la orden de facturacion. Los productos se sincronizan automaticamente con Insumos y Farmacia Administrada.
+                    </small>
+                  </div>
+                </div>
 
+                {errorCatalogo && (
+                  <div className="alert alert-warning py-2 small rounded-2">{errorCatalogo}</div>
+                )}
+
+                <div className="bg-light p-3 rounded-3 mb-3 border">
+                  <div className="row g-2 align-items-end">
+                    <div className="col-md-3">
+                      <label className="form-label small fw-semibold text-muted mb-1">Tipo</label>
+                      <select
+                        className="form-select form-select-sm"
+                        value={tipoConcepto}
+                        onChange={(e) => {
+                          setTipoConcepto(e.target.value as "servicio" | "producto");
+                          setReferenciaId("");
+                        }}
+                      >
+                        <option value="servicio">Servicio</option>
+                        <option value="producto">Producto</option>
+                      </select>
+                    </div>
+
+                    <div className="col-md-5">
+                      <label className="form-label small fw-semibold text-muted mb-1">
+                        {tipoConcepto === "servicio" ? "Servicio" : "Producto"}
+                      </label>
+                      <select
+                        className="form-select form-select-sm"
+                        value={referenciaId}
+                        onChange={(e) => setReferenciaId(e.target.value)}
+                      >
+                        <option value="">Seleccionar...</option>
+                        {(tipoConcepto === "servicio" ? servicios : productos).map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.nombre} - ${Number(item.precioUnitario).toFixed(2)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-md-2">
+                      <label className="form-label small fw-semibold text-muted mb-1">Cantidad</label>
+                      <input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        className="form-control form-control-sm"
+                        value={cantidadConcepto}
+                        onChange={(e) => setCantidadConcepto(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="col-md-2">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm w-100"
+                        style={{
+                          backgroundColor: "var(--vet-primary, #6D28D9)",
+                          borderColor: "var(--vet-primary, #6D28D9)",
+                        }}
+                        onClick={agregarConcepto}
+                      >
+                        <i className="bi bi-plus-lg me-1"></i> Agregar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {conceptosSeleccionados.length > 0 && (
+                  <div className="table-responsive mt-2">
+                    <table className="table table-sm table-hover align-middle border mb-0 small">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Concepto</th>
+                          <th>Tipo</th>
+                          <th>Cantidad</th>
+                          <th>Precio Unit.</th>
+                          <th>Subtotal</th>
+                          <th className="text-end">Accion</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {conceptosSeleccionados.map((concepto, index) => (
+                          <tr key={`${concepto.tipo}-${concepto.id}-${index}`}>
+                            <td className="fw-semibold text-dark">{concepto.nombre}</td>
+                            <td>
+                              <span
+                                className="badge rounded-pill text-capitalize"
+                                style={{
+                                  backgroundColor:
+                                    concepto.tipo === "servicio" ? "#F5F3FF" : "#EEF2FF",
+                                  color:
+                                    concepto.tipo === "servicio" ? "#6D28D9" : "#4F46E5",
+                                }}
+                              >
+                                {concepto.tipo}
+                              </span>
+                            </td>
+                            <td>{concepto.cantidad}</td>
+                            <td>${concepto.precio.toFixed(2)}</td>
+                            <td className="fw-semibold">
+                              ${(concepto.precio * concepto.cantidad).toFixed(2)}
+                            </td>
+                            <td className="text-end">
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger py-0 px-2"
+                                onClick={() => handleQuitarConcepto(index)}
+                              >
+                                <i className="bi bi-trash3"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
               <div className="soap-section-card">
                 <div className="soap-section-header">
                   <span

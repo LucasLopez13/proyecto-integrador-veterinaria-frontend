@@ -301,7 +301,6 @@ function ProfessionalAppointments() {
                             >
                               <option value="pendiente">Pendiente</option>
                               <option value="confirmado">Confirmado</option>
-                              <option value="atendido">Atendido</option>
                               <option value="cancelado">Cancelado</option>
                             </select>
                           )}

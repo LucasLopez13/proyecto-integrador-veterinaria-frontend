@@ -756,9 +756,6 @@ function PetDetails() {
                 icon="bi-clipboard2-pulse"
                 title="Sin registros de consulta aun"
                 description="No hay atenciones medicas registradas formalmente para este paciente."
-                actionText={isProfessional ? "Registrar Primera Consulta" : undefined}
-                actionTo={isProfessional ? `/profesional/atencion?mascotaId=${pet.id}` : undefined}
-                actionIcon="bi-plus-lg"
               />
             ) : (
               <div className="d-flex flex-column gap-3">
@@ -909,14 +906,14 @@ function PetDetails() {
                 </p>
               </div>
 
-              {isProfessional && (
+              {isProfessional && !mostrarFormularioSanitario &&(
                 <button
                   type="button"
                   className="btn btn-primary rounded-2 d-inline-flex align-items-center gap-2"
                   onClick={() => setMostrarFormularioSanitario((prev) => !prev)}
                 >
-                  <i className={`bi ${mostrarFormularioSanitario ? "bi-x-lg" : "bi-plus-lg"}`} />
-                  {mostrarFormularioSanitario ? "Cancelar" : "Nuevo registro sanitario"}
+                  <i className="bi bi-plus-lg" />
+                      Nuevo registro sanitario
                 </button>
               )}
               {mostrarFormularioSanitario && isProfessional && (
@@ -1006,6 +1003,8 @@ function PetDetails() {
                         type="date"
                         className={`form-control ${sanitaryFormErrors.fechaAplicacion ? "is-invalid" : ""}`}
                         value={sanitaryForm.fechaAplicacion}
+                        style={{ cursor: "pointer" }}
+                        onClick={(e) => e.currentTarget.showPicker?.()}
                         onChange={(e) => {
                           setSanitaryForm((prev) => ({
                             ...prev,
@@ -1035,6 +1034,8 @@ function PetDetails() {
                       className={`form-control ${sanitaryFormErrors.fechaRefuerzoEstimada ? "is-invalid" : ""}`}
                       min={sanitaryForm.fechaAplicacion}
                       value={sanitaryForm.fechaRefuerzoEstimada}
+                      style={{ cursor: "pointer" }}
+                      onClick={(e) => e.currentTarget.showPicker?.()}
                       onChange={(e) => {
                         setSanitaryForm((prev) => ({
                           ...prev,
