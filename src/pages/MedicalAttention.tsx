@@ -31,6 +31,7 @@ interface ProductoFacturacion {
   nombre: string;
   precioUnitario: number;
   stockActual: number;
+  unidadMedida?: string;
 }
 
 interface ConceptoSeleccionado {
@@ -38,6 +39,7 @@ interface ConceptoSeleccionado {
   id: number;
   nombre: string;
   precio: number;
+  unidadMedida?: string;
   cantidad: number;
 }
 
@@ -299,6 +301,12 @@ export default function MedicalAttention() {
       return;
     }
 
+    const unidadConcepto = tipoConcepto === "producto" ? ((referencia as ProductoFacturacion).unidadMedida || productosInventario.find((p) => p.id === id)?.unidadMedida || "").toLowerCase() : "";
+    if ((tipoConcepto === "servicio" || unidadConcepto === "comprimidos") && !Number.isInteger(cantidad)) {
+      setErrorCatalogo(unidadConcepto === "comprimidos" ? "Para medicamentos en comprimidos la cantidad debe ser un numero entero." : "Para servicios la cantidad debe ser un numero entero.");
+      return;
+    }
+
     if (tipoConcepto === "producto") {
       const prodFact = referencia as ProductoFacturacion;
       const yaFacturado = conceptosSeleccionados
@@ -375,6 +383,7 @@ export default function MedicalAttention() {
           id,
           nombre: referencia.nombre,
           precio: Number(referencia.precioUnitario),
+          unidadMedida: tipoConcepto === "producto" ? ((referencia as ProductoFacturacion).unidadMedida || productosInventario.find((p) => p.id === id)?.unidadMedida) : undefined,
           cantidad,
         },
       ];
@@ -429,6 +438,11 @@ export default function MedicalAttention() {
       return;
     }
 
+    if (String(productoActual.unidadMedida || "").toLowerCase() === "comprimidos" && !Number.isInteger(cant)) {
+      setErrorConsumo("Para medicamentos en comprimidos la cantidad a debitar debe ser un numero entero.");
+      return;
+    }
+
     const consumidoPrevio = consumosSeleccionados
       .filter((item) => item.loteId === loteActual.id)
       .reduce((acc, curr) => acc + curr.cantidad, 0);
@@ -477,6 +491,7 @@ export default function MedicalAttention() {
             id: prodFact.id,
             nombre: prodFact.nombre,
             precio: Number(prodFact.precioUnitario),
+            unidadMedida: productoActual.unidadMedida,
             cantidad: cant,
           },
         ];
@@ -1287,19 +1302,21 @@ export default function MedicalAttention() {
                         <option value="">Seleccionar...</option>
                         {(tipoConcepto === "servicio" ? servicios : productos).map((item) => (
                           <option key={item.id} value={item.id}>
-                            {item.nombre} - ${Number(item.precioUnitario).toFixed(2)}
+                            {item.nombre} - ${Number(item.precioUnitario).toFixed(2)}{tipoConcepto === "producto" ? ` / ${(item as ProductoFacturacion).unidadMedida || productosInventario.find((p) => p.id === item.id)?.unidadMedida || "unid."} (Disp: ${(item as ProductoFacturacion).stockActual} ${(item as ProductoFacturacion).unidadMedida || productosInventario.find((p) => p.id === item.id)?.unidadMedida || ""})` : ""}
                           </option>
                         ))}
                       </select>
                     </div>
 
                     <div className="col-md-2">
-                      <label className="form-label small fw-semibold text-muted mb-1">Cantidad</label>
+                      <label className="form-label small fw-semibold text-muted mb-1">{tipoConcepto === "producto" ? `Cantidad (${productos.find((p) => String(p.id) === String(referenciaId))?.unidadMedida || productosInventario.find((p) => String(p.id) === String(referenciaId))?.unidadMedida || "ml / comp."})` : "Cantidad"}</label>
                       <input
                         type="number"
-                        min="0.01"
-                        step="0.01"
+
+
                         className="form-control form-control-sm"
+                        min={tipoConcepto === "servicio" || (productos.find((p) => String(p.id) === String(referenciaId))?.unidadMedida || productosInventario.find((p) => String(p.id) === String(referenciaId))?.unidadMedida) === "comprimidos" ? "1" : "0.01"}
+                        step={tipoConcepto === "servicio" || (productos.find((p) => String(p.id) === String(referenciaId))?.unidadMedida || productosInventario.find((p) => String(p.id) === String(referenciaId))?.unidadMedida) === "comprimidos" ? "1" : "0.01"}
                         value={cantidadConcepto}
                         onChange={(e) => setCantidadConcepto(e.target.value)}
                       />
@@ -1351,8 +1368,8 @@ export default function MedicalAttention() {
                                 {concepto.tipo}
                               </span>
                             </td>
-                            <td>{concepto.cantidad}</td>
-                            <td>${concepto.precio.toFixed(2)}</td>
+                            <td>{concepto.cantidad}{concepto.unidadMedida || (concepto.tipo === "producto" ? productosInventario.find((p) => p.id === concepto.id)?.unidadMedida : "") ? ` ${concepto.unidadMedida || productosInventario.find((p) => p.id === concepto.id)?.unidadMedida}` : ""}</td>
+                            <td>${concepto.precio.toFixed(2)}{concepto.unidadMedida || (concepto.tipo === "producto" ? productosInventario.find((p) => p.id === concepto.id)?.unidadMedida : "") ? ` / ${concepto.unidadMedida || productosInventario.find((p) => p.id === concepto.id)?.unidadMedida}` : ""}</td>
                             <td className="fw-semibold">
                               ${(concepto.precio * concepto.cantidad).toFixed(2)}
                             </td>
@@ -1445,9 +1462,11 @@ export default function MedicalAttention() {
                       <input
                         id="inputCantidadConsumo"
                         type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder="Ej: 1.5"
+
+
+                        min={productoActual?.unidadMedida === "comprimidos" ? "1" : "0.01"}
+                        step={productoActual?.unidadMedida === "comprimidos" ? "1" : "0.01"}
+                        placeholder={productoActual?.unidadMedida === "comprimidos" ? "Ej: 2" : "Ej: 1.5"}
                         className="form-control form-control-sm"
                         value={cantidadConsumo}
                         onChange={(e) => {

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { apiFetch } from "../services/apiClient";
 import { FeedbackModal, type FeedbackModalState } from "../components/common/FeedbackModal";
 import { MetricCard } from "../components/common/MetricCard";
@@ -20,6 +19,9 @@ interface OrdenFacturacion {
   fechaGeneracion: string;
   total: number | string;
   estado: "pendiente" | "pagada" | "anulada";
+  metodoPago?: string;
+  fechaPago?: string;
+  comprobante?: string;
   detalles?: DetalleOrden[];
   consulta?: {
     id: number;
@@ -51,10 +53,12 @@ interface ConsultaPendiente {
     servicio?: {
       nombre: string;
       precioUnitario?: number | string;
+      unidadMedida?: string;
     };
     producto?: {
       nombre: string;
       precioUnitario?: number | string;
+      unidadMedida?: string;
     };
   }[];
 }
@@ -210,7 +214,7 @@ function BillingManagement() {
       confirmVariant: esPago ? "primary" : "danger",
       title: esPago ? "Confirmar Cobro de Orden" : "Confirmar Anulacion de Orden",
       message: esPago
-        ? `¿Confirmas que la orden #${orden.id} por ${formatoMonto(orden.total)} fue abonada? Esto aprobara automaticamente el pago asociado.`
+        ? `¿Confirmas que la orden #${orden.id} por ${formatoMonto(orden.total)} fue abonada? Se registrara como pagada en el sistema.`
         : `¿Estas seguro de que deseas anular la orden de facturacion #${orden.id}?`,
       confirmText: esPago ? "Marcar como pagada" : "Anular orden",
       cancelText: "Cancelar",
@@ -290,12 +294,6 @@ function BillingManagement() {
           </div>
 
           <div className="d-flex gap-2">
-            <Link
-              to="/profesional/pagos"
-              className="btn btn-outline-secondary rounded-2 shadow-sm d-inline-flex align-items-center gap-2 px-3 fw-medium"
-            >
-              <i className="bi bi-wallet2"></i> Gestion de Pagos
-            </Link>
             <button
               type="button"
               className="btn btn-primary rounded-2 shadow-sm d-inline-flex align-items-center gap-2 px-3 fw-medium"
@@ -443,7 +441,7 @@ function BillingManagement() {
                                     {concepto.servicio?.nombre ??
                                       concepto.producto?.nombre ??
                                       "Concepto"}{" "}
-                                    (x{concepto.cantidad})
+                                    ({concepto.producto?.unidadMedida ? `${concepto.cantidad} ${concepto.producto.unidadMedida}` : `x${concepto.cantidad}`})
                                   </span>
                                 ))}
                               </div>
@@ -497,7 +495,7 @@ function BillingManagement() {
                   </h2>
                   <p className="text-muted small mb-0">
                     Las ordenes emitidas son visibles para el tutor en Mis Turnos
-                    y se marcan como pagadas automaticamente al aprobarse el pago.
+                    y pueden ser abonadas por el cliente o cobradas en recepcion.
                   </p>
                 </div>
 
@@ -574,7 +572,14 @@ function BillingManagement() {
                           </td>
                           <td>
                             {orden.fechaGeneracion
-                              ? new Date(orden.fechaGeneracion).toLocaleString("es-AR")
+                              ? new Date(orden.fechaGeneracion).toLocaleString("es-AR", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                })
                               : "No disponible"}
                           </td>
                           <td>
@@ -730,7 +735,14 @@ function BillingManagement() {
                         {ordenSeleccionada.fechaGeneracion
                           ? new Date(
                               ordenSeleccionada.fechaGeneracion
-                            ).toLocaleString("es-AR")
+                            ).toLocaleString("es-AR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            })
                           : "No disponible"}
                       </strong>
                     </span>
@@ -755,6 +767,32 @@ function BillingManagement() {
                     </span>
                   </div>
 
+                  {ordenSeleccionada.estado === "pagada" && (
+                    <div className="alert alert-success py-2 px-3 small mb-3 d-flex flex-wrap gap-3 align-items-center">
+                      <div>
+                        <strong>Metodo de pago:</strong>{" "}
+                        <span className="text-capitalize">{ordenSeleccionada.metodoPago || "Efectivo"}</span>
+                      </div>
+                      {ordenSeleccionada.fechaPago && (
+                        <div>
+                          <strong>Fecha de pago:</strong>{" "}
+                          {new Date(ordenSeleccionada.fechaPago).toLocaleString("es-AR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}
+                        </div>
+                      )}
+                      {ordenSeleccionada.comprobante && (
+                        <div>
+                          <strong>Comprobante:</strong> {ordenSeleccionada.comprobante}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="table-responsive">
                     <table className="table table-sm align-middle border">
                       <thead className="table-light">

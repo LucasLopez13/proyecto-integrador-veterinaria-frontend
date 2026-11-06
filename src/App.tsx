@@ -11,7 +11,6 @@ import TriageBoard from "./pages/TriageBoard";
 import Navbar from "./components/Navbar";
 import MyAppointments from "./pages/MyAppointments";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
-import PaymentManagement from "./pages/PaymentManagement";
 import PublicVaccinationCard from "./pages/PublicVaccinationCard";
 import AlertasStock from "./pages/AlertasStock";
 import MyRecipes from "./pages/MyRecipes";
@@ -199,18 +198,6 @@ function App() {
               redirectTo="/mascotas"
             >
               <TriageBoard />
-            </RoleProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/profesional/pagos"
-          element={
-            <RoleProtectedRoute
-              allowedRoles={["profesional", "admin"]}
-              redirectTo="/mascotas"
-            >
-              <PaymentManagement />
             </RoleProtectedRoute>
           }
         />

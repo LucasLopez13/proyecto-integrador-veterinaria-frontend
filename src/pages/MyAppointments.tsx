@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import type { Appointment, PaginatedAppointments } from "../types/Appointment";
 import { apiFetch } from "../services/apiClient";
 import { MONTH_NAMES } from "../utils/dateUtils";
+import { BUSINESS_HOURS_SLOTS } from "../constants";
 import { getSpeciesIcon } from "../utils/speciesIcon";
 import { AppointmentStatusBadge } from "../components/common/AppointmentStatusBadge";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
@@ -11,8 +12,8 @@ import { FeedbackModal, type FeedbackModalState } from "../components/common/Fee
 import { ErrorModal } from "../components/common/ErrorModal";
 import { FormFieldError } from "../components/common/FormFieldError";
 import { Pagination } from "../components/common/Pagination";
-import { paymentService } from "../services/paymentService";
-import type { Payment, PaymentMethod } from "../types/Payment";
+
+export type MetodoPago = "transferencia" | "tarjeta" | "efectivo";
 
 interface DetalleOrdenCliente {
   id: number;
@@ -28,6 +29,9 @@ interface OrdenFacturacionCliente {
   fechaGeneracion: string;
   total: number | string;
   estado: "pendiente" | "pagada" | "anulada";
+  metodoPago?: string;
+  fechaPago?: string;
+  comprobante?: string;
   detalles?: DetalleOrdenCliente[];
   consulta?: {
     id: number;
@@ -43,23 +47,20 @@ interface OrdenFacturacionCliente {
 
 function MyAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
   const [ordenesFacturacion, setOrdenesFacturacion] = useState<OrdenFacturacionCliente[]>([]);
-  const [paymentFormTurnoId, setPaymentFormTurnoId] = useState<number | null>(null);
   const [paymentFormOrdenId, setPaymentFormOrdenId] = useState<number | null>(null);
-  const [paymentMonto, setPaymentMonto] = useState("");
-  const [paymentMetodo, setPaymentMetodo] = useState<PaymentMethod>("transferencia");
+  const [paymentMetodo, setPaymentMetodo] = useState<MetodoPago>("transferencia");
   const [paymentObservaciones, setPaymentObservaciones] = useState("");
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
+  const [paymentMessageOrdenId, setPaymentMessageOrdenId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [paymentMessageTurnoId, setPaymentMessageTurnoId] = useState<number | null>(null);
-  const [paymentMessageOrdenId, setPaymentMessageOrdenId] = useState<number | null>(null);
 
   const [reprogramandoId, setReprogramandoId] = useState<number | null>(null);
   const [nuevaFecha, setNuevaFecha] = useState("");
+  const [nuevaHora, setNuevaHora] = useState("");
   const [rescheduleError, setRescheduleError] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -97,15 +98,6 @@ function MyAppointments() {
     }
   };
 
-  const cargarPagos = async () => {
-    try {
-      const data = await paymentService.getPayments();
-      setPayments(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("No se pudieron cargar los pagos:", err);
-    }
-  };
-
   const cargarOrdenes = async () => {
     try {
       const data = await apiFetch<OrdenFacturacionCliente[]>("/facturacion/mis-ordenes");
@@ -117,60 +109,35 @@ function MyAppointments() {
 
   useEffect(() => {
     cargarTurnos(1);
-    cargarPagos();
     cargarOrdenes();
   }, []);
 
-  const handleRegistrarPago = async (opts: {
-    turnoId?: number;
-    ordenId?: number;
-  }) => {
+  const handlePagarOrden = async (ordenId: number) => {
     setPaymentError(null);
     setPaymentMessage(null);
-
-    const monto = Number(paymentMonto);
-
-    if (!paymentMonto.trim() || !Number.isFinite(monto) || monto <= 0) {
-      setPaymentError("Ingresa un monto valido mayor que cero.");
-      return;
-    }
 
     try {
       setPaymentLoading(true);
 
-      const concepto = opts.ordenId
-        ? `Pago de orden de facturacion #${opts.ordenId}${opts.turnoId ? ` (Turno #${opts.turnoId})` : ""
-        }`
-        : `Pago de turno #${opts.turnoId}`;
+      await apiFetch<{ message: string; orden: OrdenFacturacionCliente }>(
+        `/facturacion/ordenes/${ordenId}/pagar`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            metodoPago: paymentMetodo,
+            comprobante: paymentObservaciones.trim() || undefined,
+          }),
+        }
+      );
 
-      await paymentService.createPayment({
-        monto,
-        concepto,
-        metodo: paymentMetodo,
-        turnoId: opts.turnoId,
-        presupuestoId: opts.ordenId,
-        observaciones: paymentObservaciones.trim() || undefined,
-      });
+      await cargarOrdenes();
 
-      await Promise.all([cargarPagos(), cargarOrdenes()]);
-
-      setPaymentFormTurnoId(null);
       setPaymentFormOrdenId(null);
-      setPaymentMonto("");
       setPaymentMetodo("transferencia");
       setPaymentObservaciones("");
-      if (opts.turnoId) {
-        setPaymentMessageTurnoId(opts.turnoId);
-        setPaymentMessage(
-          `El pago se registro como pendiente de verificacion administrativa.`
-        );
-      } else if (opts.ordenId) {
-        setPaymentMessageOrdenId(opts.ordenId);
-        setPaymentMessage(
-          `El pago de la orden #${opts.ordenId} se registro como pendiente de aprobacion.`
-        );
-      }
-    } catch (err) {
+      setPaymentMessageOrdenId(ordenId);
+      setPaymentMessage("¡Pago registrado con exito! La factura ha quedado abonada.");
+    } catch (err: any) {
       setPaymentError(
         err instanceof Error ? err.message : "No se pudo registrar el pago."
       );
@@ -224,26 +191,36 @@ function MyAppointments() {
     }
   };
 
-  const nowForInput = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+  const hoyStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
     .toISOString()
-    .slice(0, 16);
+    .slice(0, 10);
+
+  const isSlotInPast = (slotStr: string, dateStr: string) => {
+    if (dateStr !== hoyStr) return false;
+    const now = new Date();
+    const [slotH, slotM] = slotStr.split(":").map(Number);
+    return (
+      slotH < now.getHours() ||
+      (slotH === now.getHours() && slotM <= now.getMinutes())
+    );
+  };
 
   const handleReprogramarTurno = async (id: number) => {
     setRescheduleError(null);
 
-    if (!nuevaFecha) {
-      setRescheduleError("Selecciona una nueva fecha y hora para reprogramar el turno.");
+    if (!nuevaFecha || !nuevaHora) {
+      setRescheduleError("Selecciona una nueva fecha y horario (formato 24 hs) para reprogramar el turno.");
       return;
     }
 
-    const hora = nuevaFecha.split("T")[1]?.slice(0, 5);
-
-    if (!hora || hora < "08:00" || hora > "20:00") {
-      setRescheduleError("El horario de reprogramación debe ser entre las 08:00 y las 20:00.");
+    if (nuevaHora < "08:00" || nuevaHora > "20:00") {
+      setRescheduleError("El horario de reprogramacion debe ser entre las 08:00 y las 20:00 hs.");
       return;
     }
 
-    if (new Date(nuevaFecha).getTime() <= Date.now()) {
+    const fechaHoraCombinada = `${nuevaFecha}T${nuevaHora}:00`;
+
+    if (new Date(fechaHoraCombinada).getTime() <= Date.now()) {
       setRescheduleError("No podes reprogramar un turno para una fecha u horario que ya ha transcurrido.");
       return;
     }
@@ -252,7 +229,7 @@ function MyAppointments() {
       await apiFetch<Appointment>(`/turnos/${id}`, {
         method: "PUT",
         body: JSON.stringify({
-          fecha: new Date(nuevaFecha).toISOString(),
+          fecha: new Date(fechaHoraCombinada).toISOString(),
         }),
       });
 
@@ -260,6 +237,7 @@ function MyAppointments() {
 
       setReprogramandoId(null);
       setNuevaFecha("");
+      setNuevaHora("");
       setRescheduleError(null);
 
       setFeedbackModal({
@@ -288,7 +266,7 @@ function MyAppointments() {
               Mis Turnos y Facturacion
             </h1>
             <p className="text-muted small mb-0">
-              Consulta tus citas veterinarias, liquidaciones clinicas y registra tus pagos
+              Consulta tus citas veterinarias, liquidaciones clinicas y abona tus facturas emitidas
             </p>
           </div>
 
@@ -314,19 +292,6 @@ function MyAppointments() {
             </h2>
             <div className="d-flex flex-column gap-3">
               {ordenesSinTurnoEnVista.map((orden) => {
-                const pagosOrden = payments.filter(
-                  (p) =>
-                    p.presupuestoId === orden.id ||
-                    (orden.consulta?.turnoId && p.turnoId === orden.consulta.turnoId)
-                );
-                const pagoActivo = pagosOrden.find(
-                  (p) => p.estado === "pendiente" || p.estado === "aprobado"
-                );
-                const puedeAbonar =
-                  orden.estado === "pendiente" &&
-                  !pagoActivo &&
-                  (!pagosOrden.length || pagosOrden.every((p) => p.estado === "rechazado"));
-
                 return (
                   <div
                     key={orden.id}
@@ -385,105 +350,108 @@ function MyAppointments() {
                         </strong>
                       </span>
 
-                      {pagoActivo ? (
-                        <span className="small">
-                          Pago registrado: <strong>{pagoActivo.estado}</strong> ({pagoActivo.metodo})
-                        </span>
+                      {orden.estado === "pagada" ? (
+                        <div className="small text-success fw-semibold">
+                          <i className="bi bi-check-circle-fill me-1"></i>
+                          Factura abonada mediante <span className="text-capitalize">{orden.metodoPago || "transferencia"}</span>
+                          {orden.fechaPago ? ` el ${new Date(orden.fechaPago).toLocaleDateString("es-AR")}` : ""}.
+                        </div>
+                      ) : orden.estado === "anulada" ? (
+                        <div className="small text-danger fw-semibold">
+                          <i className="bi bi-x-circle-fill me-1"></i>
+                          Orden anulada.
+                        </div>
                       ) : (
-                        puedeAbonar && (
-                          <button
-                            type="button"
-                            className="btn btn-primary btn-sm rounded-2"
-                            style={{
-                              backgroundColor: "var(--vet-primary, #6D28D9)",
-                              borderColor: "var(--vet-primary, #6D28D9)",
-                            }}
-                            onClick={() => {
-                              setPaymentFormOrdenId(orden.id);
-                              setPaymentFormTurnoId(null);
-                              setPaymentMonto(String(Number(orden.total)));
-                              setPaymentMetodo("transferencia");
-                              setPaymentObservaciones("");
-                              setPaymentError(null);
-                              setPaymentMessage(null);
-                            }}
-                          >
-                            <i className="bi bi-wallet2 me-1"></i>
-                            Abonar orden
-                          </button>
-                        )
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm rounded-2 d-inline-flex align-items-center gap-1 shadow-sm px-3"
+                          style={{
+                            backgroundColor: "var(--vet-primary, #6D28D9)",
+                            borderColor: "var(--vet-primary, #6D28D9)",
+                          }}
+                          onClick={() => {
+                            setPaymentFormOrdenId(orden.id);
+                            setPaymentMetodo("transferencia");
+                            setPaymentObservaciones("");
+                            setPaymentError(null);
+                            setPaymentMessage(null);
+                          }}
+                        >
+                          <i className="bi bi-credit-card me-1"></i>
+                          Abonar factura (${Number(orden.total).toLocaleString("es-AR")})
+                        </button>
                       )}
                     </div>
 
                     {paymentFormOrdenId === orden.id && (
                       <form
-                        className="mt-3 p-3 rounded-2"
-                        style={{ backgroundColor: "#FAF9FC" }}
+                        className="mt-3 p-3 rounded-2 border"
+                        style={{ backgroundColor: "#FAF9FC", borderColor: "var(--vet-border-tint, #EDE9FE)" }}
                         onSubmit={(e) => {
                           e.preventDefault();
-                          void handleRegistrarPago({
-                            ordenId: orden.id,
-                            turnoId: orden.consulta?.turnoId ?? undefined,
-                          });
+                          void handlePagarOrden(orden.id);
                         }}
                       >
-                        <div className="row g-2 mb-2">
-                          <div className="col-sm-6">
-                            <label className="form-label small fw-semibold">Monto a abonar ($)</label>
-                            <input
-                              type="number"
-                              min="0.01"
-                              step="0.01"
-                              className="form-control form-control-sm"
-                              value={paymentMonto}
-                              onChange={(e) => setPaymentMonto(e.target.value)}
-                              required
-                            />
-                          </div>
-                          <div className="col-sm-6">
-                            <label className="form-label small fw-semibold">Metodo de pago</label>
-                            <select
-                              className="form-select form-select-sm"
-                              value={paymentMetodo}
-                              onChange={(e) =>
-                                setPaymentMetodo(e.target.value as PaymentMethod)
-                              }
-                            >
-                              <option value="transferencia">Transferencia</option>
-                              <option value="tarjeta">Tarjeta</option>
-                              <option value="efectivo">Efectivo</option>
-                            </select>
-                          </div>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <h5 className="h6 fw-bold mb-0" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                            <i className="bi bi-credit-card me-2 text-primary"></i>
+                            Abonar Orden #{orden.id}
+                          </h5>
+                          <span className="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">
+                            Total: ${Number(orden.total).toLocaleString("es-AR")}
+                          </span>
                         </div>
 
-                        <div className="mb-2">
-                          <label className="form-label small fw-semibold">
-                            Comprobante / Observaciones (opcional)
-                          </label>
-                          <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            placeholder="Ej: Nro de comprobante de transferencia..."
-                            value={paymentObservaciones}
-                            onChange={(e) => setPaymentObservaciones(e.target.value)}
-                          />
+                        <div className="row g-2 mb-3">
+                          <div className="col-12 col-sm-6">
+                            <label htmlFor={`metodo-orden-${orden.id}`} className="form-label small fw-semibold">
+                              Metodo de pago
+                            </label>
+                            <select
+                              id={`metodo-orden-${orden.id}`}
+                              className="form-select form-select-sm"
+                              value={paymentMetodo}
+                              onChange={(e) => setPaymentMetodo(e.target.value as MetodoPago)}
+                            >
+                              <option value="transferencia">Transferencia Bancaria</option>
+                              <option value="tarjeta">Tarjeta de Debito / Credito</option>
+                              <option value="efectivo">Efectivo en Clinica</option>
+                            </select>
+                          </div>
+
+                          <div className="col-12 col-sm-6">
+                            <label htmlFor={`obs-orden-${orden.id}`} className="form-label small fw-semibold">
+                              Comprobante / Detalle (opcional)
+                            </label>
+                            <input
+                              id={`obs-orden-${orden.id}`}
+                              type="text"
+                              className="form-control form-control-sm"
+                              placeholder="Ej: Nro. de transferencia o comprobante"
+                              value={paymentObservaciones}
+                              onChange={(e) => setPaymentObservaciones(e.target.value)}
+                            />
+                          </div>
                         </div>
 
                         {paymentError && (
-                          <div className="alert alert-danger py-2 small">{paymentError}</div>
+                          <div className="alert alert-danger py-2 small mb-3">
+                            {paymentError}
+                          </div>
                         )}
 
                         <div className="d-flex gap-2">
                           <button
                             type="submit"
-                            className="btn btn-primary btn-sm"
+                            className="btn btn-primary btn-sm rounded-2 fw-medium px-3"
+                            style={{ backgroundColor: "var(--vet-primary, #6D28D9)", borderColor: "var(--vet-primary, #6D28D9)" }}
                             disabled={paymentLoading}
                           >
-                            {paymentLoading ? "Registrando..." : "Confirmar pago"}
+                            {paymentLoading ? "Procesando pago..." : "Confirmar pago"}
                           </button>
                           <button
                             type="button"
-                            className="btn btn-outline-secondary btn-sm"
+                            className="btn btn-outline-secondary btn-sm rounded-2"
                             disabled={paymentLoading}
                             onClick={() => {
                               setPaymentFormOrdenId(null);
@@ -594,6 +562,7 @@ function MyAppointments() {
                               } else {
                                 setReprogramandoId(appointment.id);
                                 setNuevaFecha("");
+                                setNuevaHora("");
                                 setRescheduleError(null);
                               }
                             }}
@@ -609,18 +578,15 @@ function MyAppointments() {
                           </button>
                         </div>
                       )}
-
                     </div>
 
-                    <div className="mt-3 pt-3 border-top border-light-subtle">
-                      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                        <h4 className="small fw-bold mb-0">
-                          <i className="bi bi-credit-card me-2" style={{ color: "var(--vet-primary, #6D28D9)" }}></i>
-                          {ordenVinculada
-                            ? `Facturacion de la Consulta (Orden #${ordenVinculada.id})`
-                            : "Pago del turno"}
-                        </h4>
-                        {ordenVinculada && (
+                    {ordenVinculada && (
+                      <div className="mt-3 pt-3 border-top border-light-subtle">
+                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                          <h4 className="small fw-bold mb-0">
+                            <i className="bi bi-credit-card me-2" style={{ color: "var(--vet-primary, #6D28D9)" }}></i>
+                            {`Facturacion de la Consulta (Orden #${ordenVinculada.id})`}
+                          </h4>
                           <span
                             className="badge rounded-pill px-2 py-1 text-capitalize"
                             style={{
@@ -640,10 +606,8 @@ function MyAppointments() {
                           >
                             Factura {ordenVinculada.estado}
                           </span>
-                        )}
-                      </div>
+                        </div>
 
-                      {ordenVinculada && (
                         <div
                           className="rounded-2 p-2 mb-2 small"
                           style={{
@@ -668,185 +632,129 @@ function MyAppointments() {
                             </span>
                           </div>
                         </div>
-                      )}
 
-                      {(() => {
-                        const pagosTurno = payments.filter(
-                          (p) =>
-                            p.turnoId === appointment.id ||
-                            (ordenVinculada && p.presupuestoId === ordenVinculada.id)
-                        );
-                        const pagoActivo = pagosTurno.find(
-                          (p) => p.estado === "pendiente" || p.estado === "aprobado"
-                        );
-                        const puedeRegistrar =
-                          !pagoActivo &&
-                          (!pagosTurno.length ||
-                            pagosTurno.every((p) => p.estado === "rechazado")) &&
-                          ordenVinculada?.estado !== "pagada" &&
-                          ordenVinculada?.estado !== "anulada" &&
-                          appointment.estado !== "cancelado";
-
-                        if (pagoActivo) {
-                          return (
-                            <div className="small mb-2">
-                              <span>
-                                Monto: ${Number(pagoActivo.monto).toLocaleString("es-AR")}
-                              </span>
-                              {" · "}
-                              <span className="fw-semibold">
-                                Estado del pago: {pagoActivo.estado}
-                              </span>
-                              {" · "}
-                              <span>Metodo: {pagoActivo.metodo}</span>
-                            </div>
-                          );
-                        }
-
-                        if (ordenVinculada?.estado === "pagada") {
-                          return (
+                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2">
+                          {ordenVinculada.estado === "pagada" ? (
                             <div className="small text-success fw-semibold">
                               <i className="bi bi-check-circle-fill me-1"></i>
-                              Orden abonada y aprobada.
+                              Factura abonada mediante <span className="text-capitalize">{ordenVinculada.metodoPago || "transferencia"}</span>
+                              {ordenVinculada.fechaPago ? ` el ${new Date(ordenVinculada.fechaPago).toLocaleDateString("es-AR")}` : ""}.
                             </div>
-                          );
-                        }
-
-                        if (puedeRegistrar && (!isPastOrCancelled || !!ordenVinculada)) {
-                          return (
+                          ) : ordenVinculada.estado === "anulada" ? (
+                            <div className="small text-danger fw-semibold">
+                              <i className="bi bi-x-circle-fill me-1"></i>
+                              Orden de facturacion anulada.
+                            </div>
+                          ) : (
                             <button
                               type="button"
-                              className="btn btn-outline-primary btn-sm rounded-2"
+                              className="btn btn-primary btn-sm rounded-2 d-inline-flex align-items-center gap-1 shadow-sm px-3"
+                              style={{
+                                backgroundColor: "var(--vet-primary, #6D28D9)",
+                                borderColor: "var(--vet-primary, #6D28D9)",
+                              }}
                               onClick={() => {
-                                setPaymentFormTurnoId(appointment.id);
-                                setPaymentFormOrdenId(null);
-                                setPaymentMonto(
-                                  ordenVinculada
-                                    ? String(Number(ordenVinculada.total))
-                                    : ""
-                                );
+                                setPaymentFormOrdenId(ordenVinculada.id);
                                 setPaymentMetodo("transferencia");
                                 setPaymentObservaciones("");
                                 setPaymentError(null);
                                 setPaymentMessage(null);
                               }}
                             >
-                              <i className="bi bi-wallet2 me-1"></i>
-                              {ordenVinculada
-                                ? `Abonar factura ($${Number(ordenVinculada.total).toLocaleString("es-AR")})`
-                                : "Registrar pago"}
+                              <i className="bi bi-credit-card me-1"></i>
+                              {`Abonar factura ($${Number(ordenVinculada.total).toLocaleString("es-AR")})`}
                             </button>
-                          );
-                        }
-
-                        return null;
-                      })()}
-
-                      {paymentFormTurnoId === appointment.id && (
-                        <form
-                          className="mt-3 p-3 rounded-2"
-                          style={{ backgroundColor: "#FAF9FC" }}
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            void handleRegistrarPago({
-                              turnoId: appointment.id,
-                              ordenId: ordenVinculada?.id,
-                            });
-                          }}
-                        >
-                          <div className="mb-3">
-                            <label
-                              htmlFor={`pago-monto-${appointment.id}`}
-                              className="form-label small fw-semibold"
-                            >
-                              Monto ($)
-                            </label>
-                            <input
-                              id={`pago-monto-${appointment.id}`}
-                              type="number"
-                              min="0.01"
-                              step="0.01"
-                              className="form-control form-control-sm"
-                              value={paymentMonto}
-                              onChange={(e) => setPaymentMonto(e.target.value)}
-                              required
-                            />
-                          </div>
-
-                          <div className="mb-3">
-                            <label
-                              htmlFor={`pago-metodo-${appointment.id}`}
-                              className="form-label small fw-semibold"
-                            >
-                              Metodo de pago
-                            </label>
-                            <select
-                              id={`pago-metodo-${appointment.id}`}
-                              className="form-select form-select-sm"
-                              value={paymentMetodo}
-                              onChange={(e) =>
-                                setPaymentMetodo(e.target.value as PaymentMethod)
-                              }
-                            >
-                              <option value="transferencia">Transferencia</option>
-                              <option value="tarjeta">Tarjeta</option>
-                              <option value="efectivo">Efectivo</option>
-                            </select>
-                          </div>
-
-                          <div className="mb-3">
-                            <label
-                              htmlFor={`pago-observaciones-${appointment.id}`}
-                              className="form-label small fw-semibold"
-                            >
-                              Observaciones (opcional)
-                            </label>
-                            <textarea
-                              id={`pago-observaciones-${appointment.id}`}
-                              className="form-control form-control-sm"
-                              rows={2}
-                              value={paymentObservaciones}
-                              onChange={(e) =>
-                                setPaymentObservaciones(e.target.value)
-                              }
-                            />
-                          </div>
-
-                          {paymentError && (
-                            <div className="alert alert-danger py-2 small">
-                              {paymentError}
-                            </div>
                           )}
-
-                          <div className="d-flex gap-2">
-                            <button
-                              type="submit"
-                              className="btn btn-primary btn-sm"
-                              disabled={paymentLoading}
-                            >
-                              {paymentLoading ? "Registrando..." : "Confirmar registro"}
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-outline-secondary btn-sm"
-                              disabled={paymentLoading}
-                              onClick={() => {
-                                setPaymentFormTurnoId(null);
-                                setPaymentError(null);
-                              }}
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        </form>
-                      )}
-
-                      {paymentMessage && paymentMessageTurnoId === appointment.id && (
-                        <div className="alert alert-success py-2 small mt-2 mb-0">
-                          {paymentMessage}
                         </div>
-                      )}
-                    </div>
+
+                        {paymentFormOrdenId === ordenVinculada.id && (
+                          <form
+                            className="mt-3 p-3 rounded-2 border"
+                            style={{ backgroundColor: "#FAF9FC", borderColor: "var(--vet-border-tint, #EDE9FE)" }}
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              void handlePagarOrden(ordenVinculada.id);
+                            }}
+                          >
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <h5 className="h6 fw-bold mb-0" style={{ color: "var(--vet-text-main, #1E1B4B)" }}>
+                                <i className="bi bi-credit-card me-2 text-primary"></i>
+                                Abonar Orden #{ordenVinculada.id}
+                              </h5>
+                              <span className="badge bg-primary-subtle text-primary fw-semibold px-2 py-1">
+                                Total: ${Number(ordenVinculada.total).toLocaleString("es-AR")}
+                              </span>
+                            </div>
+
+                            <div className="row g-2 mb-3">
+                              <div className="col-12 col-sm-6">
+                                <label htmlFor={`metodo-turno-${ordenVinculada.id}`} className="form-label small fw-semibold">
+                                  Metodo de pago
+                                </label>
+                                <select
+                                  id={`metodo-turno-${ordenVinculada.id}`}
+                                  className="form-select form-select-sm"
+                                  value={paymentMetodo}
+                                  onChange={(e) => setPaymentMetodo(e.target.value as MetodoPago)}
+                                >
+                                  <option value="transferencia">Transferencia Bancaria</option>
+                                  <option value="tarjeta">Tarjeta de Debito / Credito</option>
+                                  <option value="efectivo">Efectivo en Clinica</option>
+                                </select>
+                              </div>
+
+                              <div className="col-12 col-sm-6">
+                                <label htmlFor={`obs-turno-${ordenVinculada.id}`} className="form-label small fw-semibold">
+                                  Comprobante / Detalle (opcional)
+                                </label>
+                                <input
+                                  id={`obs-turno-${ordenVinculada.id}`}
+                                  type="text"
+                                  className="form-control form-control-sm"
+                                  placeholder="Ej: Nro. de operacion o comprobante"
+                                  value={paymentObservaciones}
+                                  onChange={(e) => setPaymentObservaciones(e.target.value)}
+                                />
+                              </div>
+                            </div>
+
+                            {paymentError && (
+                              <div className="alert alert-danger py-2 small mb-3">
+                                {paymentError}
+                              </div>
+                            )}
+
+                            <div className="d-flex gap-2">
+                              <button
+                                type="submit"
+                                className="btn btn-primary btn-sm rounded-2 fw-medium px-3"
+                                style={{ backgroundColor: "var(--vet-primary, #6D28D9)", borderColor: "var(--vet-primary, #6D28D9)" }}
+                                disabled={paymentLoading}
+                              >
+                                {paymentLoading ? "Procesando pago..." : "Confirmar pago"}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-outline-secondary btn-sm rounded-2"
+                                disabled={paymentLoading}
+                                onClick={() => {
+                                  setPaymentFormOrdenId(null);
+                                  setPaymentError(null);
+                                }}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </form>
+                        )}
+
+                        {paymentMessage && paymentMessageOrdenId === ordenVinculada.id && (
+                          <div className="alert alert-success py-2 small mt-2 mb-0">
+                            {paymentMessage}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {isReprogramando && (
                       <div
@@ -859,18 +767,41 @@ function MyAppointments() {
                           </label>
                           <input
                             id={`reschedule-date-${appointment.id}`}
-                            type="datetime-local"
-                            min={nowForInput}
+                            type="date"
+                            min={hoyStr}
                             value={nuevaFecha}
                             onChange={(e) => {
-                              setNuevaFecha(e.target.value);
+                              const nextDate = e.target.value;
+                              setNuevaFecha(nextDate);
+                              if (nuevaHora && isSlotInPast(nuevaHora, nextDate)) {
+                                setNuevaHora("");
+                              }
                               if (rescheduleError) setRescheduleError(null);
                             }}
                             onClick={(e) => e.currentTarget.showPicker?.()}
                             onFocus={(e) => e.currentTarget.showPicker?.()}
                             className={`form-control form-control-sm rounded-2 ${rescheduleError ? "is-invalid" : ""}`}
-                            style={{ maxWidth: "240px", cursor: "pointer" }}
+                            style={{ maxWidth: "170px", cursor: "pointer" }}
                           />
+                          <select
+                            id={`reschedule-time-${appointment.id}`}
+                            value={nuevaHora}
+                            onChange={(e) => {
+                              setNuevaHora(e.target.value);
+                              if (rescheduleError) setRescheduleError(null);
+                            }}
+                            className={`form-select form-select-sm rounded-2 ${rescheduleError ? "is-invalid" : ""}`}
+                            style={{ maxWidth: "160px", cursor: "pointer" }}
+                          >
+                            <option value="">Horario (24 hs)</option>
+                            {BUSINESS_HOURS_SLOTS.filter(
+                              (h) => !isSlotInPast(h, nuevaFecha)
+                            ).map((h) => (
+                              <option key={h} value={h}>
+                                {h} hs
+                              </option>
+                            ))}
+                          </select>
                           <button
                             type="button"
                             onClick={() => handleReprogramarTurno(appointment.id)}

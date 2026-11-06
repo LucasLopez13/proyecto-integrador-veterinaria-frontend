@@ -14,17 +14,18 @@ export function formatTime(dateInput: string | Date | null | undefined): string 
   if (!dateInput) return "--:--";
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
   if (isNaN(date.getTime())) return "--:--";
-  return date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
 export function formatDateTime(dateInput: string | Date | null | undefined): string {
   if (!dateInput) return "No registrada";
   const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
   if (isNaN(date.getTime())) return "Fecha invalida";
-  return `${date.toLocaleDateString("es-AR")} ${date.toLocaleTimeString("es-AR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`;
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${date.toLocaleDateString("es-AR")} ${hours}:${minutes} hs`;
 }
 
 export function formatStopwatch(totalSeconds: number): string {

@@ -52,12 +52,13 @@ export default function PrescriptionCard({
 
   const solicitarConfirmacion = () => {
     if (confirmando || prescripcion.confirmadaPorProfesional) return;
+    const unidadAdmin = prescripcion.unidadAdministracion || "ml";
     setFeedbackModal({
       isOpen: true,
       type: "confirm",
       confirmVariant: "primary",
       title: "Confirmar Prescripcion Medica",
-      message: `¿Confirmas que revisaste la dosis (${prescripcion.dosisTotal ?? "-"} mg / ${prescripcion.volumenMl ?? "-"} ml cada ${prescripcion.frecuenciaHoras} hs por ${prescripcion.duracionDias} dias) para ${prescripcion.medicamento}? Esta accion emitira la receta medica y no se puede deshacer.`,
+      message: `¿Confirmas que revisaste la dosis (${prescripcion.dosisTotal ?? "-"} mg / ${prescripcion.volumenMl ?? "-"} ${unidadAdmin} cada ${prescripcion.frecuenciaHoras} hs por ${prescripcion.duracionDias} dias) para ${prescripcion.medicamento}? Esta accion emitira la receta medica y no se puede deshacer.`,
       confirmText: "Si, confirmar prescripcion",
       cancelText: "Revisar datos",
       onConfirm: () => void ejecutarConfirmacion(),
@@ -137,10 +138,14 @@ export default function PrescriptionCard({
           </strong>
         </div>
         <div className="col-sm-6 col-md-4">
-          <span className="text-muted d-block">Volumen a administrar</span>
+          <span className="text-muted d-block">
+            {prescripcion.unidadAdministracion === "comprimidos"
+              ? "Cantidad a administrar"
+              : "Volumen a administrar"}
+          </span>
           <strong style={{ color: "var(--vet-primary, #6D28D9)" }}>
             {prescripcion.volumenMl != null
-              ? `${prescripcion.volumenMl} ml`
+              ? `${prescripcion.volumenMl} ${prescripcion.unidadAdministracion || "ml"}`
               : "No calculado"}
           </strong>
         </div>

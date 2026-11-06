@@ -124,14 +124,6 @@ function Navbar() {
 
                 <Link
                   className="nav-link d-inline-flex align-items-center gap-1"
-                  to="/profesional/pagos"
-                  onClick={cerrarMenu}
-                >
-                  <i className="bi bi-wallet2"></i> Pagos
-                </Link>
-
-                <Link
-                  className="nav-link d-inline-flex align-items-center gap-1"
                   to="/profesional/alertas-stock"
                   onClick={cerrarMenu}
                 >
@@ -150,7 +142,7 @@ function Navbar() {
               </Link>
             )}
 
-            <div className="d-flex align-items-center justify-content-between gap-2 mt-2 mt-lg-0 pt-2 pt-lg-0 border-top border-lg-0">
+            <div className="d-flex align-items-center justify-content-between gap-2 mt-2 mt-lg-0 pt-2 pt-lg-0">
               <div className="user-profile-chip ms-lg-3 me-2 d-flex align-items-center gap-2">
                 <span className="user-avatar-squircle">
                   {user.nombre ? user.nombre.charAt(0).toUpperCase() : "U"}

@@ -16,6 +16,7 @@ function AlertasStock() {
   const { token } = useAuth();
 
   const [pestanaActiva, setPestanaActiva] = useState<"alertas" | "movimientos">("alertas");
+  const [filtroEstado, setFiltroEstado] = useState<"todos" | "stock_critico" | "proximo_vencer" | "normal">("todos");
   const [datos, setDatos] = useState<RespuestaAlertasStock | null>(null);
   const [dias, setDias] = useState(30);
   const [cargando, setCargando] = useState(true);
@@ -75,7 +76,8 @@ function AlertasStock() {
 
   useEffect(() => {
     void cargarAlertas();
-  }, [cargarAlertas]);
+    void cargarCatalogoModal();
+  }, [cargarAlertas, cargarCatalogoModal]);
 
   useEffect(() => {
     if (pestanaActiva === "movimientos") {
@@ -235,24 +237,56 @@ function AlertasStock() {
             </article>
           </section>
 
-          <section className="alertas-filtros">
-            <label htmlFor="diasVencimiento">
-              Avisar por vencimientos dentro de:
-            </label>
+          <section className="alertas-filtros d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div className="d-flex align-items-center flex-wrap gap-2">
+              <span className="small fw-semibold text-muted me-1">
+                <i className="bi bi-funnel me-1"></i> Estado:
+              </span>
+              {[
+                { key: "todos", label: "Todas las Alertas" },
+                { key: "stock_critico", label: "Stock Crítico" },
+                { key: "proximo_vencer", label: "Próximo a Vencer" },
+                { key: "normal", label: "Normal" },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  className={`btn btn-sm rounded-2 fw-medium ${
+                    filtroEstado === item.key ? "btn-primary" : "btn-outline-secondary"
+                  }`}
+                  style={
+                    filtroEstado === item.key
+                      ? { backgroundColor: "var(--vet-primary, #6D28D9)", borderColor: "var(--vet-primary, #6D28D9)" }
+                      : undefined
+                  }
+                  onClick={() =>
+                    setFiltroEstado(item.key as "todos" | "stock_critico" | "proximo_vencer" | "normal")
+                  }
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
 
-            <select
-              id="diasVencimiento"
-              value={dias}
-              onChange={(event) => setDias(Number(event.target.value))}
-            >
-              <option value={7}>7 dias</option>
-              <option value={15}>15 dias</option>
-              <option value={30}>30 dias</option>
-              <option value={60}>60 dias</option>
-              <option value={90}>90 dias</option>
-              <option value={180}>180 dias</option>
-              <option value={365}>365 dias</option>
-            </select>
+            <div className="d-flex align-items-center gap-2">
+              <label htmlFor="diasVencimiento" className="mb-0">
+                Avisar por vencimientos dentro de:
+              </label>
+
+              <select
+                id="diasVencimiento"
+                value={dias}
+                onChange={(event) => setDias(Number(event.target.value))}
+              >
+                <option value={7}>7 dias</option>
+                <option value={15}>15 dias</option>
+                <option value={30}>30 dias</option>
+                <option value={60}>60 dias</option>
+                <option value={90}>90 dias</option>
+                <option value={180}>180 dias</option>
+                <option value={365}>365 dias</option>
+              </select>
+            </div>
           </section>
 
           {cargando && (
@@ -270,26 +304,98 @@ function AlertasStock() {
             </div>
           )}
 
-          {!cargando && !error && datos?.alertas.length === 0 && (
-            <div className="alertas-vacio">
-              <span aria-hidden="true">
-                <i className="bi bi-check2-circle"></i>
-              </span>
-              <h2>No hay alertas pendientes</h2>
-              <p>
-                No se encontraron productos con stock critico ni lotes que requieran
-                atencion para el periodo seleccionado.
-              </p>
-            </div>
-          )}
-
-          {!cargando && !error && datos && datos.alertas.length > 0 && (
-            <section className="alertas-lista" aria-label="Listado de alertas">
-              {datos.alertas.map((alerta) => (
-                <AlertaCard key={`${alerta.tipo}-${alerta.loteId ?? alerta.productoId}`} alerta={alerta} />
-              ))}
+          {!cargando && !error && filtroEstado === "normal" && (
+            <section className="alertas-lista" aria-label="Productos con stock normal">
+              {productosInventario
+                .filter((p) => Number(p.stockActual) > Number(p.alertaStockMinimo))
+                .map((prod) => (
+                  <article key={prod.id} className="alerta-card" style={{ borderLeft: "4px solid #059669" }}>
+                    <div className="alerta-card-header">
+                      <div>
+                        <span
+                          className="alerta-badge"
+                          style={{ backgroundColor: "#ECFDF5", color: "#059669", border: "1px solid #A7F3D0" }}
+                        >
+                          STOCK NORMAL
+                        </span>
+                        <h2>{prod.nombre}</h2>
+                      </div>
+                      <span
+                        className="alerta-tipo"
+                        style={{ color: "#059669", fontWeight: 600 }}
+                      >
+                        Disponible para consumo
+                      </span>
+                    </div>
+                    <p className="alerta-mensaje">
+                      Stock disponible por encima del umbral mínimo ({prod.alertaStockMinimo} {prod.unidadMedida}).
+                    </p>
+                    <dl className="alerta-detalles">
+                      <div>
+                        <dt>Stock actual</dt>
+                        <dd>{prod.stockActual} {prod.unidadMedida}</dd>
+                      </div>
+                      <div>
+                        <dt>Umbral mínimo</dt>
+                        <dd>{prod.alertaStockMinimo} {prod.unidadMedida}</dd>
+                      </div>
+                      {prod.lotesDisponibles?.[0] && (
+                        <>
+                          <div>
+                            <dt>Lote FEFO activo</dt>
+                            <dd>{prod.lotesDisponibles[0].numeroLote}</dd>
+                          </div>
+                          <div>
+                            <dt>Vencimiento</dt>
+                            <dd>{prod.lotesDisponibles[0].fechaVencimiento}</dd>
+                          </div>
+                        </>
+                      )}
+                    </dl>
+                  </article>
+                ))}
             </section>
           )}
+
+          {!cargando &&
+            !error &&
+            filtroEstado !== "normal" &&
+            (() => {
+              const alertasFiltradas = (datos?.alertas ?? []).filter((alerta) => {
+                if (filtroEstado === "stock_critico") {
+                  return alerta.tipo === "STOCK_CRITICO";
+                }
+                if (filtroEstado === "proximo_vencer") {
+                  return alerta.tipo === "PROXIMO_A_VENCER" || alerta.tipo === "PRODUCTO_VENCIDO";
+                }
+                return true;
+              });
+
+              if (alertasFiltradas.length === 0) {
+                return (
+                  <div className="alertas-vacio">
+                    <span aria-hidden="true">
+                      <i className="bi bi-check2-circle"></i>
+                    </span>
+                    <h2>No hay alertas pendientes</h2>
+                    <p>
+                      No se encontraron productos ni lotes para el filtro seleccionado.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <section className="alertas-lista" aria-label="Listado de alertas">
+                  {alertasFiltradas.map((alerta) => (
+                    <AlertaCard
+                      key={`${alerta.tipo}-${alerta.loteId ?? alerta.productoId}`}
+                      alerta={alerta}
+                    />
+                  ))}
+                </section>
+              );
+            })()}
         </>
       )}
 
@@ -333,7 +439,8 @@ function AlertasStock() {
                             month: "2-digit",
                             year: "numeric",
                             hour: "2-digit",
-                            minute: "2-digit"
+                            minute: "2-digit",
+                            hour12: false,
                           })}
                         </td>
                         <td className="fw-semibold text-dark">

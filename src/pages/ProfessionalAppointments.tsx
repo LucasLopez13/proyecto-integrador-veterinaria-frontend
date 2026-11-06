@@ -14,14 +14,24 @@ function ProfessionalAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filtroEstado, setFiltroEstado] = useState<string>("todos");
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
-  const totalPages = Math.ceil(appointments.length / pageSize) || 1;
+
+  const filteredAppointments = appointments.filter((a) => {
+    if (filtroEstado === "todos") return true;
+    if (filtroEstado === "atendido") {
+      return a.estado === "atendido" || a.estado === "completado";
+    }
+    return a.estado === filtroEstado;
+  });
+
+  const totalPages = Math.ceil(filteredAppointments.length / pageSize) || 1;
 
   const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, appointments.length);
-  const paginatedAppointments = appointments.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + pageSize, filteredAppointments.length);
+  const paginatedAppointments = filteredAppointments.slice(startIndex, endIndex);
 
   const cargarTurnos = async () => {
     try {
@@ -86,10 +96,10 @@ function ProfessionalAppointments() {
 
           <div className="d-flex gap-2">
             <Link
-              to="/profesional/pagos"
+              to="/facturacion/ordenes"
               className="btn btn-outline-secondary rounded-2 shadow-sm d-inline-flex align-items-center gap-2 px-3 fw-medium"
             >
-              <i className="bi bi-wallet2"></i> Gestion de Pagos
+              <i className="bi bi-receipt"></i> Facturación
             </Link>
             <Link
               to="/profesional/triage"
@@ -144,6 +154,39 @@ function ProfessionalAppointments() {
           />
         ) : (
           <div className="bg-white rounded-3 border border-light-subtle shadow-sm overflow-hidden" style={{ borderColor: "#EDE9FE" }}>
+            <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 border-bottom" style={{ backgroundColor: "#FAF9FC" }}>
+              <span className="small fw-semibold text-muted">
+                <i className="bi bi-funnel me-1"></i> Filtrar por estado:
+              </span>
+              <div className="d-flex flex-wrap gap-1">
+                {[
+                  { key: "todos", label: "Todos" },
+                  { key: "pendiente", label: "Pendiente" },
+                  { key: "confirmado", label: "Confirmado" },
+                  { key: "atendido", label: "Atendido" },
+                  { key: "cancelado", label: "Cancelado" },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={`btn btn-sm rounded-2 fw-medium ${
+                      filtroEstado === item.key ? "btn-primary" : "btn-outline-secondary"
+                    }`}
+                    style={
+                      filtroEstado === item.key
+                        ? { backgroundColor: "#6D28D9", borderColor: "#6D28D9" }
+                        : undefined
+                    }
+                    onClick={() => {
+                      setFiltroEstado(item.key);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="table-responsive mb-0">
               <table className="table table-hover align-middle mb-0">
                 <thead style={{ backgroundColor: "#F8FAFC" }}>
@@ -232,35 +275,45 @@ function ProfessionalAppointments() {
 
                         <td className="py-3 px-3">
                           {(() => {
-                            const pagos = appointment.pagos || [];
-                            const ultimoPago = pagos[pagos.length - 1];
+                            const orden = (appointment as any).consulta?.ordenFacturacion;
 
-                            if (!ultimoPago) {
+                            if (!orden) {
+                              if (appointment.estado === "atendido" || appointment.estado === "completado") {
+                                return (
+                                  <Link
+                                    to="/facturacion/ordenes"
+                                    className="badge text-bg-light border text-decoration-none text-muted"
+                                    title="Ver en Facturación"
+                                  >
+                                    Sin facturar
+                                  </Link>
+                                );
+                              }
                               return (
                                 <span className="badge text-bg-light border text-muted">
-                                  Sin pago
+                                  -
                                 </span>
                               );
                             }
 
-                            if (ultimoPago.estado === "aprobado") {
+                            if (orden.estado === "pagada") {
                               return (
                                 <Link
-                                  to="/profesional/pagos"
+                                  to="/facturacion/ordenes"
                                   className="badge text-bg-success text-decoration-none"
-                                  title="Ver en Pagos"
+                                  title={`Factura #${orden.id} Pagada`}
                                 >
-                                  Aprobado
+                                  Pagada
                                 </Link>
                               );
                             }
 
-                            if (ultimoPago.estado === "pendiente") {
+                            if (orden.estado === "pendiente") {
                               return (
                                 <Link
-                                  to="/profesional/pagos"
+                                  to="/facturacion/ordenes"
                                   className="badge text-bg-warning text-decoration-none"
-                                  title="Pago pendiente - Gestionar"
+                                  title={`Factura #${orden.id} Pendiente de cobro`}
                                 >
                                   Pendiente
                                 </Link>
@@ -269,11 +322,11 @@ function ProfessionalAppointments() {
 
                             return (
                               <Link
-                                to="/profesional/pagos"
+                                to="/facturacion/ordenes"
                                 className="badge text-bg-danger text-decoration-none"
-                                title="Pago rechazado"
+                                title={`Factura #${orden.id} Anulada`}
                               >
-                                Rechazado
+                                Anulada
                               </Link>
                             );
                           })()}
@@ -301,6 +354,7 @@ function ProfessionalAppointments() {
                             >
                               <option value="pendiente">Pendiente</option>
                               <option value="confirmado">Confirmado</option>
+                              <option value="atendido">Atendido</option>
                               <option value="cancelado">Cancelado</option>
                             </select>
                           )}
@@ -339,7 +393,7 @@ function ProfessionalAppointments() {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
-              totalItems={appointments.length}
+              totalItems={filteredAppointments.length}
               itemsPerPage={pageSize}
               className="p-3 border-top mt-0"
             />

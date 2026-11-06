@@ -173,13 +173,15 @@ export default function ConsultationPrescriptions({
                       </span>
                     </div>
                     <div className="col-md-6">
-                      <strong>Volumen:</strong>{" "}
+                      <strong>
+                        {p.unidadAdministracion === "comprimidos" ? "Cantidad:" : "Volumen:"}
+                      </strong>{" "}
                       <span
                         className="fw-semibold"
                         style={{ color: "var(--vet-primary, #6D28D9)" }}
                       >
                         {p.volumenMl != null
-                          ? `${p.volumenMl} ml`
+                          ? `${p.volumenMl} ${p.unidadAdministracion || "ml"}`
                           : "No calculado"}
                       </span>
                     </div>
