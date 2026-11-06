@@ -27,6 +27,16 @@ function Pets() {
     cargarMascotas();
   }, []);
 
+  const handleUpdatePet = (updatedPet: Pet) => {
+    setPets((prev) =>
+      prev.map((p) => (p.id === updatedPet.id ? { ...p, ...updatedPet } : p))
+    );
+  };
+
+  const handleDeletePet = (deletedPetId: number) => {
+    setPets((prev) => prev.filter((p) => p.id !== deletedPetId));
+  };
+
   return (
     <main className="pets-page py-4">
       <div className="container">
@@ -61,7 +71,12 @@ function Pets() {
         ) : (
           <div className="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3">
             {pets.map((pet) => (
-              <PetCard key={pet.id} pet={pet} />
+              <PetCard
+                key={pet.id}
+                pet={pet}
+                onUpdate={handleUpdatePet}
+                onDelete={handleDeletePet}
+              />
             ))}
           </div>
         )}
