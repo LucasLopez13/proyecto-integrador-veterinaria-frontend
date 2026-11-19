@@ -28,7 +28,7 @@ interface OrdenFacturacionCliente {
   consultaId: number;
   fechaGeneracion: string;
   total: number | string;
-  estado: "pendiente" | "pagada" | "anulada";
+  estado: "pendiente" | "en_revision" | "pagada" | "anulada";
   metodoPago?: string;
   fechaPago?: string;
   comprobante?: string;
@@ -136,7 +136,7 @@ function MyAppointments() {
       setPaymentMetodo("transferencia");
       setPaymentObservaciones("");
       setPaymentMessageOrdenId(ordenId);
-      setPaymentMessage("¡Pago registrado con exito! La factura ha quedado abonada.");
+      setPaymentMessage("¡Pago informado con exito! Queda pendiente de aprobacion por parte de la clinica.");
     } catch (err: any) {
       setPaymentError(
         err instanceof Error ? err.message : "No se pudo registrar el pago."
@@ -311,23 +311,33 @@ function MyAppointments() {
                         </span>
                       </div>
                       <span
-                        className="badge rounded-pill px-3 py-1 fw-semibold text-capitalize"
+                        className="badge rounded-pill px-3 py-1 fw-semibold"
                         style={{
                           backgroundColor:
                             orden.estado === "pagada"
                               ? "#ECFDF5"
-                              : orden.estado === "anulada"
-                                ? "#FEF2F2"
-                                : "#FFFBEB",
+                              : orden.estado === "en_revision"
+                                ? "#EFF6FF"
+                                : orden.estado === "anulada"
+                                  ? "#FEF2F2"
+                                  : "#FFFBEB",
                           color:
                             orden.estado === "pagada"
                               ? "#059669"
-                              : orden.estado === "anulada"
-                                ? "#DC2626"
-                                : "#D97706",
+                              : orden.estado === "en_revision"
+                                ? "#2563EB"
+                                : orden.estado === "anulada"
+                                  ? "#DC2626"
+                                  : "#D97706",
                         }}
                       >
-                        {orden.estado}
+                        {orden.estado === "en_revision"
+                          ? "Pendiente de aprobacion"
+                          : orden.estado === "pagada"
+                            ? "Pagada"
+                            : orden.estado === "anulada"
+                              ? "Anulada"
+                              : "Pendiente"}
                       </span>
                     </div>
 
@@ -355,6 +365,11 @@ function MyAppointments() {
                           <i className="bi bi-check-circle-fill me-1"></i>
                           Factura abonada mediante <span className="text-capitalize">{orden.metodoPago || "transferencia"}</span>
                           {orden.fechaPago ? ` el ${new Date(orden.fechaPago).toLocaleDateString("es-AR")}` : ""}.
+                        </div>
+                      ) : orden.estado === "en_revision" ? (
+                        <div className="small fw-semibold" style={{ color: "#2563EB" }}>
+                          <i className="bi bi-hourglass-split me-1"></i>
+                          Pago informado (<span className="text-capitalize">{orden.metodoPago || "transferencia"}</span>) — Pendiente de aprobacion por la clinica.
                         </div>
                       ) : orden.estado === "anulada" ? (
                         <div className="small text-danger fw-semibold">
@@ -588,23 +603,33 @@ function MyAppointments() {
                             {`Facturacion de la Consulta (Orden #${ordenVinculada.id})`}
                           </h4>
                           <span
-                            className="badge rounded-pill px-2 py-1 text-capitalize"
+                            className="badge rounded-pill px-2 py-1"
                             style={{
                               backgroundColor:
                                 ordenVinculada.estado === "pagada"
                                   ? "#ECFDF5"
-                                  : ordenVinculada.estado === "anulada"
-                                    ? "#FEF2F2"
-                                    : "#FFFBEB",
+                                  : ordenVinculada.estado === "en_revision"
+                                    ? "#EFF6FF"
+                                    : ordenVinculada.estado === "anulada"
+                                      ? "#FEF2F2"
+                                      : "#FFFBEB",
                               color:
                                 ordenVinculada.estado === "pagada"
                                   ? "#059669"
-                                  : ordenVinculada.estado === "anulada"
-                                    ? "#DC2626"
-                                    : "#D97706",
+                                  : ordenVinculada.estado === "en_revision"
+                                    ? "#2563EB"
+                                    : ordenVinculada.estado === "anulada"
+                                      ? "#DC2626"
+                                      : "#D97706",
                             }}
                           >
-                            Factura {ordenVinculada.estado}
+                            {ordenVinculada.estado === "en_revision"
+                              ? "Pendiente de aprobacion"
+                              : ordenVinculada.estado === "pagada"
+                                ? "Factura pagada"
+                                : ordenVinculada.estado === "anulada"
+                                  ? "Factura anulada"
+                                  : "Factura pendiente"}
                           </span>
                         </div>
 
@@ -639,6 +664,11 @@ function MyAppointments() {
                               <i className="bi bi-check-circle-fill me-1"></i>
                               Factura abonada mediante <span className="text-capitalize">{ordenVinculada.metodoPago || "transferencia"}</span>
                               {ordenVinculada.fechaPago ? ` el ${new Date(ordenVinculada.fechaPago).toLocaleDateString("es-AR")}` : ""}.
+                            </div>
+                          ) : ordenVinculada.estado === "en_revision" ? (
+                            <div className="small fw-semibold" style={{ color: "#2563EB" }}>
+                              <i className="bi bi-hourglass-split me-1"></i>
+                              Pago informado (<span className="text-capitalize">{ordenVinculada.metodoPago || "transferencia"}</span>) — Pendiente de aprobacion por la clinica.
                             </div>
                           ) : ordenVinculada.estado === "anulada" ? (
                             <div className="small text-danger fw-semibold">

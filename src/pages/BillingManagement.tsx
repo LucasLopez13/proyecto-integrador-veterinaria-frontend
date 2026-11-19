@@ -18,7 +18,7 @@ interface OrdenFacturacion {
   consultaId: number;
   fechaGeneracion: string;
   total: number | string;
-  estado: "pendiente" | "pagada" | "anulada";
+  estado: "pendiente" | "en_revision" | "pagada" | "anulada";
   metodoPago?: string;
   fechaPago?: string;
   comprobante?: string;
@@ -74,7 +74,7 @@ function BillingManagement() {
   const [generandoId, setGenerandoId] = useState<number | null>(null);
   const [actualizandoOrdenId, setActualizandoOrdenId] = useState<number | null>(null);
   const [filtroEstado, setFiltroEstado] = useState<
-    "todas" | "pendiente" | "pagada" | "anulada"
+    "todas" | "pendiente" | "en_revision" | "pagada" | "anulada"
   >("todas");
 
   const [ordenSeleccionada, setOrdenSeleccionada] =
@@ -171,7 +171,7 @@ function BillingManagement() {
 
   const ejecutarCambioEstadoOrden = async (
     orden: OrdenFacturacion,
-    nuevoEstado: "pagada" | "anulada"
+    nuevoEstado: "pagada" | "pendiente" | "anulada"
   ) => {
     try {
       setError("");
@@ -189,9 +189,14 @@ function BillingManagement() {
       setOrdenSeleccionada(null);
       await cargarDatos();
 
-      setMensaje(
-        `La orden de facturacion #${orden.id} fue marcada como ${nuevoEstado}.`
-      );
+      const mensajeAccion =
+        nuevoEstado === "pagada"
+          ? `El pago de la orden #${orden.id} fue aprobado y marcado como pagada.`
+          : nuevoEstado === "pendiente"
+            ? `El pago informado de la orden #${orden.id} fue rechazado. La orden volvio a estado pendiente.`
+            : `La orden de facturacion #${orden.id} fue anulada.`;
+
+      setMensaje(mensajeAccion);
     } catch (err) {
       setError(
         err instanceof Error
@@ -205,18 +210,41 @@ function BillingManagement() {
 
   const solicitarCambioEstadoOrden = (
     orden: OrdenFacturacion,
-    nuevoEstado: "pagada" | "anulada"
+    nuevoEstado: "pagada" | "pendiente" | "anulada"
   ) => {
     const esPago = nuevoEstado === "pagada";
+    const esRechazo = nuevoEstado === "pendiente";
+    const esAprobacion = esPago && orden.estado === "en_revision";
+
+    const detalleComprobante = orden.comprobante
+      ? ` (Comprobante: ${orden.comprobante})`
+      : "";
+
     setModalState({
       isOpen: true,
       type: "confirm",
       confirmVariant: esPago ? "primary" : "danger",
-      title: esPago ? "Confirmar Cobro de Orden" : "Confirmar Anulacion de Orden",
-      message: esPago
-        ? `¿Confirmas que la orden #${orden.id} por ${formatoMonto(orden.total)} fue abonada? Se registrara como pagada en el sistema.`
-        : `¿Estas seguro de que deseas anular la orden de facturacion #${orden.id}?`,
-      confirmText: esPago ? "Marcar como pagada" : "Anular orden",
+      title: esAprobacion
+        ? "Aprobar Pago Informado"
+        : esPago
+          ? "Confirmar Cobro de Orden"
+          : esRechazo
+            ? "Rechazar Pago Informado"
+            : "Confirmar Anulacion de Orden",
+      message: esAprobacion
+        ? `¿Confirmas la aprobacion del pago de ${formatoMonto(orden.total)} informado mediante ${orden.metodoPago || "transferencia"}${detalleComprobante}? Al aprobarlo, le figurara como pagada al cliente.`
+        : esPago
+          ? `¿Confirmas que la orden #${orden.id} por ${formatoMonto(orden.total)} fue abonada? Se registrara como pagada en el sistema.`
+          : esRechazo
+            ? `¿Deseas rechazar el pago informado de la orden #${orden.id}? La factura volvera a estado pendiente para que el cliente pueda informar un nuevo pago.`
+            : `¿Estas seguro de que deseas anular la orden de facturacion #${orden.id}?`,
+      confirmText: esAprobacion
+        ? "Aprobar pago"
+        : esPago
+          ? "Marcar como pagada"
+          : esRechazo
+            ? "Rechazar pago"
+            : "Anular orden",
       cancelText: "Cancelar",
       onConfirm: () => void ejecutarCambioEstadoOrden(orden, nuevoEstado),
     });
@@ -249,7 +277,7 @@ function BillingManagement() {
 
   const totalOrdenes = ordenes.length;
   const ordenesPendientesCount = ordenes.filter(
-    (o) => o.estado === "pendiente"
+    (o) => o.estado === "pendiente" || o.estado === "en_revision"
   ).length;
   const ordenesPagadasCount = ordenes.filter(
     (o) => o.estado === "pagada"
@@ -502,6 +530,7 @@ function BillingManagement() {
                 <div className="d-flex flex-wrap gap-2">
                   {[
                     { value: "todas", label: "Todas", icon: "bi-collection" },
+                    { value: "en_revision", label: "Por aprobar", icon: "bi-hourglass-split" },
                     { value: "pendiente", label: "Pendientes", icon: "bi-clock-history" },
                     { value: "pagada", label: "Pagadas", icon: "bi-check2-circle" },
                     { value: "anulada", label: "Anuladas", icon: "bi-x-circle" },
@@ -524,7 +553,7 @@ function BillingManagement() {
                       }
                       onClick={() =>
                         setFiltroEstado(
-                          opt.value as "todas" | "pendiente" | "pagada" | "anulada"
+                          opt.value as "todas" | "pendiente" | "en_revision" | "pagada" | "anulada"
                         )
                       }
                     >
@@ -591,23 +620,29 @@ function BillingManagement() {
                           </td>
                           <td>
                             <span
-                              className="badge rounded-pill px-3 py-2 fw-semibold text-capitalize"
+                              className="badge rounded-pill px-3 py-2 fw-semibold"
                               style={{
                                 backgroundColor:
                                   orden.estado === "pagada"
                                     ? "#ECFDF5"
+                                    : orden.estado === "en_revision"
+                                    ? "#EFF6FF"
                                     : orden.estado === "anulada"
                                     ? "#FEF2F2"
                                     : "#FFFBEB",
                                 color:
                                   orden.estado === "pagada"
                                     ? "#059669"
+                                    : orden.estado === "en_revision"
+                                    ? "#2563EB"
                                     : orden.estado === "anulada"
                                     ? "#DC2626"
                                     : "#D97706",
                                 border: `1px solid ${
                                   orden.estado === "pagada"
                                     ? "#A7F3D0"
+                                    : orden.estado === "en_revision"
+                                    ? "#BFDBFE"
                                     : orden.estado === "anulada"
                                     ? "#FCA5A5"
                                     : "#FDE68A"
@@ -618,13 +653,27 @@ function BillingManagement() {
                                 className={`bi me-1 ${
                                   orden.estado === "pagada"
                                     ? "bi-check2-circle"
+                                    : orden.estado === "en_revision"
+                                    ? "bi-hourglass-split"
                                     : orden.estado === "anulada"
                                     ? "bi-x-circle"
                                     : "bi-clock-history"
                                 }`}
                               ></i>
-                              {orden.estado}
+                              {orden.estado === "en_revision"
+                                ? "Por aprobar"
+                                : orden.estado === "pagada"
+                                ? "Pagada"
+                                : orden.estado === "anulada"
+                                ? "Anulada"
+                                : "Pendiente"}
                             </span>
+                            {orden.estado === "en_revision" && (
+                              <span className="d-block small text-muted mt-1">
+                                <span className="text-capitalize">{orden.metodoPago || "Transferencia"}</span>
+                                {orden.comprobante ? ` · Comp: ${orden.comprobante}` : ""}
+                              </span>
+                            )}
                           </td>
                           <td className="text-end">
                             <div className="d-inline-flex gap-2 flex-wrap justify-content-end">
@@ -637,6 +686,36 @@ function BillingManagement() {
                                 <i className="bi bi-eye me-1"></i>
                                 Detalle
                               </button>
+                              {orden.estado === "en_revision" && (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm rounded-2 text-white fw-medium"
+                                    style={{
+                                      backgroundColor: "#059669",
+                                      borderColor: "#059669",
+                                    }}
+                                    disabled={actualizandoOrdenId === orden.id}
+                                    onClick={() =>
+                                      solicitarCambioEstadoOrden(orden, "pagada")
+                                    }
+                                  >
+                                    <i className="bi bi-check2-circle me-1"></i>
+                                    Aprobar pago
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-danger rounded-2 fw-medium"
+                                    disabled={actualizandoOrdenId === orden.id}
+                                    onClick={() =>
+                                      solicitarCambioEstadoOrden(orden, "pendiente")
+                                    }
+                                  >
+                                    <i className="bi bi-x-lg me-1"></i>
+                                    Rechazar
+                                  </button>
+                                </>
+                              )}
                               {orden.estado === "pendiente" && (
                                 <>
                                   <button
@@ -747,35 +826,57 @@ function BillingManagement() {
                       </strong>
                     </span>
                     <span
-                      className="badge rounded-pill px-3 py-2 fw-semibold text-capitalize"
+                      className="badge rounded-pill px-3 py-2 fw-semibold"
                       style={{
                         backgroundColor:
                           ordenSeleccionada.estado === "pagada"
                             ? "#ECFDF5"
+                            : ordenSeleccionada.estado === "en_revision"
+                            ? "#EFF6FF"
                             : ordenSeleccionada.estado === "anulada"
                             ? "#FEF2F2"
                             : "#FFFBEB",
                         color:
                           ordenSeleccionada.estado === "pagada"
                             ? "#059669"
+                            : ordenSeleccionada.estado === "en_revision"
+                            ? "#2563EB"
                             : ordenSeleccionada.estado === "anulada"
                             ? "#DC2626"
                             : "#D97706",
                       }}
                     >
-                      Estado: {ordenSeleccionada.estado}
+                      Estado:{" "}
+                      {ordenSeleccionada.estado === "en_revision"
+                        ? "Pendiente de aprobacion"
+                        : ordenSeleccionada.estado === "pagada"
+                        ? "Pagada"
+                        : ordenSeleccionada.estado === "anulada"
+                        ? "Anulada"
+                        : "Pendiente"}
                     </span>
                   </div>
 
-                  {ordenSeleccionada.estado === "pagada" && (
-                    <div className="alert alert-success py-2 px-3 small mb-3 d-flex flex-wrap gap-3 align-items-center">
+                  {(ordenSeleccionada.estado === "pagada" ||
+                    ordenSeleccionada.estado === "en_revision") && (
+                    <div
+                      className={`alert ${
+                        ordenSeleccionada.estado === "pagada"
+                          ? "alert-success"
+                          : "alert-info"
+                      } py-2 px-3 small mb-3 d-flex flex-wrap gap-3 align-items-center`}
+                    >
                       <div>
                         <strong>Metodo de pago:</strong>{" "}
                         <span className="text-capitalize">{ordenSeleccionada.metodoPago || "Efectivo"}</span>
                       </div>
                       {ordenSeleccionada.fechaPago && (
                         <div>
-                          <strong>Fecha de pago:</strong>{" "}
+                          <strong>
+                            {ordenSeleccionada.estado === "en_revision"
+                              ? "Informado el:"
+                              : "Fecha de pago:"}
+                          </strong>{" "}
                           {new Date(ordenSeleccionada.fechaPago).toLocaleString("es-AR", {
                             day: "2-digit",
                             month: "2-digit",
@@ -843,6 +944,34 @@ function BillingManagement() {
                 </div>
 
                 <div className="modal-footer border-top">
+                  {ordenSeleccionada.estado === "en_revision" && (
+                    <>
+                      <button
+                        type="button"
+                        className="btn btn-sm text-white rounded-2 px-3 fw-medium"
+                        style={{
+                          backgroundColor: "#059669",
+                          borderColor: "#059669",
+                        }}
+                        onClick={() =>
+                          solicitarCambioEstadoOrden(ordenSeleccionada, "pagada")
+                        }
+                      >
+                        <i className="bi bi-check2-circle me-1"></i>
+                        Aprobar pago
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm rounded-2 px-3 fw-medium"
+                        onClick={() =>
+                          solicitarCambioEstadoOrden(ordenSeleccionada, "pendiente")
+                        }
+                      >
+                        <i className="bi bi-x-lg me-1"></i>
+                        Rechazar pago
+                      </button>
+                    </>
+                  )}
                   {ordenSeleccionada.estado === "pendiente" && (
                     <button
                       type="button"

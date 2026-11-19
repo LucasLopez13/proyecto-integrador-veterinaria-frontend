@@ -308,6 +308,18 @@ function ProfessionalAppointments() {
                               );
                             }
 
+                            if (orden.estado === "en_revision") {
+                              return (
+                                <Link
+                                  to="/facturacion/ordenes"
+                                  className="badge text-bg-primary text-decoration-none"
+                                  title={`Factura #${orden.id} — Pago informado pendiente de aprobacion`}
+                                >
+                                  Por aprobar
+                                </Link>
+                              );
+                            }
+
                             if (orden.estado === "pendiente") {
                               return (
                                 <Link

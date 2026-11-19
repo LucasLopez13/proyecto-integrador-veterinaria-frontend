@@ -26,7 +26,7 @@ export interface Appointment {
     id: number;
     ordenFacturacion?: {
       id: number;
-      estado: "pendiente" | "pagada" | "anulada";
+      estado: "pendiente" | "en_revision" | "pagada" | "anulada";
       total: number | string;
     };
   };
